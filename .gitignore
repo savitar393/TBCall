@@ -1,0 +1,6 @@
+.tools/
+target/
+sitb-manual.txt
+.idea/
+*.iml
+*.pdf
