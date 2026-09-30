@@ -43,7 +43,7 @@ public class Regimen {
     private LocalDate effectiveUntil;
 
     @Column(name = "active")
-    private Boolean active;
+    private Boolean active = true;
 
     @Column(name = "created_at", insertable = false, updatable = false)
     private OffsetDateTime createdAt;

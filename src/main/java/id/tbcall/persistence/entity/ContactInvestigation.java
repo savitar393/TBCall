@@ -15,6 +15,10 @@ import org.hibernate.annotations.DynamicInsert;
 @Setter
 @NoArgsConstructor
 public class ContactInvestigation {
+    @Version
+    @Column(name = "version", nullable = false)
+    private long version;
+
     @Id
     @GeneratedValue(strategy = GenerationType.UUID)
     @Column(name = "id")
@@ -45,7 +49,7 @@ public class ContactInvestigation {
     private OffsetDateTime investigatedAt;
 
     @Column(name = "status", length = 30)
-    private String status;
+    private String status = "NEW";
 
     @Column(name = "result_code", length = 100)
     private String resultCode;

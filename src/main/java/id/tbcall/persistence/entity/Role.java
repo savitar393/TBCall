@@ -30,7 +30,7 @@ public class Role {
     private String description;
 
     @Column(name = "system_role")
-    private Boolean systemRole;
+    private Boolean systemRole = false;
 
     @Column(name = "created_at", insertable = false, updatable = false)
     private OffsetDateTime createdAt;

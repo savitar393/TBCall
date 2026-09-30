@@ -2,6 +2,7 @@ package id.tbcall.persistence.entity;
 
 import jakarta.persistence.*;
 import java.time.OffsetDateTime;
+import java.util.HashMap;
 import java.util.Map;
 import java.util.UUID;
 import lombok.Getter;
@@ -18,6 +19,10 @@ import org.hibernate.type.SqlTypes;
 @Setter
 @NoArgsConstructor
 public class Alert {
+    @Version
+    @Column(name = "version", nullable = false)
+    private long version;
+
     @Id
     @GeneratedValue(strategy = GenerationType.UUID)
     @Column(name = "id")
@@ -43,10 +48,10 @@ public class Alert {
     private String alertType;
 
     @Column(name = "severity", length = 20)
-    private String severity;
+    private String severity = "INFO";
 
     @Column(name = "status", length = 30)
-    private String status;
+    private String status = "OPEN";
 
     @Column(name = "triggered_at")
     private OffsetDateTime triggeredAt;
@@ -68,7 +73,7 @@ public class Alert {
 
     @JdbcTypeCode(SqlTypes.JSON)
     @Column(name = "details", columnDefinition = "jsonb")
-    private Map<String, Object> details;
+    private Map<String, Object> details = new HashMap<>();
 
     @Column(name = "created_at", insertable = false, updatable = false)
     private OffsetDateTime createdAt;

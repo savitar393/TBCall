@@ -17,6 +17,10 @@ import org.hibernate.annotations.DynamicInsert;
 @Setter
 @NoArgsConstructor
 public class TreatmentDrug {
+    @Version
+    @Column(name = "version", nullable = false)
+    private long version;
+
     @Id
     @GeneratedValue(strategy = GenerationType.UUID)
     @Column(name = "id")

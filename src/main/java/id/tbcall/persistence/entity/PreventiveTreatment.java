@@ -17,6 +17,10 @@ import org.hibernate.annotations.DynamicInsert;
 @Setter
 @NoArgsConstructor
 public class PreventiveTreatment {
+    @Version
+    @Column(name = "version", nullable = false)
+    private long version;
+
     @Id
     @GeneratedValue(strategy = GenerationType.UUID)
     @Column(name = "id")
@@ -64,7 +68,7 @@ public class PreventiveTreatment {
     private String drugSource;
 
     @Column(name = "status", length = 30)
-    private String status;
+    private String status = "ACTIVE";
 
     @Column(name = "outcome_code", length = 100)
     private String outcomeCode;

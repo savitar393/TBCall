@@ -44,7 +44,7 @@ public class RegimenDrug {
 
     @Id
     @Column(name = "sequence_no")
-    private Integer sequenceNo;
+    private Integer sequenceNo = 1;
 
     @NoArgsConstructor
     @EqualsAndHashCode

@@ -21,5 +21,5 @@ public class DmStatus {
     private String name;
 
     @Column(name = "active")
-    private Boolean active;
+    private Boolean active = true;
 }

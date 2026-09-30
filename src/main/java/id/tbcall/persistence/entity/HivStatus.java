@@ -21,5 +21,5 @@ public class HivStatus {
     private String name;
 
     @Column(name = "active")
-    private Boolean active;
+    private Boolean active = true;
 }

@@ -3,6 +3,7 @@ package id.tbcall.persistence.entity;
 import jakarta.persistence.*;
 import java.net.InetAddress;
 import java.time.OffsetDateTime;
+import java.util.HashMap;
 import java.util.Map;
 import java.util.UUID;
 import lombok.Getter;
@@ -59,5 +60,5 @@ public class AuditLog {
 
     @JdbcTypeCode(SqlTypes.JSON)
     @Column(name = "metadata", columnDefinition = "jsonb")
-    private Map<String, Object> metadata;
+    private Map<String, Object> metadata = new HashMap<>();
 }

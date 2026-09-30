@@ -35,10 +35,10 @@ public class UserFacility {
     private Facility facility;
 
     @Column(name = "is_primary")
-    private Boolean isPrimary;
+    private Boolean isPrimary = false;
 
     @Column(name = "active")
-    private Boolean active;
+    private Boolean active = true;
 
     @Column(name = "assigned_at")
     private OffsetDateTime assignedAt;

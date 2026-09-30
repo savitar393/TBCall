@@ -15,6 +15,10 @@ import org.hibernate.annotations.DynamicInsert;
 @Setter
 @NoArgsConstructor
 public class AdverseEvent {
+    @Version
+    @Column(name = "version", nullable = false)
+    private long version;
+
     @Id
     @GeneratedValue(strategy = GenerationType.UUID)
     @Column(name = "id")
@@ -34,7 +38,7 @@ public class AdverseEvent {
     private String severity;
 
     @Column(name = "serious")
-    private Boolean serious;
+    private Boolean serious = false;
 
     @Column(name = "started_at")
     private OffsetDateTime startedAt;

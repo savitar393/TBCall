@@ -15,6 +15,10 @@ import org.hibernate.annotations.DynamicInsert;
 @Setter
 @NoArgsConstructor
 public class LabResult {
+    @Version
+    @Column(name = "version", nullable = false)
+    private long version;
+
     @Id
     @GeneratedValue(strategy = GenerationType.UUID)
     @Column(name = "id")
@@ -29,7 +33,7 @@ public class LabResult {
     private LabSpecimen specimen;
 
     @Column(name = "sequence_no")
-    private Integer sequenceNo;
+    private Integer sequenceNo = 1;
 
     @Column(name = "tested_at")
     private OffsetDateTime testedAt;
@@ -44,7 +48,7 @@ public class LabResult {
     private String resultText;
 
     @Column(name = "status", length = 30)
-    private String status;
+    private String status = "FINAL";
 
     @Column(name = "verified_at")
     private OffsetDateTime verifiedAt;

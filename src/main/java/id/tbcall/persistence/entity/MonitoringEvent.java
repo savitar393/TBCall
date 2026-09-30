@@ -2,6 +2,7 @@ package id.tbcall.persistence.entity;
 
 import jakarta.persistence.*;
 import java.time.OffsetDateTime;
+import java.util.HashMap;
 import java.util.Map;
 import java.util.UUID;
 import lombok.Getter;
@@ -18,6 +19,10 @@ import org.hibernate.type.SqlTypes;
 @Setter
 @NoArgsConstructor
 public class MonitoringEvent {
+    @Version
+    @Column(name = "version", nullable = false)
+    private long version;
+
     @Id
     @GeneratedValue(strategy = GenerationType.UUID)
     @Column(name = "id")
@@ -40,7 +45,7 @@ public class MonitoringEvent {
     private OffsetDateTime completedAt;
 
     @Column(name = "status", length = 30)
-    private String status;
+    private String status = "SCHEDULED";
 
     @Column(name = "source_entity_type", length = 80)
     private String sourceEntityType;
@@ -50,7 +55,7 @@ public class MonitoringEvent {
 
     @JdbcTypeCode(SqlTypes.JSON)
     @Column(name = "metadata", columnDefinition = "jsonb")
-    private Map<String, Object> metadata;
+    private Map<String, Object> metadata = new HashMap<>();
 
     @Column(name = "created_at", insertable = false, updatable = false)
     private OffsetDateTime createdAt;

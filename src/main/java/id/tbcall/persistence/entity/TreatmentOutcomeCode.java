@@ -24,5 +24,5 @@ public class TreatmentOutcomeCode {
     private String description;
 
     @Column(name = "active")
-    private Boolean active;
+    private Boolean active = true;
 }

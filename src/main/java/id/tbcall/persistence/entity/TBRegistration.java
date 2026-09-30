@@ -17,6 +17,10 @@ import org.hibernate.annotations.DynamicInsert;
 @Setter
 @NoArgsConstructor
 public class TBRegistration {
+    @Version
+    @Column(name = "version", nullable = false)
+    private long version;
+
     @Id
     @GeneratedValue(strategy = GenerationType.UUID)
     @Column(name = "id")
@@ -67,7 +71,7 @@ public class TBRegistration {
     private String dmStatusCode;
 
     @Column(name = "status", length = 30)
-    private String status;
+    private String status = "OPEN";
 
     @Column(name = "created_at", insertable = false, updatable = false)
     private OffsetDateTime createdAt;

@@ -2,6 +2,7 @@ package id.tbcall.persistence.entity;
 
 import jakarta.persistence.*;
 import java.time.OffsetDateTime;
+import java.util.HashMap;
 import java.util.Map;
 import java.util.UUID;
 import lombok.Getter;
@@ -18,6 +19,10 @@ import org.hibernate.type.SqlTypes;
 @Setter
 @NoArgsConstructor
 public class Notification {
+    @Version
+    @Column(name = "version", nullable = false)
+    private long version;
+
     @Id
     @GeneratedValue(strategy = GenerationType.UUID)
     @Column(name = "id")
@@ -35,7 +40,7 @@ public class Notification {
     private String channel;
 
     @Column(name = "status", length = 30)
-    private String status;
+    private String status = "PENDING";
 
     @Column(name = "scheduled_at")
     private OffsetDateTime scheduledAt;
@@ -51,7 +56,7 @@ public class Notification {
 
     @JdbcTypeCode(SqlTypes.JSON)
     @Column(name = "payload", columnDefinition = "jsonb")
-    private Map<String, Object> payload;
+    private Map<String, Object> payload = new HashMap<>();
 
     @Column(name = "failure_reason", columnDefinition = "text")
     private String failureReason;

@@ -25,10 +25,10 @@ public class SyncRun {
     private ExternalSystem externalSystem;
 
     @Column(name = "direction", length = 20)
-    private String direction;
+    private String direction = "INBOUND";
 
     @Column(name = "status", length = 30)
-    private String status;
+    private String status = "RUNNING";
 
     @Column(name = "started_at")
     private OffsetDateTime startedAt;
@@ -37,16 +37,16 @@ public class SyncRun {
     private OffsetDateTime finishedAt;
 
     @Column(name = "records_received")
-    private Integer recordsReceived;
+    private Integer recordsReceived = 0;
 
     @Column(name = "records_created")
-    private Integer recordsCreated;
+    private Integer recordsCreated = 0;
 
     @Column(name = "records_updated")
-    private Integer recordsUpdated;
+    private Integer recordsUpdated = 0;
 
     @Column(name = "records_failed")
-    private Integer recordsFailed;
+    private Integer recordsFailed = 0;
 
     @Column(name = "cursor_value", columnDefinition = "text")
     private String cursorValue;

@@ -15,6 +15,10 @@ import org.hibernate.annotations.DynamicInsert;
 @Setter
 @NoArgsConstructor
 public class LabRequest {
+    @Version
+    @Column(name = "version", nullable = false)
+    private long version;
+
     @Id
     @GeneratedValue(strategy = GenerationType.UUID)
     @Column(name = "id")
@@ -52,7 +56,7 @@ public class LabRequest {
     private String courierName;
 
     @Column(name = "status", length = 30)
-    private String status;
+    private String status = "REQUESTED";
 
     @Column(name = "notes", columnDefinition = "text")
     private String notes;

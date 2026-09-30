@@ -18,6 +18,10 @@ import org.hibernate.annotations.DynamicUpdate;
 @Setter
 @NoArgsConstructor
 public class TBCase {
+    @Version
+    @Column(name = "version", nullable = false)
+    private long version;
+
     @Id
     @GeneratedValue(strategy = GenerationType.UUID)
     @Column(name = "id")
@@ -75,7 +79,7 @@ public class TBCase {
     private OffsetDateTime closedAt;
 
     @Column(name = "status", length = 30)
-    private String status;
+    private String status = "ACTIVE";
 
     @Column(name = "created_at", insertable = false, updatable = false)
     private OffsetDateTime createdAt;

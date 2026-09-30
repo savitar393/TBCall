@@ -15,6 +15,10 @@ import org.hibernate.annotations.DynamicInsert;
 @Setter
 @NoArgsConstructor
 public class LabRequestTest {
+    @Version
+    @Column(name = "version", nullable = false)
+    private long version;
+
     @Id
     @GeneratedValue(strategy = GenerationType.UUID)
     @Column(name = "id")
@@ -28,7 +32,7 @@ public class LabRequestTest {
     private String testTypeCode;
 
     @Column(name = "status", length = 30)
-    private String status;
+    private String status = "REQUESTED";
 
     @Column(name = "created_at", insertable = false, updatable = false)
     private OffsetDateTime createdAt;

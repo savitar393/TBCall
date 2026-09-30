@@ -15,6 +15,10 @@ import org.hibernate.annotations.DynamicInsert;
 @Setter
 @NoArgsConstructor
 public class PatientUserLink {
+    @Version
+    @Column(name = "version", nullable = false)
+    private long version;
+
     @Id
     @GeneratedValue(strategy = GenerationType.UUID)
     @Column(name = "id")
@@ -29,10 +33,10 @@ public class PatientUserLink {
     private Patient patient;
 
     @Column(name = "relationship_type", length = 50)
-    private String relationshipType;
+    private String relationshipType = "SELF";
 
     @Column(name = "verification_status", length = 30)
-    private String verificationStatus;
+    private String verificationStatus = "PENDING";
 
     @Column(name = "verified_at")
     private OffsetDateTime verifiedAt;

@@ -27,5 +27,5 @@ public class DrugResistancePattern {
     private String description;
 
     @Column(name = "active", nullable = false)
-    private Boolean active;
+    private Boolean active = true;
 }

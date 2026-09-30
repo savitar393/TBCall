@@ -134,3 +134,7 @@ Tujuh peran bawaan (`system_role=true` berarti peran bawaan, bukan hak administr
 Izin notifikasi sendiri diberikan kepada semua peran; grant ini tidak mengaktifkan pengiriman notifikasi. `REPORT_READ` tidak berarti akses dataset pasien mentah: laporan diri, fasyankes, laboratorium, agregat program, dan operasional sistem berbeda menurut scope. `USER_MANAGE_FACILITY` digunakan administrator sistem untuk administrasi pengguna lintas fasyankes sesuai matriks; kode tetap, scope sistem harus eksplisit. `AUDIT_READ` harus membatasi tampilan metadata/payload sensitif sesuai tugas; hak audit/operasional tidak menjadi akses klinis terselubung.
 
 Belum ada penegakan otorisasi dalam checkpoint persistensi. Identitas tautan, scope, proyeksi field, transisi status, editabilitas sumber SITB, target polimorfik, aturan klinis dan workflow rujukan harus diselesaikan pada lapisan layanan/API berikutnya. Tidak ada kontradiksi yang mengharuskan perubahan V1/V2.
+
+## V8: koreksi deskripsi dan hardening runtime
+
+V8 mempertahankan kode/nama `drug_resistance_patterns.TB_SO`, dengan deskripsi terkini: **TBC Sensitif Obat sesuai klasifikasi program; interpretasi rinci mengikuti hasil uji kepekaan dan pedoman nasional.** Deskripsi V4 yang lebih membatasi tetap ada dalam migrasi historis, tetapi bukan deskripsi runtime setelah V8. Tidak ada perubahan katalog/peran lainnya atau interpretasi hasil otomatis. Kebijakan default Java, timestamp dan optimistic locking dijelaskan dalam [PERSISTENCE_RUNTIME.md](docs/PERSISTENCE_RUNTIME.md).

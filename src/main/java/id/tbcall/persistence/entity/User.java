@@ -15,6 +15,10 @@ import org.hibernate.annotations.DynamicInsert;
 @Setter
 @NoArgsConstructor
 public class User {
+    @Version
+    @Column(name = "version", nullable = false)
+    private long version;
+
     @Id
     @GeneratedValue(strategy = GenerationType.UUID)
     @Column(name = "id")
@@ -30,7 +34,7 @@ public class User {
     private String passwordHash;
 
     @Column(name = "status", length = 30)
-    private String status;
+    private String status = "PENDING";
 
     @Column(name = "email_verified_at")
     private OffsetDateTime emailVerifiedAt;

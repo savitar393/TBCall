@@ -16,6 +16,10 @@ import org.hibernate.annotations.DynamicInsert;
 @Setter
 @NoArgsConstructor
 public class Patient {
+    @Version
+    @Column(name = "version", nullable = false)
+    private long version;
+
     @Id
     @GeneratedValue(strategy = GenerationType.UUID)
     @Column(name = "id")
@@ -43,7 +47,7 @@ public class Patient {
     private LocalDate birthDate;
 
     @Column(name = "birth_date_unknown")
-    private Boolean birthDateUnknown;
+    private Boolean birthDateUnknown = false;
 
     @Column(name = "sex_code", length = 30)
     private String sexCode;

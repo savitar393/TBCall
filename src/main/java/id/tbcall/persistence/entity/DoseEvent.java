@@ -16,6 +16,10 @@ import org.hibernate.annotations.DynamicInsert;
 @Setter
 @NoArgsConstructor
 public class DoseEvent {
+    @Version
+    @Column(name = "version", nullable = false)
+    private long version;
+
     @Id
     @GeneratedValue(strategy = GenerationType.UUID)
     @Column(name = "id")
@@ -38,7 +42,7 @@ public class DoseEvent {
     private String administrationMode;
 
     @Column(name = "source", length = 40)
-    private String source;
+    private String source = "TBCALL";
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "recorded_by_user_id")
