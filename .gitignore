@@ -1,6 +1,5 @@
 .tools/
 target/
-*.txt
+docs/reference-local/
 .idea/
 *.iml
-*.pdf
