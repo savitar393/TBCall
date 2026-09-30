@@ -1,6 +1,6 @@
-# TBCall persistence foundation
+# TBCall backend — Phase 1 identity and authorization
 
-This module is the migration-managed persistence layer for TBCall. It contains no API, frontend, SITB connector, clinical automation, or development patient seed.
+This backend implements the migration-managed persistence foundation and Application/API v1 Phase 1: identity, opaque sessions and scoped account linking. The clinical API phases, frontend, SITB connector and clinical automation remain unimplemented.
 
 ## Requirements
 
@@ -9,7 +9,36 @@ This module is the migration-managed persistence layer for TBCall. It contains n
 - PostgreSQL 15 or newer for application startup
 - Docker-compatible container runtime for `mvn test`
 
-Set `TBCALL_DB_URL`, `TBCALL_DB_USER`, and `TBCALL_DB_PASSWORD` for a PostgreSQL database, then start with `mvn spring-boot:run`. The database user needs permission to install the V1 `pgcrypto`, `citext`, and `pg_trgm` extensions and create schema objects. For tests, run `mvn clean test`; Testcontainers starts empty PostgreSQL 16 databases and Spring Boot applies V1 through V8 before Hibernate validates the mappings. All entity/repository Java sources are committed under `src/main/java`; no generation helper or local reference PDF is required to compile or test a clone.
+Set `TBCALL_DB_URL`, `TBCALL_DB_USER`, and `TBCALL_DB_PASSWORD` for a PostgreSQL database, then start with `mvn spring-boot:run`. The database user needs permission to install the V1 `pgcrypto`, `citext`, and `pg_trgm` extensions and create schema objects. For tests, run `mvn clean test`; Testcontainers starts empty PostgreSQL 16 databases and Spring Boot applies V1 through V9 before Hibernate validates the mappings. All Java sources are committed under `src/main/java`; no generation helper or local reference PDF is required to compile or test a clone.
+
+## Identity configuration and browser use
+
+Production defaults: `TBCALL_PRODUCTION=true`, secure cookies and verification-secret exposure disabled. Registration requires an email/SMS `VerificationDeliveryPort` adapter; the default port returns 503 and rolls back registration when delivery is unavailable. No outbound adapter or fake SITB service is provided.
+
+- Bootstrap: set `TBCALL_BOOTSTRAP_EMAIL` and/or `TBCALL_BOOTSTRAP_PHONE`, plus `TBCALL_BOOTSTRAP_PASSWORD` (12–128 characters). The first `SYSTEM_ADMIN` is ACTIVE with verified configured identities. Once any SYSTEM_ADMIN assignment exists, bootstrap is a no-op. Remove bootstrap credentials from deployment configuration after initial use. Existing ordinary accounts are never automatically promoted.
+- `TBCALL_CORS_ALLOWED_ORIGINS`: comma-separated exact HTTP(S) origins; default empty means no cross-origin access. Credentials never use wildcard origins.
+- `TBCALL_VERIFICATION_LIFETIME`: default `30m`, positive and at most `24h`.
+- Local development only: use profile `dev`, `TBCALL_PRODUCTION=false`, and `TBCALL_EXPOSE_VERIFICATION_TOKENS=true` for tokens in registration responses. Local HTTP additionally requires `TBCALL_COOKIE_SECURE=false`. Any `prod`/`production` profile rejects secret exposure and insecure cookies.
+
+Sessions are random opaque tokens, stored as SHA-256 hashes, delivered in `TBCALL_SESSION` (HttpOnly, Secure in production, SameSite=Strict, path `/`, 8 hours). There is no JWT or servlet authentication session. `/me` resolves current roles, permissions and links from PostgreSQL on every request.
+
+CSRF applies to **all** POST/DELETE requests, including registration, verification and login. Browser initialization calls `GET /api/v1/me`; an unauthenticated 401 still issues an `XSRF-TOKEN` cookie. Send its value as `X-XSRF-TOKEN` with state-changing requests. Login/logout clear the old CSRF cookie; call `/me` again for a fresh token. Same-origin clients are preferred. See [SECURITY.md](docs/SECURITY.md) and [AUTHORIZATION.md](docs/AUTHORIZATION.md).
+
+## Phase 1 endpoints
+
+| Method | Path | Input/precondition |
+|---|---|---|
+| POST | `/api/v1/auth/register` | `email` and/or `phone`, `password` |
+| POST | `/api/v1/auth/verify` | `token` |
+| POST | `/api/v1/auth/login` | `identity`, `password` |
+| POST | `/api/v1/auth/logout` | authenticated session + CSRF |
+| GET | `/api/v1/me` | authenticated session |
+| POST | `/api/v1/patients/{patientId}/account-link` | `userId`; If-Match for an existing link |
+| DELETE | `/api/v1/patients/{patientId}/account-link` | If-Match for the verified SELF link |
+| POST | `/api/v1/cases/{caseId}/supporters/{supporterId}/account-link` | `userId`, If-Match for supporter |
+| DELETE | `/api/v1/cases/{caseId}/supporters/{supporterId}/account-link` | If-Match for supporter |
+
+Versioned responses include `id`/`version` and ETag. Use `If-Match: "<version>"`; missing required preconditions return 428, stale versions return 409. Problem responses use Indonesian title/detail, stable technical `code` and `traceId`; `X-Request-ID` correlates requests and audit. No public NIK search/claim or clinical CRUD endpoint exists.
 
 ## Ownership and mapping
 
@@ -19,6 +48,6 @@ Each V1 table has a corresponding JPA entity. UUID foreign keys are lazy, unidir
 
 V8 implements [Runtime Persistence v1.2](docs/architecture/TBCall_Runtime_Persistence_v1.2.md): corrected TB_SO wording, 26 versioned entities and 57 deterministic field initializers. PostgreSQL defaults remain in place; clock-dependent defaults still require refresh/reload when immediate database state is needed. `TBCase` retains dynamic updates, while concurrency protection uses JPA `@Version`.
 
-The [runtime persistence policy](docs/PERSISTENCE_RUNTIME.md) documents exact version scope, Java defaults, database-owned timestamps and the direct-SQL restriction. Ordinary future transactions use `READ_COMMITTED`. Future APIs must map optimistic conflicts to HTTP 409 without silently retrying user updates. No services or API behavior are implemented here.
+The [runtime persistence policy](docs/PERSISTENCE_RUNTIME.md) documents exact version scope, Java defaults, database-owned timestamps and the direct-SQL restriction. Phase 1 commands own `READ_COMMITTED` transactions and map optimistic conflicts to HTTP 409 without silently retrying user updates. The [approved Application/API v1 architecture](docs/architecture/TBCall_Application_API_v1.md) defines subsequent phases.
 
 The V1 `lab_requests` constraint permits either `registration_id` or `case_id`, exactly one per row. The integration suite tests both paths. The migration includes its own `BEGIN`/`COMMIT` around V1; Flyway also starts a transaction, so PostgreSQL emits a harmless nested-transaction warning on first migration. The source was preserved unchanged.
