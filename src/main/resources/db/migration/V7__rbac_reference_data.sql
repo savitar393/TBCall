@@ -1,0 +1,80 @@
+-- TBCall responsibilities derived from the approved v1.1 capability matrix.
+-- These grants are NOT an authorization implementation: verified link/facility,
+-- field projection and report scope must be enforced before exposing any data.
+INSERT INTO roles (code, name, description, system_role) VALUES
+    ('PATIENT', 'Pasien', 'Akses data diri melalui tautan terverifikasi; pencatatan kepatuhan mandiri.', true),
+    ('TREATMENT_SUPPORTER', 'Pendamping Pengobatan / PMO', 'Akses minimum untuk pasien tertaut; tanpa rincian HIV/DM atau hasil diagnostik yang tidak diperlukan.', true),
+    ('TB_OFFICER', 'Petugas TBC', 'Pengelolaan klinis dan pemantauan dalam lingkup fasyankes.', true),
+    ('LAB_STAFF', 'Petugas Laboratorium', 'Permintaan dan hasil laboratorium dalam lingkup penugasan; data pasien minimum yang diperlukan.', true),
+    ('FACILITY_ADMIN', 'Administrator Fasyankes', 'Administrasi fasyankes dan pengguna; tanpa akses klinis bawaan.', true),
+    ('PROGRAM_MONITOR', 'Pengelola / Pemantau Program TBC', 'Laporan agregat dan audit yang diizinkan; tanpa akses klinis pasien bawaan.', true),
+    ('SYSTEM_ADMIN', 'Administrator Sistem', 'Administrasi sistem, peran dan integrasi; tanpa akses klinis bawaan.', true);
+
+INSERT INTO permissions (code, name) VALUES
+    ('PATIENT_READ', 'Melihat data pasien'),
+    ('PATIENT_CREATE', 'Mendaftarkan pasien'),
+    ('PATIENT_UPDATE', 'Memperbarui data pasien'),
+    ('REGISTRATION_READ', 'Melihat registrasi TBC'),
+    ('REGISTRATION_WRITE', 'Mengelola registrasi TBC'),
+    ('DIAGNOSIS_READ', 'Melihat diagnosis'),
+    ('DIAGNOSIS_WRITE', 'Mengelola diagnosis'),
+    ('CASE_READ', 'Melihat kasus TBC'),
+    ('CASE_WRITE', 'Mengelola kasus TBC'),
+    ('LAB_REQUEST_READ', 'Melihat permintaan laboratorium'),
+    ('LAB_REQUEST_WRITE', 'Mengelola permintaan laboratorium'),
+    ('LAB_RESULT_READ', 'Melihat hasil laboratorium'),
+    ('LAB_RESULT_WRITE', 'Mengelola hasil laboratorium'),
+    ('TREATMENT_READ', 'Melihat pengobatan'),
+    ('TREATMENT_WRITE', 'Mengelola pengobatan'),
+    ('ADHERENCE_READ', 'Melihat kepatuhan pengobatan'),
+    ('ADHERENCE_RECORD', 'Mencatat kepatuhan pengobatan'),
+    ('FOLLOW_UP_READ', 'Melihat tindak lanjut'),
+    ('FOLLOW_UP_WRITE', 'Mengelola tindak lanjut'),
+    ('OUTCOME_READ', 'Melihat hasil akhir pengobatan'),
+    ('OUTCOME_WRITE', 'Mengelola hasil akhir pengobatan'),
+    ('CONTACT_READ', 'Melihat kontak'),
+    ('CONTACT_WRITE', 'Mengelola kontak'),
+    ('TPT_READ', 'Melihat TPT'),
+    ('TPT_WRITE', 'Mengelola TPT'),
+    ('ADVERSE_EVENT_READ', 'Melihat efek samping obat'),
+    ('ADVERSE_EVENT_WRITE', 'Mengelola efek samping obat'),
+    ('REFERRAL_READ', 'Melihat rujukan'),
+    ('REFERRAL_WRITE', 'Mengelola rujukan'),
+    ('MONITORING_READ', 'Melihat pemantauan'),
+    ('MONITORING_MANAGE', 'Mengelola pemantauan'),
+    ('ALERT_READ', 'Melihat peringatan'),
+    ('ALERT_ACKNOWLEDGE', 'Menandai peringatan telah diketahui'),
+    ('ALERT_RESOLVE', 'Menyelesaikan peringatan'),
+    ('NOTIFICATION_READ_SELF', 'Melihat notifikasi sendiri'),
+    ('USER_MANAGE_FACILITY', 'Mengelola pengguna fasyankes'),
+    ('FACILITY_MANAGE', 'Mengelola fasyankes'),
+    ('ROLE_MANAGE', 'Mengelola peran'),
+    ('AUDIT_READ', 'Melihat audit'),
+    ('REPORT_READ', 'Melihat laporan'),
+    ('INTEGRATION_MANAGE', 'Mengelola integrasi');
+
+-- Explicit grants. No administrator wildcard or inference from clinical role names.
+WITH grants(role_code, permission_codes) AS (VALUES
+    ('PATIENT', ARRAY['PATIENT_READ','REGISTRATION_READ','DIAGNOSIS_READ','CASE_READ',
+        'LAB_REQUEST_READ','LAB_RESULT_READ','TREATMENT_READ','ADHERENCE_READ','ADHERENCE_RECORD',
+        'FOLLOW_UP_READ','OUTCOME_READ','TPT_READ','ADVERSE_EVENT_READ','REFERRAL_READ',
+        'MONITORING_READ','ALERT_READ','ALERT_ACKNOWLEDGE','NOTIFICATION_READ_SELF','REPORT_READ']),
+    ('TREATMENT_SUPPORTER', ARRAY['PATIENT_READ','CASE_READ','TREATMENT_READ','ADHERENCE_READ',
+        'ADHERENCE_RECORD','MONITORING_READ','ALERT_READ','ALERT_ACKNOWLEDGE','NOTIFICATION_READ_SELF']),
+    ('TB_OFFICER', ARRAY['PATIENT_READ','PATIENT_CREATE','PATIENT_UPDATE','REGISTRATION_READ',
+        'REGISTRATION_WRITE','DIAGNOSIS_READ','DIAGNOSIS_WRITE','CASE_READ','CASE_WRITE',
+        'LAB_REQUEST_READ','LAB_REQUEST_WRITE','LAB_RESULT_READ','TREATMENT_READ','TREATMENT_WRITE',
+        'ADHERENCE_READ','ADHERENCE_RECORD','FOLLOW_UP_READ','FOLLOW_UP_WRITE','OUTCOME_READ',
+        'OUTCOME_WRITE','CONTACT_READ','CONTACT_WRITE','TPT_READ','TPT_WRITE','ADVERSE_EVENT_READ',
+        'ADVERSE_EVENT_WRITE','REFERRAL_READ','REFERRAL_WRITE','MONITORING_READ','MONITORING_MANAGE',
+        'ALERT_READ','ALERT_ACKNOWLEDGE','ALERT_RESOLVE','NOTIFICATION_READ_SELF','REPORT_READ']),
+    ('LAB_STAFF', ARRAY['PATIENT_READ','CASE_READ','LAB_REQUEST_READ','LAB_RESULT_READ',
+        'LAB_RESULT_WRITE','MONITORING_READ','NOTIFICATION_READ_SELF','REPORT_READ']),
+    ('FACILITY_ADMIN', ARRAY['USER_MANAGE_FACILITY','FACILITY_MANAGE','AUDIT_READ','REPORT_READ','NOTIFICATION_READ_SELF']),
+    ('PROGRAM_MONITOR', ARRAY['AUDIT_READ','REPORT_READ','NOTIFICATION_READ_SELF']),
+    ('SYSTEM_ADMIN', ARRAY['USER_MANAGE_FACILITY','FACILITY_MANAGE','ROLE_MANAGE','AUDIT_READ',
+        'REPORT_READ','INTEGRATION_MANAGE','NOTIFICATION_READ_SELF'])
+)
+INSERT INTO role_permissions (role_id, permission_id)
+SELECT r.id,p.id FROM grants g CROSS JOIN LATERAL unnest(g.permission_codes) AS permission_code
+JOIN roles r ON r.code=g.role_code JOIN permissions p ON p.code=permission_code;

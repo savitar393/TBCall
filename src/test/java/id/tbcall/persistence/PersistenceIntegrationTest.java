@@ -59,15 +59,59 @@ class PersistenceIntegrationTest {
     @Autowired PreventiveTreatmentRepository preventiveTreatments;
     @Autowired PatientUserLinkRepository patientLinks;
     @Autowired ExternalIdentifierRepository externalIdentifiers;
+    @Autowired DrugResistancePatternRepository resistancePatterns;
+    @Autowired AdditionalConditionTypeRepository conditionTypes;
+    @Autowired CaseConditionObservationRepository conditionObservations;
 
     @Test
     void flywayBuildsEmptyDatabaseAndHibernateValidatesIt() {
-        assertThat(jdbc.queryForObject("select count(*) from flyway_schema_history where success", Integer.class)).isEqualTo(2);
-        assertThat(jdbc.queryForObject("select count(*) from pg_tables where schemaname = 'public'", Integer.class)).isEqualTo(56);
+        assertThat(jdbc.queryForList("select version from flyway_schema_history where success order by installed_rank", String.class))
+                .containsExactly("1", "2", "3", "4", "5", "6", "7");
+        assertThat(jdbc.queryForObject("select count(*) from pg_tables where schemaname = 'public'", Integer.class)).isEqualTo(59);
         assertThat(jdbc.queryForObject("select count(*) from patients", Integer.class)).isZero();
-        assertThat(jdbc.queryForObject("select count(*) from roles", Integer.class)).isZero();
+        assertThat(jdbc.queryForObject("select count(*) from roles", Integer.class)).isEqualTo(7);
         assertThat(jdbc.queryForObject("select count(*) from external_systems", Integer.class)).isZero();
         assertThat(jdbc.queryForObject("select count(*) from lab_test_types where code = 'TCM'", Integer.class)).isEqualTo(1);
+    }
+
+    @Test
+    void resistanceAndConditionHistoryRoundTripWithoutReplacingHivOrDm() {
+        Facility facility = facility("Puskesmas A");
+        TBRegistration registration = registration(patient("Pasien A"), facility, LocalDate.of(2026, 1, 1));
+        TBCase tbCase = tbCase(registration, diagnosis(registration), facility);
+        tbCase.setDrugResistancePatternCode("TB_HR");
+        tbCase.setHivStatusCode("NEGATIF");
+        tbCase.setDmStatusCode("TIDAK");
+        OffsetDateTime observed = OffsetDateTime.parse("2026-01-03T08:00:00+07:00");
+        CaseConditionObservation first = new CaseConditionObservation();
+        first.setTbCase(tbCase);
+        first.setConditionTypeCode("KURANG_GIZI");
+        first.setStatusCode("PRESENT");
+        first.setClassificationCode("TEST_CLASSIFICATION");
+        first.setObservedAt(observed);
+        first.setSource("TBCALL");
+        conditionObservations.save(first);
+        CaseConditionObservation later = new CaseConditionObservation();
+        later.setTbCase(tbCase);
+        later.setConditionTypeCode("KURANG_GIZI");
+        later.setStatusCode("ABSENT");
+        later.setObservedAt(observed.plusMonths(1));
+        later.setSource("IMPORT");
+        conditionObservations.save(later);
+        flushAndClear();
+
+        assertThat(resistancePatterns.findById("TB_HR").orElseThrow().getName())
+                .isEqualTo("TBC Sensitif Rifampisin, Resistan Isoniazid (TBC Hr)");
+        assertThat(conditionTypes.findById("KURANG_GIZI").orElseThrow().getActive()).isTrue();
+        var history = conditionObservations.findByTbCase_IdOrderByObservedAtAsc(tbCase.getId());
+        assertThat(history).extracting(CaseConditionObservation::getStatusCode).containsExactly("PRESENT", "ABSENT");
+        assertThat(history.getFirst().getClassificationCode()).isEqualTo("TEST_CLASSIFICATION");
+        assertThat(history.getFirst().getCreatedAt()).isNotNull();
+        assertThat(history.getFirst().getUpdatedAt()).isNotNull();
+        assertThat(history.getFirst().getTbCase().getDrugResistancePatternCode()).isEqualTo("TB_HR");
+        assertThat(history.getFirst().getTbCase().getHivStatusCode()).isEqualTo("NEGATIF");
+        assertThat(history.getFirst().getTbCase().getDmStatusCode()).isEqualTo("TIDAK");
+        assertThat(history.getFirst().getTbCase().getStatus()).isEqualTo("ACTIVE");
     }
 
     @Test

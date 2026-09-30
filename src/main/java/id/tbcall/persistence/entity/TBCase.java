@@ -8,10 +8,12 @@ import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
 import org.hibernate.annotations.DynamicInsert;
+import org.hibernate.annotations.DynamicUpdate;
 
 @Entity
 @Table(name = "tb_cases")
 @DynamicInsert
+@DynamicUpdate
 @Getter
 @Setter
 @NoArgsConstructor
@@ -35,6 +37,9 @@ public class TBCase {
 
     @Column(name = "case_category_code", length = 30)
     private String caseCategoryCode;
+
+    @Column(name = "drug_resistance_pattern_code", length = 30)
+    private String drugResistancePatternCode;
 
     @Column(name = "health_worker")
     private Boolean healthWorker;
