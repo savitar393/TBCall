@@ -1,6 +1,6 @@
-# Keamanan identitas — Application/API v1 Phase 1
+# Keamanan identitas — Application/API v1 Phase 1 dan 1.1
 
-Implementasi mengikuti [arsitektur yang disetujui](architecture/TBCall_Application_API_v1.md). V1–V8 tidak berubah; Flyway V9 menambah constraint kepemilikan tautan dan izin verifikasi bagi petugas TBC. Hibernate tetap `validate`.
+Implementasi mengikuti [arsitektur Phase 1](architecture/TBCall_Application_API_v1.md) dan [Phase 1.1](architecture/TBCall_Application_API_v1.1_Admin_Recovery.md). V1–V9 tidak berubah; Flyway V10 menambah izin status akun dan index token. Hibernate tetap `validate`.
 
 ## Kredensial dan verifikasi
 
@@ -17,7 +17,7 @@ Implementasi mengikuti [arsitektur yang disetujui](architecture/TBCall_Applicati
 
 Untuk dev/test saja, aktifkan **ketiganya**: profil `dev`/`test`, `tbcall.security.production=false`, `tbcall.security.expose-verification-tokens=true`. Profil `prod`/`production` tetap melarang exposure walaupun flag production dimatikan. Konfigurasi berbahaya menggagalkan startup. Adapter default dalam mode eksplisit tersebut menggunakan respons pendaftaran sebagai delivery lokal.
 
-Delivery sinkron dapat mendahului commit database; kegagalan commit menghasilkan token yang tidak dapat digunakan. Resend/outbox dan pengiriman background belum diimplementasikan dan harus ditetapkan saat adapter pengiriman nyata dibangun.
+Delivery sinkron dapat mendahului commit database; kegagalan commit menghasilkan token yang tidak dapat digunakan. Resend/reset sudah tersedia pada Phase 1.1; outbox dan pengiriman background perlu keputusan terpisah saat adapter pengiriman nyata dibangun. Port melaporkan isAvailable(); registrasi/resend/reset request mengembalikan 503 yang sama sebelum lookup identitas ketika delivery tidak tersedia. Respons recovery tetap generik 202 ketika delivery tersedia, tanpa token bahkan di development. Adapter lokal default hanya mendukung token respons registrasi; recovery lokal memerlukan adapter development eksplisit. Lihat [ACCOUNT_RECOVERY.md](ACCOUNT_RECOVERY.md).
 
 ## Sesi browser
 
@@ -43,4 +43,6 @@ Audit: USER_REGISTERED, CONTACT_VERIFIED, LOGIN_SUCCESS, LOGOUT, PATIENT_LINK_VE
 
 ## Sebelum deployment dan fase berikutnya
 
-Deployment production perlu TLS, origin yang benar, secret bootstrap terlindungi dan adapter delivery nyata. Rate limiting, resend/reset password dan operasi admin/peran/fasilitas belum masuk Phase 1. Scope regional, DTO klinis dan kontrak write-back SITB hanya dibangun pada fase yang memang mengizinkannya.
+Phase 1.1 menambah administrasi fasyankes, lookup user exact/masked, penugasan fasyankes, peran global dan status akun. Update/deactivate fasyankes dan perubahan status wajib If-Match. Suspend/disable/reset password mencabut seluruh sesi dalam transaksi. Lock katalog SYSTEM_ADMIN lalu user mencegah kehilangan administrator aktif terverifikasi terakhir; lock facility lalu user melindungi membership/primary dan deactivation. Konsumsi/invalidation token mengambil lock user sebelum token. Audit baru tidak merekam identitas/token/password; metadata hanya traceId. Detail endpoint dan audit ada di [ADMINISTRATION.md](ADMINISTRATION.md) dan [ACCOUNT_RECOVERY.md](ACCOUNT_RECOVERY.md).
+
+Deployment production perlu TLS, origin yang benar, secret bootstrap terlindungi dan adapter delivery nyata. Edge/distributed rate limiting wajib sebelum akses internet publik; checkpoint ini tidak memperkenalkan model trust client-IP atau limiter lokal. Scope regional, DTO klinis, resource-level clinical authorization dan kontrak write-back SITB hanya dibangun pada fase yang memang mengizinkannya. Phase 2 belum dimulai.

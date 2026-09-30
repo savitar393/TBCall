@@ -29,7 +29,7 @@ public class AccountLinkService {
         this.em=em; this.scopes=scopes; this.roles=roles; this.audit=audit; this.clock=clock;
     }
     public PatientLinkResult verifyPatient(CurrentActor actor, UUID patientId, UUID userId, String match) {
-        scopes.requireOfficerPatient(actor, "PATIENT_LINK_VERIFY", patientId);
+        scopes.requireOfficerPatientLinkScope(actor, "PATIENT_LINK_VERIFY", patientId);
         Patient patient=em.find(Patient.class, patientId, LockModeType.PESSIMISTIC_WRITE);
         if (patient==null) throw ApplicationFailure.missing();
         User user=target(userId);
@@ -52,7 +52,7 @@ public class AccountLinkService {
         em.flush(); return new PatientLinkResult(patientResponse(link), created);
     }
     public PatientLinkResponse revokePatient(CurrentActor actor, UUID patientId, String match) {
-        scopes.requireOfficerPatient(actor, "PATIENT_LINK_VERIFY", patientId);
+        scopes.requireOfficerPatientLinkScope(actor, "PATIENT_LINK_VERIFY", patientId);
         em.find(Patient.class, patientId, LockModeType.PESSIMISTIC_WRITE);
         List<PatientUserLink> found=em.createQuery("""
                 select l from PatientUserLink l where l.patient.id=:patient and l.relationshipType='SELF' and l.verificationStatus='VERIFIED'

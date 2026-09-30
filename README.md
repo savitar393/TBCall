@@ -1,6 +1,6 @@
-# TBCall backend — Phase 1 identity and authorization
+# TBCall backend — Phase 1.1 administration and account recovery
 
-This backend implements the migration-managed persistence foundation and Application/API v1 Phase 1: identity, opaque sessions and scoped account linking. The clinical API phases, frontend, SITB connector and clinical automation remain unimplemented.
+This backend implements the migration-managed persistence foundation, Phase 1 identity/authorization, and Phase 1.1 administrative provisioning and account recovery. The clinical API phases, frontend, SITB connector and clinical automation remain unimplemented.
 
 ## Requirements
 
@@ -9,7 +9,7 @@ This backend implements the migration-managed persistence foundation and Applica
 - PostgreSQL 15 or newer for application startup
 - Docker-compatible container runtime for `mvn test`
 
-Set `TBCALL_DB_URL`, `TBCALL_DB_USER`, and `TBCALL_DB_PASSWORD` for a PostgreSQL database, then start with `mvn spring-boot:run`. The database user needs permission to install the V1 `pgcrypto`, `citext`, and `pg_trgm` extensions and create schema objects. For tests, run `mvn clean test`; Testcontainers starts empty PostgreSQL 16 databases and Spring Boot applies V1 through V9 before Hibernate validates the mappings. All Java sources are committed under `src/main/java`; no generation helper or local reference PDF is required to compile or test a clone.
+Set `TBCALL_DB_URL`, `TBCALL_DB_USER`, and `TBCALL_DB_PASSWORD` for a PostgreSQL database, then start with `mvn spring-boot:run`. The database user needs permission to install the V1 `pgcrypto`, `citext`, and `pg_trgm` extensions and create schema objects. For tests, run `mvn clean test`; Testcontainers starts empty PostgreSQL 16 databases and Spring Boot applies V1 through V10 before Hibernate validates the mappings. All Java sources are committed under `src/main/java`; no generation helper or local reference PDF is required to compile or test a clone.
 
 ## Identity configuration and browser use
 
@@ -22,7 +22,7 @@ Production defaults: `TBCALL_PRODUCTION=true`, secure cookies and verification-s
 
 Sessions are random opaque tokens, stored as SHA-256 hashes, delivered in `TBCALL_SESSION` (HttpOnly, Secure in production, SameSite=Strict, path `/`, 8 hours). There is no JWT or servlet authentication session. `/me` resolves current roles, permissions and links from PostgreSQL on every request.
 
-CSRF applies to **all** POST/DELETE requests, including registration, verification and login. Browser initialization calls `GET /api/v1/me`; an unauthenticated 401 still issues an `XSRF-TOKEN` cookie. Send its value as `X-XSRF-TOKEN` with state-changing requests. Login/logout clear the old CSRF cookie; call `/me` again for a fresh token. Same-origin clients are preferred. See [SECURITY.md](docs/SECURITY.md) and [AUTHORIZATION.md](docs/AUTHORIZATION.md).
+CSRF applies to **all** POST/PATCH/DELETE requests, including registration, verification, login and recovery. Browser initialization calls `GET /api/v1/me`; an unauthenticated 401 still issues an `XSRF-TOKEN` cookie. Send its value as `X-XSRF-TOKEN` with state-changing requests. Login/logout clear the old CSRF cookie; call `/me` again for a fresh token. Same-origin clients are preferred. See [SECURITY.md](docs/SECURITY.md) and [AUTHORIZATION.md](docs/AUTHORIZATION.md).
 
 ## Phase 1 endpoints
 
@@ -41,6 +41,8 @@ CSRF applies to **all** POST/DELETE requests, including registration, verificati
 Versioned responses include `id`/`version` and ETag. Use `If-Match: "<version>"`; missing required preconditions return 428, stale versions return 409. Problem responses use Indonesian title/detail, stable technical `code` and `traceId`; `X-Request-ID` correlates requests and audit. No public NIK search/claim or clinical CRUD endpoint exists.
 
 ## Ownership and mapping
+
+Phase 1.1 adds facility provisioning, exact masked administrative user lookup, facility memberships, global role/status management, verification resend and password reset. See [ADMINISTRATION.md](docs/ADMINISTRATION.md), [ACCOUNT_RECOVERY.md](docs/ACCOUNT_RECOVERY.md) and the [approved Phase 1.1 architecture](docs/architecture/TBCall_Application_API_v1.1_Admin_Recovery.md) for endpoint contracts. V10 adds only USER_ACCOUNT_MANAGE for SYSTEM_ADMIN and a verification-token index; V1–V9 are unchanged. Recovery responses stay generic; delivery availability is checked before identity lookup. A real delivery adapter and edge/distributed rate limiting are required before public internet exposure.
 
 Flyway is the schema authority (`spring.jpa.hibernate.ddl-auto=validate`). V1 and V2 are immutable historical migrations. V3–V7 implement the [Domain / Schema v1.1 checkpoint](docs/architecture/TBCall_Domain_Schema_v1.1.md): current reference catalogs, resistance/condition observations, relational integrity and RBAC seeds. Provenance and exact grants are in [REFERENCE_DATA.md](REFERENCE_DATA.md), and operational terminology is in [TERMINOLOGY.md](docs/TERMINOLOGY.md). Code strings are TBCall canonical choices, not claims about SITB database or API codes.
 

@@ -1,6 +1,7 @@
 package id.tbcall.web;
 
 import id.tbcall.application.auth.AuthService;
+import id.tbcall.application.auth.AccountRecoveryService;
 import id.tbcall.application.auth.SessionService;
 import id.tbcall.authorization.CurrentActor;
 import id.tbcall.security.SecurityProperties;
@@ -19,17 +20,30 @@ import static id.tbcall.application.auth.AuthDtos.*;
 @RequestMapping("/api/v1")
 public class AuthController {
     private final AuthService auth;
+    private final AccountRecoveryService recovery;
     private final SessionService sessions;
     private final SecurityProperties properties;
     private final CookieCsrfTokenRepository csrf;
-    public AuthController(AuthService auth, SessionService sessions, SecurityProperties properties, CookieCsrfTokenRepository csrf) {
-        this.auth=auth; this.sessions=sessions; this.properties=properties; this.csrf=csrf;
+    public AuthController(AuthService auth, AccountRecoveryService recovery, SessionService sessions, SecurityProperties properties, CookieCsrfTokenRepository csrf) {
+        this.auth=auth; this.recovery=recovery; this.sessions=sessions; this.properties=properties; this.csrf=csrf;
     }
     @PostMapping("/auth/register")
     ResponseEntity<RegistrationResponse> register(@Valid @RequestBody RegisterRequest request) {
         return ResponseEntity.status(201).body(auth.register(request));
     }
     @PostMapping("/auth/verify") VerificationResponse verify(@Valid @RequestBody VerifyRequest request) { return auth.verify(request.token()); }
+    @PostMapping("/auth/verification/resend")
+    ResponseEntity<RecoveryResponse> resend(@Valid @RequestBody RecoveryRequest request) {
+        return ResponseEntity.accepted().body(recovery.resend(request.identity()));
+    }
+    @PostMapping("/auth/password-reset/request")
+    ResponseEntity<RecoveryResponse> resetRequest(@Valid @RequestBody RecoveryRequest request) {
+        return ResponseEntity.accepted().body(recovery.requestReset(request.identity()));
+    }
+    @PostMapping("/auth/password-reset/confirm")
+    ResponseEntity<Void> resetConfirm(@Valid @RequestBody ResetConfirmRequest request) {
+        recovery.confirmReset(request); return ResponseEntity.noContent().build();
+    }
     @PostMapping("/auth/login")
     ResponseEntity<LoginResponse> login(@Valid @RequestBody LoginRequest input, HttpServletRequest request, HttpServletResponse response) {
         IssuedSession issued=sessions.login(input); csrf.saveToken(null, request, response);

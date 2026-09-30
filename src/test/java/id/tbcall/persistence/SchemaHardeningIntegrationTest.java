@@ -100,7 +100,7 @@ class SchemaHardeningIntegrationTest {
                 "FACILITY_ADMIN", Set.of("USER_MANAGE_FACILITY", "FACILITY_MANAGE", "AUDIT_READ", "REPORT_READ", "NOTIFICATION_READ_SELF"),
                 "PROGRAM_MONITOR", Set.of("AUDIT_READ", "REPORT_READ", "NOTIFICATION_READ_SELF"),
                 "SYSTEM_ADMIN", Set.of("USER_MANAGE_FACILITY", "FACILITY_MANAGE", "ROLE_MANAGE", "AUDIT_READ",
-                        "REPORT_READ", "INTEGRATION_MANAGE", "NOTIFICATION_READ_SELF"));
+                        "REPORT_READ", "INTEGRATION_MANAGE", "NOTIFICATION_READ_SELF", "USER_ACCOUNT_MANAGE"));
         assertThat(codes("roles", "true")).containsExactlyInAnyOrderElementsOf(expected.keySet());
         expected.forEach((role, permissions) -> assertThat(jdbc.queryForList("""
                 select p.code from role_permissions rp join roles r on r.id=rp.role_id

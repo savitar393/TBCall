@@ -1,4 +1,4 @@
-# Otorisasi dan lingkup identitas — Phase 1
+# Otorisasi dan lingkup identitas — Phase 1 dan 1.1
 
 Otorisasi adalah **permission + scope + field projection**. Peran administrator tidak memiliki bypass akses klinis. [Arsitektur Application/API v1](architecture/TBCall_Application_API_v1.md) tetap menjadi kontrak untuk fase berikutnya.
 
@@ -11,7 +11,8 @@ Session filter memuat identitas ACTIVE, assignment peran beserta nama Indonesia,
 | Policy | Syarat |
 |---|---|
 | TB officer facility | role TB_OFFICER + permission command + facility dalam assignment aktif |
-| TB officer patient | syarat di atas + registrasi pada facility tersebut atau case.currentFacility dalam scope |
+| TB officer patient link (`requireOfficerPatientLinkScope`) | syarat di atas + registrasi pada facility tersebut atau case.currentFacility dalam scope; asosiasi historis tetap dapat dipakai untuk identity linking |
+| TB officer clinical patient (`requireOfficerClinicalPatientScope`) | syarat di atas + registrasi OPEN/DIAGNOSED pada facility tersebut atau case ACTIVE/REFERRED dengan currentFacility dalam scope |
 | TB officer case | syarat di atas + case.currentFacility dalam scope |
 | Patient SELF | role PATIENT + permission use-case + tepat patient dari link SELF VERIFIED |
 | Supporter case | role TREATMENT_SUPPORTER + permission use-case + active linked supporter pada case |
@@ -47,4 +48,12 @@ Link pertama memberi TREATMENT_SUPPORTER. Unlink terakhir menghapus peran; unlin
 - partial index `patient_supporters(linked_user_id)` untuk active non-null links;
 - PATIENT_LINK_VERIFY dan SUPPORTER_LINK_MANAGE hanya diberikan ke TB_OFFICER.
 
-Semua grant V7 lainnya tetap. V1–V8 tidak diedit. Tidak ada endpoint generic clinical CRUD atau role/facility assignment API pada Phase 1.
+Semua grant V7 lainnya tetap. V1–V9 tidak diedit. Phase 1.1 menambah V10: USER_ACCOUNT_MANAGE hanya SYSTEM_ADMIN serta index token. Tidak ada endpoint generic clinical CRUD.
+
+## Administrasi Phase 1.1
+
+SYSTEM_ADMIN wajib permission sesuai command untuk master fasyankes, lookup user, membership, peran global dan status akun. FACILITY_ADMIN + USER_MANAGE_FACILITY hanya dapat mengelola membership di active facility scope sendiri; lookup exact menampilkan assignment sendiri dan boolean untuk assignment lain. Tanpa assignment aktif, peran operasional inert. Nama peran global tetap berlaku pada semua assignment fasilitas aktif user; role per facility memerlukan arsitektur/migrasi terpisah.
+
+Peran PATIENT/TREATMENT_SUPPORTER hanya dimutasi melalui workflow link. USER_ACCOUNT_MANAGE tidak memberi akses klinis. Target role/add membership harus ACTIVE dan verified. Admin tidak boleh menghapus atau menonaktifkan SYSTEM_ADMIN usable terakhir. Lihat [ADMINISTRATION.md](ADMINISTRATION.md) untuk proyeksi DTO, status dan locking.
+
+Scope clinical patient baru diuji namun belum dipakai oleh endpoint klinis. CLOSED/CANCELLED/CONVERTED_TO_CASE registrations dan TRANSFERRED/COMPLETED/CLOSED/CANCELLED cases saja tidak cukup. Scope patient saat ini tidak otomatis membuka seluruh resource historis; service Phase 2 harus menambah check pada setiap resource dan proyeksi field.

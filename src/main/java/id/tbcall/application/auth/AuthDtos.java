@@ -18,6 +18,10 @@ public final class AuthDtos {
     public record RegistrationResponse(UUID id, String status, List<VerificationSecret> verificationTokens) {}
     public record VerificationResponse(UUID id, String status) {}
     public record LoginResponse(UUID id, String status, OffsetDateTime expiresAt) {}
+    public record RecoveryRequest(@NotBlank(message="Identitas wajib diisi.") @Size(max=254, message="Identitas terlalu panjang.") String identity) {}
+    public record ResetConfirmRequest(@NotBlank(message="Token wajib diisi.") @Size(max=256, message="Token tidak valid.") String token,
+            @NotBlank(message="Kata sandi wajib diisi.") @Size(min=12, max=128, message="Kata sandi harus berisi 12–128 karakter.") String newPassword) {}
+    public record RecoveryResponse(String message) {}
     // Internal application result only; never returned as an HTTP body.
     public record IssuedSession(LoginResponse response, String secret) {}
 }

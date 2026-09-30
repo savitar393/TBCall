@@ -6,10 +6,8 @@ import id.tbcall.persistence.entity.User;
 import id.tbcall.persistence.entity.UserVerificationToken;
 import id.tbcall.security.IdentityNormalizer;
 import id.tbcall.security.PasswordHasher;
-import id.tbcall.security.SecretTokens;
 import id.tbcall.security.SecurityProperties;
 import jakarta.persistence.EntityManager;
-import jakarta.persistence.LockModeType;
 import java.time.Clock;
 import java.time.OffsetDateTime;
 import java.util.ArrayList;
@@ -22,18 +20,18 @@ import static id.tbcall.application.auth.AuthDtos.*;
 public class AuthService {
     private final EntityManager em;
     private final PasswordHasher passwords;
-    private final SecretTokens tokens;
+    private final VerificationTokens tokens;
     private final SecurityProperties properties;
-    private final VerificationDeliveryPort delivery;
     private final AuditService audit;
     private final Clock clock;
-    public AuthService(EntityManager em, PasswordHasher passwords, SecretTokens tokens, SecurityProperties properties,
-            VerificationDeliveryPort delivery, AuditService audit, Clock clock) {
+    public AuthService(EntityManager em, PasswordHasher passwords, VerificationTokens tokens, SecurityProperties properties,
+            AuditService audit, Clock clock) {
         this.em=em; this.passwords=passwords; this.tokens=tokens; this.properties=properties;
-        this.delivery=delivery; this.audit=audit; this.clock=clock;
+        this.audit=audit; this.clock=clock;
     }
     @Transactional(isolation=org.springframework.transaction.annotation.Isolation.READ_COMMITTED)
     public RegistrationResponse register(RegisterRequest input) {
+        tokens.requireRegistrationDelivery();
         String email = IdentityNormalizer.email(input.email()); String phone = IdentityNormalizer.phone(input.phone());
         if (email == null && phone == null) throw ApplicationFailure.invalid("Email atau nomor telepon wajib diisi.");
         if (input.password() == null || input.password().length()<12 || input.password().length()>128)
@@ -50,21 +48,14 @@ public class AuthService {
         return new RegistrationResponse(user.getId(), user.getStatus(), properties.isExposeVerificationTokens() ? List.copyOf(secrets) : List.of());
     }
     private void issue(User user, String purpose, String destination, List<VerificationSecret> secrets) {
-        String secret = tokens.generate(); OffsetDateTime expiry = OffsetDateTime.now(clock).plus(properties.getVerificationLifetime());
-        UserVerificationToken token = new UserVerificationToken(); token.setUser(user); token.setPurpose(purpose);
-        token.setTokenHash(tokens.hash(secret)); token.setExpiresAt(expiry); em.persist(token);
-        delivery.deliver(purpose, destination, secret, expiry);
+        String secret = tokens.issue(user, purpose, destination);
         secrets.add(new VerificationSecret(purpose, secret));
     }
     @Transactional(isolation=org.springframework.transaction.annotation.Isolation.READ_COMMITTED)
     public VerificationResponse verify(String secret) {
-        List<UserVerificationToken> found = em.createQuery("select t from UserVerificationToken t where t.tokenHash=:hash", UserVerificationToken.class)
-                .setParameter("hash", tokens.hash(secret)).setLockMode(LockModeType.PESSIMISTIC_WRITE).getResultList();
+        UserVerificationToken token = tokens.lockForConsumption(secret, invalidToken());
         OffsetDateTime now = OffsetDateTime.now(clock);
-        if (found.isEmpty()) throw invalidToken();
-        UserVerificationToken token = found.getFirst();
-        if (token.getUsedAt()!=null || !token.getExpiresAt().isAfter(now)) throw invalidToken();
-        User user = em.find(User.class, token.getUser().getId(), LockModeType.PESSIMISTIC_WRITE);
+        User user = token.getUser();
         if (!List.of("PENDING", "ACTIVE").contains(user.getStatus())) throw invalidToken();
         if ("EMAIL_VERIFICATION".equals(token.getPurpose()) && user.getEmail()!=null) user.setEmailVerifiedAt(now);
         else if ("PHONE_VERIFICATION".equals(token.getPurpose()) && user.getPhone()!=null) user.setPhoneVerifiedAt(now);

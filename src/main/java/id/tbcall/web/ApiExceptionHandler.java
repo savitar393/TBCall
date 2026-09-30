@@ -34,7 +34,8 @@ public class ApiExceptionHandler {
                 .distinct().collect(java.util.stream.Collectors.joining(" "));
         return problems.response(ApplicationFailure.invalid(detail), request);
     }
-    @ExceptionHandler({HttpMessageNotReadableException.class, MethodArgumentTypeMismatchException.class, ConstraintViolationException.class})
+    @ExceptionHandler({HttpMessageNotReadableException.class, MethodArgumentTypeMismatchException.class, ConstraintViolationException.class,
+            org.springframework.web.bind.MissingServletRequestParameterException.class})
     ResponseEntity<?> malformed(Exception error, HttpServletRequest request) {
         return problems.response(ApplicationFailure.invalid("Format data permintaan tidak valid."), request);
     }

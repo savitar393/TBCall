@@ -72,6 +72,19 @@ class IdentityAuthorizationIntegrationTest {
                 .forEach(filter -> org.springframework.test.util.ReflectionTestUtils.setField(filter, "tokenRepository", csrfRepository)));
     }
 
+    @Test void registrationOnlyDevelopmentDeliveryDoesNotClaimRecoveryAvailability() throws Exception {
+        register("known@example.org",null,PASSWORD,201);
+        for(String identity:List.of("known@example.org","unknown@example.org")) {
+            for(String endpoint:List.of("/api/v1/auth/verification/resend","/api/v1/auth/password-reset/request")) {
+                mvc.perform(post(endpoint).with(csrf()).contentType("application/json")
+                        .content(json.writeValueAsString(Map.of("identity",identity))))
+                        .andExpect(status().isServiceUnavailable()).andExpect(jsonPath("$.code").value("VERIFICATION_DELIVERY_UNAVAILABLE"));
+            }
+        }
+        assertThat(jdbc.queryForObject("select count(*) from user_verification_tokens",Integer.class)).isEqualTo(1);
+        assertThat(jdbc.queryForObject("select count(*) from user_verification_tokens where used_at is not null",Integer.class)).isZero();
+    }
+
     @Test void registrationCreatesPendingUserWithNoRoleAndOnlyHashedSecrets() throws Exception {
         JsonNode response = register(" PERSON@EXAMPLE.ORG ", "081234567890", PASSWORD, 201);
         UUID id = UUID.fromString(response.path("id").asText());

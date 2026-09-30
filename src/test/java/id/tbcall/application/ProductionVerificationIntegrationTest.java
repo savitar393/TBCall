@@ -37,9 +37,12 @@ class ProductionVerificationIntegrationTest {
     @TestConfiguration static class Delivery {
         @Bean BlockingQueue<String> delivered() { return new LinkedBlockingQueue<>(); }
         @Bean VerificationDeliveryPort delivery(BlockingQueue<String> delivered) {
-            return (purpose, destination, secret, expiry) -> {
-                assertThat(purpose).isEqualTo("EMAIL_VERIFICATION"); assertThat(destination).isEqualTo("production@example.org");
-                delivered.add(secret);
+            return new VerificationDeliveryPort() {
+                public boolean isAvailable() { return true; }
+                public void deliver(String purpose, String destination, String secret, java.time.OffsetDateTime expiry) {
+                    assertThat(purpose).isIn("EMAIL_VERIFICATION","PASSWORD_RESET"); assertThat(destination).isEqualTo("production@example.org");
+                    delivered.add(secret);
+                }
             };
         }
     }
@@ -57,5 +60,20 @@ class ProductionVerificationIntegrationTest {
                 .andExpect(status().isOk()).andExpect(cookie().httpOnly("TBCALL_SESSION", true))
                 .andExpect(cookie().secure("TBCALL_SESSION", true))
                 .andExpect(header().string("Set-Cookie", org.hamcrest.Matchers.containsString("SameSite=Strict")));
+        String known=mvc.perform(post("/api/v1/auth/password-reset/request").with(csrf()).contentType("application/json")
+                .content("{\"identity\":\"production@example.org\"}")).andExpect(status().isAccepted()).andReturn().getResponse().getContentAsString();
+        String reset=delivered.remove();
+        String unknown=mvc.perform(post("/api/v1/auth/password-reset/request").with(csrf()).contentType("application/json")
+                .content("{\"identity\":\"unknown@example.org\"}")).andExpect(status().isAccepted()).andReturn().getResponse().getContentAsString();
+        assertThat(known).isEqualTo(unknown).doesNotContain(secret,reset,"production@example.org");
+        String resend=mvc.perform(post("/api/v1/auth/verification/resend").with(csrf()).contentType("application/json")
+                .content("{\"identity\":\"production@example.org\"}")).andExpect(status().isAccepted()).andReturn().getResponse().getContentAsString();
+        assertThat(resend).doesNotContain(secret,reset); assertThat(delivered).isEmpty();
+        mvc.perform(post("/api/v1/auth/password-reset/confirm").with(csrf()).contentType("application/json")
+                .content(JsonMapper.builder().build().writeValueAsString(java.util.Map.of("token",reset,"newPassword","Recovered password 123!"))))
+                .andExpect(status().isNoContent());
+        assertThat(jdbc.queryForObject("select count(*) from user_sessions where revoked_at is null",Integer.class)).isZero();
+        assertThat(jdbc.queryForList("select token_hash from user_verification_tokens",String.class).toString()).doesNotContain(secret,reset);
+        assertThat(jdbc.queryForList("select metadata::text from audit_logs",String.class).toString()).doesNotContain(secret,reset,"Recovered password 123!");
     }
 }

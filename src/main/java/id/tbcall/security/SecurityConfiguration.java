@@ -3,6 +3,7 @@ package id.tbcall.security;
 import id.tbcall.application.auth.BootstrapAdmin;
 import id.tbcall.application.auth.SessionService;
 import id.tbcall.application.auth.VerificationDeliveryPort;
+import id.tbcall.application.auth.VerificationTokens;
 import id.tbcall.application.common.ApplicationFailure;
 import id.tbcall.application.common.AuditService;
 import id.tbcall.authorization.CurrentActor;
@@ -37,10 +38,13 @@ public class SecurityConfiguration {
     @Bean ApplicationRunner bootstrapRunner(BootstrapAdmin admin) { return args -> admin.initialize(); }
     @Bean @ConditionalOnMissingBean
     VerificationDeliveryPort verificationDelivery(SecurityProperties properties) {
-        return (purpose, destination, secret, expiry) -> {
-            if (!properties.isExposeVerificationTokens()) throw new ApplicationFailure(503, "VERIFICATION_DELIVERY_UNAVAILABLE",
-                    "Pengiriman verifikasi belum tersedia", "Pengiriman email atau SMS belum dikonfigurasi. Hubungi administrator.");
-            // Explicit dev/test response delivery is handled by AuthService, with no logging/storage here.
+        return new VerificationDeliveryPort() {
+            public boolean isAvailable() { return false; }
+            public boolean isRegistrationAvailable() { return properties.isExposeVerificationTokens(); }
+            public void deliver(String purpose, String destination, String secret, java.time.OffsetDateTime expiry) {
+                if (!isRegistrationAvailable()) throw VerificationTokens.unavailable();
+                // Local registration response delivery only; recovery needs a configured development adapter.
+            }
         };
     }
     @Bean CookieCsrfTokenRepository csrfRepository(SecurityProperties properties) {
@@ -52,7 +56,7 @@ public class SecurityConfiguration {
             SessionService sessions, CookieCsrfTokenRepository csrfRepository, ProblemResponses problems, AuditService audit) throws Exception {
         validate(properties, environment);
         CorsConfiguration cors=new CorsConfiguration(); cors.setAllowedOrigins(properties.getAllowedOrigins());
-        cors.setAllowedMethods(List.of("GET", "POST", "DELETE", "OPTIONS"));
+        cors.setAllowedMethods(List.of("GET", "POST", "PATCH", "DELETE", "OPTIONS"));
         cors.setAllowedHeaders(List.of("Content-Type", "X-XSRF-TOKEN", "If-Match", "X-Request-ID"));
         cors.setExposedHeaders(List.of("ETag", "X-Request-ID")); cors.setAllowCredentials(true);
         UrlBasedCorsConfigurationSource source=new UrlBasedCorsConfigurationSource(); source.registerCorsConfiguration("/api/**", cors);
@@ -66,7 +70,8 @@ public class SecurityConfiguration {
                 .requestCache(c -> c.disable()).formLogin(c -> c.disable()).httpBasic(c -> c.disable()).logout(c -> c.disable())
                 .cors(c -> c.disable())
                 .csrf(c -> c.spa().csrfTokenRepository(csrfRepository))
-                .authorizeHttpRequests(a -> a.requestMatchers("/api/v1/auth/register", "/api/v1/auth/verify", "/api/v1/auth/login").permitAll()
+                .authorizeHttpRequests(a -> a.requestMatchers("/api/v1/auth/register", "/api/v1/auth/verify", "/api/v1/auth/login",
+                        "/api/v1/auth/verification/resend", "/api/v1/auth/password-reset/request", "/api/v1/auth/password-reset/confirm").permitAll()
                         .anyRequest().authenticated())
                 .exceptionHandling(e -> e.authenticationEntryPoint((request, response, failure) -> problems.write(
                         new ApplicationFailure(401, "AUTHENTICATION_REQUIRED", "Login diperlukan", "Silakan login untuk mengakses layanan ini."), request, response))

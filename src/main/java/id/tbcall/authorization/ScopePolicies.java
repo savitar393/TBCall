@@ -18,7 +18,7 @@ public class ScopePolicies {
     public boolean officerFacility(CurrentActor actor, String permission, UUID facility) {
         return actor.hasRole("TB_OFFICER") && actor.permissions().contains(permission) && actor.facilityIds().contains(facility);
     }
-    public void requireOfficerPatient(CurrentActor actor, String permission, UUID patient) {
+    public void requireOfficerPatientLinkScope(CurrentActor actor, String permission, UUID patient) {
         if (!actor.hasRole("TB_OFFICER") || !actor.permissions().contains(permission) || actor.facilityIds().isEmpty()) denied(actor);
         long registrations = em.createQuery("""
                 select count(r) from TBRegistration r where r.patient.id=:patient and r.facility.id in :facilities
@@ -27,6 +27,18 @@ public class ScopePolicies {
                 select count(c) from TBCase c where c.registration.patient.id=:patient and c.currentFacility.id in :facilities
                 """, Long.class).setParameter("patient", patient).setParameter("facilities", actor.facilityIds()).getSingleResult();
         if (registrations == 0 && cases == 0) denied(actor);
+    }
+    public void requireOfficerClinicalPatientScope(CurrentActor actor, String permission, UUID patient) {
+        if (!actor.hasRole("TB_OFFICER") || !actor.permissions().contains(permission) || actor.facilityIds().isEmpty()) denied(actor);
+        long registrations=em.createQuery("""
+                select count(r) from TBRegistration r where r.patient.id=:patient and r.facility.id in :facilities
+                and r.status in ('OPEN','DIAGNOSED')
+                """, Long.class).setParameter("patient", patient).setParameter("facilities", actor.facilityIds()).getSingleResult();
+        long cases=em.createQuery("""
+                select count(c) from TBCase c where c.registration.patient.id=:patient and c.currentFacility.id in :facilities
+                and c.status in ('ACTIVE','REFERRED')
+                """, Long.class).setParameter("patient", patient).setParameter("facilities", actor.facilityIds()).getSingleResult();
+        if (registrations==0 && cases==0) denied(actor);
     }
     public void requireOfficerCase(CurrentActor actor, String permission, TBCase tbCase) {
         if (!officerFacility(actor, permission, tbCase.getCurrentFacility().getId())) denied(actor);
