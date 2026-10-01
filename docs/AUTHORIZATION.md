@@ -1,4 +1,4 @@
-# Otorisasi dan lingkup identitas — Phase 1 dan 1.1
+# Otorisasi dan lingkup identitas — Phase 1, 1.1 dan 2
 
 Otorisasi adalah **permission + scope + field projection**. Peran administrator tidak memiliki bypass akses klinis. [Arsitektur Application/API v1](architecture/TBCall_Application_API_v1.md) tetap menjadi kontrak untuk fase berikutnya.
 
@@ -18,7 +18,7 @@ Session filter memuat identitas ACTIVE, assignment peran beserta nama Indonesia,
 | Supporter case | role TREATMENT_SUPPORTER + permission use-case + active linked supporter pada case |
 | Lab request | role LAB_STAFF + permission use-case + testingFacility request dalam assignment aktif |
 
-Policy lab merupakan dasar scope request yang diarahkan ke laboratorium, bukan izin membaca pasien umum atau menulis pengobatan. Policy self/supporter tidak menetapkan DTO klinis; proyeksi HIV/DM/NIK/BPJS dan detail lab tetap dibatasi oleh kontrak use-case pada fase berikutnya. Referral exceptions dan regional scope belum diimplementasikan.
+Policy lab merupakan dasar scope request yang diarahkan ke laboratorium, bukan izin membaca pasien umum atau menulis pengobatan. Phase 2 menetapkan DTO SELF terbatas dalam [CLINICAL_INTAKE.md](CLINICAL_INTAKE.md); proyeksi supporter dan detail lab tetap menunggu fase berikutnya. Referral exceptions dan regional scope belum diimplementasikan.
 
 ## Staff-assisted SELF
 
@@ -38,7 +38,7 @@ Link pertama memberi TREATMENT_SUPPORTER. Unlink terakhir menghapus peran; unlin
 
 ## Source authority
 
-`ClinicalSourceAuthorityPolicy` disediakan; implementasi prototype menerima edit lokal yang telah memiliki permission dan scope TB officer. Phase 1 tidak membuka clinical edit endpoint. Tidak ada tabel ownership baru, interpretasi hasil klinis atau dugaan field write-back SITB. Adapter otoritas SITB hanya dibuat setelah kontrak integrasi resmi tersedia.
+`ClinicalSourceAuthorityPolicy` memiliki `requireLocalCreate(actor, permission, facilityId, resourceType)` dan `requireLocalEdit(actor, permission, facilityId, resourceType, resourceId)`. Setiap write klinis Phase 2 memanggil policy setelah permission/scope check, termasuk PATIENT dan TB_REGISTRATION pada mode pasien baru. Implementasi prototype menerima write lokal dengan permission dan scope TB officer. Tidak ada tabel ownership baru, interpretasi hasil klinis atau dugaan field write-back SITB. Adapter otoritas SITB hanya dibuat setelah kontrak integrasi resmi tersedia.
 
 ## V9
 
@@ -56,4 +56,14 @@ SYSTEM_ADMIN wajib permission sesuai command untuk master fasyankes, lookup user
 
 Peran PATIENT/TREATMENT_SUPPORTER hanya dimutasi melalui workflow link. USER_ACCOUNT_MANAGE tidak memberi akses klinis. Target role/add membership harus ACTIVE dan verified. Admin tidak boleh menghapus atau menonaktifkan SYSTEM_ADMIN usable terakhir. Lihat [ADMINISTRATION.md](ADMINISTRATION.md) untuk proyeksi DTO, status dan locking.
 
-Scope clinical patient baru diuji namun belum dipakai oleh endpoint klinis. CLOSED/CANCELLED/CONVERTED_TO_CASE registrations dan TRANSFERRED/COMPLETED/CLOSED/CANCELLED cases saja tidak cukup. Scope patient saat ini tidak otomatis membuka seluruh resource historis; service Phase 2 harus menambah check pada setiap resource dan proyeksi field.
+## Clinical intake Phase 2
+
+Endpoint klinis menerapkan current clinical patient scope: registrasi OPEN/DIAGNOSED pada assignment aktif atau case ACTIVE/REFERRED dengan currentFacility pada assignment aktif. CLOSED/CANCELLED/CONVERTED_TO_CASE registrations dan TRANSFERRED/COMPLETED/CLOSED/CANCELLED cases saja tidak cukup. List/detail hanya menampilkan episode current dalam scope, dengan field projection terpisah. Historical identity-link scope Phase 1 tetap berlaku hanya untuk workflow link.
+
+Registrasi dapat dibaca berdasarkan facility asal, termasuk registrasi historis. Diagnosis mengikuti facility registrasi. Case mengikuti currentFacility. Akses patient detail tidak otomatis membuka registrasi/diagnosis dari facility lain. Endpoint scoped mengembalikan 404 yang sama untuk resource tidak ada atau di luar scope; role/permission/assignment yang tidak memenuhi syarat menghasilkan 403 ACCESS_DENIED.
+
+POST `/patients/resolve` adalah pengecualian lookup exact untuk membuat registrasi: TB_OFFICER + PATIENT_IDENTITY_RESOLVE + assignment aktif, identitas WNI/WNA dan konfirmasi nama/tanggal lahir. Respons hanya identitas minimum yang dimask. UUID pasien historis saja tidak cukup untuk registrasi baru; konfirmasi diulang dalam transaksi. Lookup tidak membuka history atau clinical detail.
+
+SYSTEM_ADMIN, FACILITY_ADMIN, PROGRAM_MONITOR dan LAB_STAFF tidak mendapat akses Phase 2 tanpa role TB_OFFICER, permission dan scope yang diperlukan. GET `/me/patient` memerlukan PATIENT + PATIENT_READ + link SELF VERIFIED; pencabutan link langsung menutup akses pada request berikutnya. Tidak ada HIV/DM, NIK/BPJS, notes, audit/sync atau data supporter pada proyeksi SELF.
+
+V11 hanya memberi PATIENT_IDENTITY_RESOLVE kepada TB_OFFICER dan menambah partial index untuk other_identity_number. V1–V10 tetap utuh. [Arsitektur Phase 2](architecture/TBCall_Application_API_v1.2_Phase2_Clinical_Intake.md) menetapkan kontrak endpoint dan batas field.

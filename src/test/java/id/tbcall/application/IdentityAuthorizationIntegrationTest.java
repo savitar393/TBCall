@@ -231,11 +231,13 @@ class IdentityAuthorizationIntegrationTest {
         assertThat(result.getResponse().getContentAsString()).doesNotContain("password", "tokenHash", "nik", "hiv", "diagnoses");
     }
 
-    @Test void publicNikClaimAndClinicalEndpointsDoNotExist() throws Exception {
+    @Test void publicNikClaimIsUnavailableAndClinicalEndpointsDenyOrdinaryAccounts() throws Exception {
         active("person@example.org"); Cookie cookie = session("person@example.org");
         mvc.perform(post("/api/v1/patients/claim").cookie(cookie).with(csrf()).contentType("application/json")
-                .content("{\"nik\":\"1234567890123456\"}")).andExpect(status().isNotFound());
-        mvc.perform(get("/api/v1/patients").cookie(cookie)).andExpect(status().isNotFound());
+                .content("{\"nik\":\"1234567890123456\"}")).andExpect(status().isMethodNotAllowed())
+                .andExpect(jsonPath("$.code").value("METHOD_NOT_ALLOWED"));
+        mvc.perform(get("/api/v1/patients").cookie(cookie)).andExpect(status().isForbidden())
+                .andExpect(jsonPath("$.code").value("ACCESS_DENIED"));
     }
 
     @Test void officerCanVerifySelfLinkAndAssignPatientRole() throws Exception {

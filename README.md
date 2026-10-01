@@ -1,6 +1,6 @@
-# TBCall backend — Phase 1.1 administration and account recovery
+# TBCall backend — Phase 2 clinical intake and case confirmation
 
-This backend implements the migration-managed persistence foundation, Phase 1 identity/authorization, and Phase 1.1 administrative provisioning and account recovery. The clinical API phases, frontend, SITB connector and clinical automation remain unimplemented.
+This backend implements the migration-managed persistence foundation, Phase 1 identity/authorization, Phase 1.1 administrative provisioning and account recovery, and Phase 2 clinical intake through explicit TB case confirmation. Laboratory/treatment APIs, later clinical phases, frontend, SITB connector and clinical automation remain unimplemented.
 
 ## Requirements
 
@@ -9,7 +9,7 @@ This backend implements the migration-managed persistence foundation, Phase 1 id
 - PostgreSQL 15 or newer for application startup
 - Docker-compatible container runtime for `mvn test`
 
-Set `TBCALL_DB_URL`, `TBCALL_DB_USER`, and `TBCALL_DB_PASSWORD` for a PostgreSQL database, then start with `mvn spring-boot:run`. The database user needs permission to install the V1 `pgcrypto`, `citext`, and `pg_trgm` extensions and create schema objects. For tests, run `mvn clean test`; Testcontainers starts empty PostgreSQL 16 databases and Spring Boot applies V1 through V10 before Hibernate validates the mappings. All Java sources are committed under `src/main/java`; no generation helper or local reference PDF is required to compile or test a clone.
+Set `TBCALL_DB_URL`, `TBCALL_DB_USER`, and `TBCALL_DB_PASSWORD` for a PostgreSQL database, then start with `mvn spring-boot:run`. The database user needs permission to install the V1 `pgcrypto`, `citext`, and `pg_trgm` extensions and create schema objects. For tests, run `mvn clean test`; Testcontainers starts empty PostgreSQL 16 databases and Spring Boot applies V1 through V11 before Hibernate validates the mappings. All Java sources are committed under `src/main/java`; no generation helper or local reference PDF is required to compile or test a clone.
 
 ## Identity configuration and browser use
 
@@ -38,7 +38,13 @@ CSRF applies to **all** POST/PATCH/DELETE requests, including registration, veri
 | POST | `/api/v1/cases/{caseId}/supporters/{supporterId}/account-link` | `userId`, If-Match for supporter |
 | DELETE | `/api/v1/cases/{caseId}/supporters/{supporterId}/account-link` | If-Match for supporter |
 
-Versioned responses include `id`/`version` and ETag. Use `If-Match: "<version>"`; missing required preconditions return 428, stale versions return 409. Problem responses use Indonesian title/detail, stable technical `code` and `traceId`; `X-Request-ID` correlates requests and audit. No public NIK search/claim or clinical CRUD endpoint exists.
+Versioned responses include their resource ID, `version` and ETag. Use `If-Match: "<version>"`; missing required preconditions return 428, stale versions return 409. Problem responses use Indonesian title/detail, stable technical `code` and `traceId`; `X-Request-ID` correlates requests and audit. Identity lookup for clinical registration requires a TB officer, exact identity plus secondary confirmation and an active facility assignment.
+
+## Phase 2 clinical intake
+
+The [clinical intake guide](docs/CLINICAL_INTAKE.md) lists all 13 endpoints, request examples, projections, state transitions and version requirements. The [approved Phase 2 architecture](docs/architecture/TBCall_Application_API_v1.2_Phase2_Clinical_Intake.md) is the contract. Patient, registration, diagnosis and case remain distinct records. New-patient registration is atomic; confirmation explicitly transitions a DIAGNOSED registration to CONVERTED_TO_CASE and creates one ACTIVE case.
+
+V11 adds only PATIENT_IDENTITY_RESOLVE for TB_OFFICER and the partial other-identity index. V1–V10 are unchanged. Current clinical patient scope is narrower than historical identity-link scope. Each clinical write checks permission, resource scope, create/edit source authority and applicable If-Match; admin/lab/program roles have no clinical bypass. Patients receive only the verified SELF projection. The [Phase 2 report](docs/PHASE2_REPORT.md) records changes and verification.
 
 ## Ownership and mapping
 
