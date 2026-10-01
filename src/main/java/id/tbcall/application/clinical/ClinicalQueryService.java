@@ -35,8 +35,8 @@ public class ClinicalQueryService {
         if(name!=null && (name.length()<3 || name.length()>255)) throw ApplicationFailure.invalid("Pencarian nama harus berisi 3–255 karakter.");
         if(nik!=null && !nik.matches("[0-9]{16}")) throw ApplicationFailure.invalid("Filter NIK harus tepat 16 digit.");
         if(bpjs!=null && bpjs.length()>50) throw ApplicationFailure.invalid("Nomor BPJS terlalu panjang.");
-        if(filter.registrationStatus()!=null && !Set.of("OPEN","DIAGNOSED","CONVERTED_TO_CASE","CLOSED","CANCELLED").contains(filter.registrationStatus())) throw ApplicationFailure.invalid("Status registrasi tidak dikenal.");
-        if(filter.caseStatus()!=null && !Set.of("ACTIVE","REFERRED","TRANSFERRED","COMPLETED","CLOSED","CANCELLED").contains(filter.caseStatus())) throw ApplicationFailure.invalid("Status kasus tidak dikenal.");
+        if(filter.registrationStatus()!=null && !Set.of("OPEN","DIAGNOSED").contains(filter.registrationStatus())) throw ApplicationFailure.invalid("Filter status registrasi hanya menerima OPEN atau DIAGNOSED.");
+        if(filter.caseStatus()!=null && !Set.of("ACTIVE","REFERRED").contains(filter.caseStatus())) throw ApplicationFailure.invalid("Filter status kasus hanya menerima ACTIVE atau REFERRED.");
         Set<UUID> facilities=actor.facilityIds();
         if(filter.facilityId()!=null) {
             if(!facilities.contains(filter.facilityId())) throw ApplicationFailure.missing(); facilities=Set.of(filter.facilityId());

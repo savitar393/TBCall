@@ -1,6 +1,6 @@
-# Clinical intake and case confirmation — Phase 2
+# Clinical intake and case confirmation — Phase 2 / 2.1
 
-Contract: [approved Application/API v1.2](architecture/TBCall_Application_API_v1.2_Phase2_Clinical_Intake.md). This slice records patient identity, Terduga TBC registrations, explicit diagnoses and confirmed cases. It does not create laboratory requests/results, treatments, referrals/transfers, contact/TPT workflows or clinical automation. Codes and JSON names are TBCall canonical identifiers; the SITB manual is a workflow reference.
+Contract: [approved Application/API v1.2](architecture/TBCall_Application_API_v1.2_Phase2_Clinical_Intake.md) with the [Phase 2.1 transition checkpoint](architecture/TBCall_Application_API_v1.2.1_Phase2.1_Transition_Hardening.md). This slice records patient identity, Terduga TBC registrations, explicit diagnoses and confirmed cases. It does not create laboratory requests/results, treatments, referrals/transfers, contact/TPT workflows or clinical automation. Codes and JSON names are TBCall canonical identifiers; the SITB manual is a workflow reference.
 
 ## Endpoints and authorization
 
@@ -62,7 +62,7 @@ New patient, OPEN registration and their audits are committed atomically. NIK/BP
 
 ## Queries and projections
 
-Patient list accepts page≥0, size 1–50 (default 20), name of 3–255 characters, exact nik/bpjs, registrationStatus, caseStatus and an assigned facilityId. Status filters match only scoped current episodes. Unknown clinical filters are rejected. The security CSRF request parameter is not a clinical filter. Page count, patient rows, catalog labels and episode summaries are batched; query count does not grow per returned patient. Patients can have multiple current episodes, so summaries are arrays.
+Patient list accepts page≥0, size 1–50 (default 20), name of 3–255 characters, exact nik/bpjs, registrationStatus, caseStatus and an assigned facilityId. registrationStatus accepts only OPEN/DIAGNOSED; caseStatus accepts only ACTIVE/REFERRED. Historical/noncurrent values (CONVERTED_TO_CASE, CLOSED, CANCELLED, TRANSFERRED, COMPLETED) return 400 VALIDATION_ERROR instead of an impossible empty result. Status filters match only scoped current episodes; historical resources remain outside the query. Unknown clinical filters are rejected. The security CSRF request parameter is not a clinical filter. Page count, patient rows, catalog labels and episode summaries are batched; query count does not grow per returned patient. Patients can have multiple current episodes, so summaries are arrays.
 
 | DTO use | Included | Excluded |
 |---|---|---|
@@ -80,7 +80,17 @@ DTOs are explicit records. Requests use enumerated typed setters that distinguis
 
 Diagnosis requires diagnosisDate≥registrationDate and ≤today, active anatomy/type, diagnosisResult and a V1 treatmentDisposition. REFERRED requires an active destination different from the registration facility. This records disposition only; it does not implement a referral command or infer diagnosis from laboratory results.
 
-First diagnosis changes OPEN → DIAGNOSED. Further diagnoses may be recorded while DIAGNOSED; each advances registration.version. Diagnosis updates require the parent to remain DIAGNOSED and the diagnosis not to be used by a case. Confirmation locks registration then the chosen diagnosis, validates lineage and absence of another case, sets currentFacility to registration.facility, ACTIVE status and confirmedAt from injected Clock, then changes registration to CONVERTED_TO_CASE. Case category, previous-treatment history and resistance are explicit input. TB_SO permits null/TB_SO resistance; TB_RO permits null/TB_HR/TB_RR/TB_MDR/TB_PRE_XDR/TB_XDR. No automatic classification occurs.
+First diagnosis changes OPEN → DIAGNOSED. Further diagnoses may be recorded while DIAGNOSED; each advances registration.version. Diagnosis updates require the parent to remain DIAGNOSED and the diagnosis not to be used by a case. Confirmation locks registration then the chosen diagnosis, validates lineage and absence of another case, and applies the diagnosis disposition:
+
+| treatmentDisposition | Initial case status / outcome |
+|---|---|
+| TREAT_HERE | ACTIVE |
+| REFERRED | REFERRED; destination must still be present, active and different from source |
+| NOT_TREATED / UNKNOWN | 409 CLINICAL_STATE_CONFLICT; no case or success audit |
+
+Legacy null disposition also cannot satisfy the confirmation gate. An invalid stored referral destination produces 409 CLINICAL_STATE_CONFLICT. In both success paths, currentFacility remains registration.facility, confirmedAt uses injected Clock and registration changes to CONVERTED_TO_CASE. Rejected confirmation leaves registration status/version unchanged. The diagnosis destination remains on the confirming diagnosis; no referral row, acceptance or facility transfer is implemented. A REFERRED case is a pre-treatment case and remains visible in the source officer's current scope. Future treatment initiation must require ACTIVE status; the later Phase 4 acceptance workflow will define activation at the destination. No treatment API is added here.
+
+diagnosisResult remains narrative and is never used to infer workflow state or case category. Case category, previous-treatment history and resistance are explicit input. TB_SO permits null/TB_SO resistance; TB_RO permits null/TB_HR/TB_RR/TB_MDR/TB_PRE_XDR/TB_XDR. No automatic classification occurs.
 
 Diagnosis POST and case confirmation use the registration ETag as If-Match. Diagnosis response includes registrationVersion for the next command; its own ETag identifies the diagnosis. GET the registration again to obtain its current ETag. All mutations requiring If-Match return 428 if absent and 409 OPTIMISTIC_LOCK_CONFLICT if stale. Case PATCH changes only the approved profile while ACTIVE/REFERRED; facility/status/lineage/confirmedAt/closedAt cannot be patched. READ_COMMITTED command transactions and the database one-case-per-registration constraint remain in effect; no silent retries are used.
 
@@ -94,6 +104,6 @@ Audit actions: PATIENT_IDENTITY_RESOLVED, PATIENT_CREATED, PATIENT_UPDATED, TB_R
 
 ## Persistence and next-phase boundary
 
-V11 adds only the documented permission/grant and partial other_identity_number index. V1–V10 and all entities are preserved. Flyway manages schema; Hibernate validates it. Run `mvn clean test` with Java 21, Maven and Docker; committed sources require no `.tools/` generator.
+V11 adds only the documented permission/grant and partial other_identity_number index. Phase 2.1 changes no migrations or entities and adds no V12. V1–V11 remain immutable. Flyway manages schema; Hibernate validates it. Run `mvn clean test` with Java 21, Maven and Docker; committed sources require no `.tools/` generator.
 
 There is no Phase 2 schema conflict. Negative/non-TB registration closure has no dedicated canonical reason model and remains deferred. Before future source-authority integration, obtain its official ownership/API contract. Subsequent lab/treatment/referral behavior requires the corresponding approved phase specification; none is implemented here.

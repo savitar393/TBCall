@@ -5,11 +5,13 @@ import id.tbcall.security.PasswordHasher;
 import jakarta.servlet.http.Cookie;
 import java.time.LocalDate;
 import java.time.Clock;
+import java.time.OffsetDateTime;
 import java.util.*;
 import java.util.concurrent.*;
 import org.junit.jupiter.api.*;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.ValueSource;
+import org.junit.jupiter.params.provider.CsvSource;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.webmvc.test.autoconfigure.AutoConfigureMockMvc;
@@ -358,6 +360,81 @@ class ClinicalIntakeIntegrationTest {
         assertThat(unchanged.path("demographics").path("bpjsNumber").asText()).isEqualTo("BPJS-123");
         assertThat(unchanged.path("version").asLong()).isZero();
         assertThat(jdbc.queryForObject("select count(*) from audit_logs where action='PATIENT_UPDATED'",Integer.class)).isZero();
+    }
+    @ParameterizedTest @CsvSource({"TREAT_HERE,ACTIVE","REFERRED,REFERRED"})
+    void confirmationUsesDispositionAndRetainsSourceScope(String disposition,String expectedStatus) throws Exception {
+        JsonNode reg=create(); String rp="/api/v1/registrations/"+reg.path("id").asText();
+        Map<String,Object> input=diagnosis(); input.put("treatmentDisposition",disposition);
+        input.put("diagnosisResult","Catatan naratif diagnosis oleh petugas.");
+        if("REFERRED".equals(disposition)) input.put("referredToFacilityId",otherFacility);
+        JsonNode d=call(post(rp+"/diagnoses").header("If-Match","\"0\""),input,201);
+        OffsetDateTime before=OffsetDateTime.now(clock);
+        JsonNode c=confirm(reg.path("id").asText(),d.path("id").asText(),"TB_SO",null,201);
+        assertThat(c.path("status").asText()).isEqualTo(expectedStatus);
+        assertThat(c.path("currentFacility").path("id").asText()).isEqualTo(facility.toString());
+        assertThat(c.path("caseCategoryCode").asText()).isEqualTo("TB_SO");
+        assertThat(OffsetDateTime.parse(c.path("confirmedAt").asText())).isBetween(before,OffsetDateTime.now(clock));
+        assertThat(call(get(rp),null,200).path("status").asText()).isEqualTo("CONVERTED_TO_CASE");
+        String patientPath="/api/v1/patients/"+reg.path("patient").path("patientId").asText();
+        JsonNode detail=call(get(patientPath),null,200);
+        assertThat(detail.path("registrations")).isEmpty(); assertThat(detail.path("cases")).hasSize(1);
+        assertThat(detail.path("cases").get(0).path("summary").path("status").asText()).isEqualTo(expectedStatus);
+        assertThat(call(get("/api/v1/patients").param("caseStatus",expectedStatus),null,200).path("content")).hasSize(1);
+        UUID caseId=UUID.fromString(c.path("id").asText());
+        if("REFERRED".equals(disposition)) {
+            assertThat(jdbc.queryForObject("select d.referred_to_facility_id from tb_cases c join diagnoses d on d.id=c.confirming_diagnosis_id where c.id=?",UUID.class,caseId)).isEqualTo(otherFacility);
+        }
+        assertThat(jdbc.queryForObject("select count(*) from referrals",Integer.class)).isZero();
+        assertThat(jdbc.queryForObject("select count(*) from treatments",Integer.class)).isZero();
+        assertThat(jdbc.queryForObject("select count(*) from audit_logs where action='TB_CASE_CONFIRMED'",Integer.class)).isEqualTo(1);
+        user("destination@example.org","TB_OFFICER",otherFacility); Cookie saved=caller; caller=login("destination@example.org");
+        try {
+            call(get("/api/v1/cases/"+caseId),null,404); call(get(patientPath),null,404);
+            assertThat(call(get("/api/v1/patients"),null,200).path("content")).isEmpty();
+        } finally { caller=saved; }
+    }
+    @ParameterizedTest @ValueSource(strings={"NOT_TREATED","UNKNOWN","legacyNull"})
+    void ineligibleDispositionRejectsConfirmationWithoutStateOrAuditChanges(String disposition) throws Exception {
+        JsonNode reg=create(); String rp="/api/v1/registrations/"+reg.path("id").asText();
+        Map<String,Object> input=diagnosis(); input.put("treatmentDisposition","legacyNull".equals(disposition) ? "TREAT_HERE" : disposition);
+        JsonNode d=call(post(rp+"/diagnoses").header("If-Match","\"0\""),input,201);
+        if("legacyNull".equals(disposition)) jdbc.update("update diagnoses set treatment_disposition=null,version=version+1 where id=?",UUID.fromString(d.path("id").asText()));
+        String before=version(rp);
+        JsonNode rejected=confirm(reg.path("id").asText(),d.path("id").asText(),"TB_SO",null,409);
+        assertThat(rejected.path("code").asText()).isEqualTo("CLINICAL_STATE_CONFLICT");
+        assertThat(call(get(rp),null,200).path("status").asText()).isEqualTo("DIAGNOSED");
+        assertThat(version(rp)).isEqualTo(before);
+        assertThat(jdbc.queryForObject("select count(*) from tb_cases",Integer.class)).isZero();
+        assertThat(jdbc.queryForObject("select count(*) from audit_logs where action='TB_CASE_CONFIRMED'",Integer.class)).isZero();
+    }
+    @ParameterizedTest @ValueSource(strings={"inactive","sameFacility"})
+    void referredDestinationIsRevalidatedAtConfirmation(String invalid) throws Exception {
+        JsonNode reg=create(); String rp="/api/v1/registrations/"+reg.path("id").asText();
+        Map<String,Object> input=diagnosis(); input.put("treatmentDisposition","REFERRED"); input.put("referredToFacilityId",otherFacility);
+        JsonNode d=call(post(rp+"/diagnoses").header("If-Match","\"0\""),input,201);
+        UUID diagnosisId=UUID.fromString(d.path("id").asText());
+        switch(invalid) {
+            case "sameFacility" -> jdbc.update("update diagnoses set referred_to_facility_id=?,version=version+1 where id=?",facility,diagnosisId);
+            default -> jdbc.update("update facilities set active=false where id=?",otherFacility);
+        }
+        String before=version(rp);
+        assertThat(confirm(reg.path("id").asText(),d.path("id").asText(),"TB_SO",null,409).path("code").asText()).isEqualTo("CLINICAL_STATE_CONFLICT");
+        assertThat(call(get(rp),null,200).path("status").asText()).isEqualTo("DIAGNOSED");
+        assertThat(version(rp)).isEqualTo(before);
+        assertThat(jdbc.queryForObject("select count(*) from tb_cases",Integer.class)).isZero();
+        assertThat(jdbc.queryForObject("select count(*) from audit_logs where action='TB_CASE_CONFIRMED'",Integer.class)).isZero();
+    }
+    @ParameterizedTest @ValueSource(strings={"OPEN","DIAGNOSED"})
+    void currentRegistrationFiltersRemainAccepted(String registrationStatus) throws Exception {
+        JsonNode reg=create(); if("DIAGNOSED".equals(registrationStatus)) recordDiagnosis(reg);
+        JsonNode page=call(get("/api/v1/patients").param("registrationStatus",registrationStatus),null,200);
+        assertThat(page.path("content")).hasSize(1);
+        assertThat(page.path("content").get(0).path("registrations").get(0).path("status").asText()).isEqualTo(registrationStatus);
+    }
+    @ParameterizedTest @CsvSource({"registrationStatus,CONVERTED_TO_CASE","registrationStatus,CLOSED","registrationStatus,CANCELLED",
+            "caseStatus,TRANSFERRED","caseStatus,COMPLETED","caseStatus,CLOSED","caseStatus,CANCELLED"})
+    void historicalPatientListFiltersAreValidationErrors(String filter,String value) throws Exception {
+        assertThat(call(get("/api/v1/patients").param(filter,value),null,400).path("code").asText()).isEqualTo("VALIDATION_ERROR");
     }
     private JsonNode create() throws Exception { return call(post("/api/v1/registrations"),newRegistration(),201); }
     private JsonNode recordDiagnosis(JsonNode reg) throws Exception {

@@ -1,5 +1,7 @@
 # Phase 2 implementation report
 
+Historical Phase 2 completion report. The [Phase 2.1 checkpoint](architecture/TBCall_Application_API_v1.2.1_Phase2.1_Transition_Hardening.md) supersedes initial case-state and patient-list status-filter behavior as described in the addendum below. The original 199-test build evidence remains historical evidence for the Phase 2 commit.
+
 Base: `dbb659fdbf48f9333ecfc819c1f814e69a6de5fc`. Scope: approved clinical intake and case confirmation only. The completion commit containing this report is identified in the final handoff; no commit hash is embedded in its own contents.
 
 ## Files created/changed
@@ -89,8 +91,16 @@ Exact Maven summary:
 | RuntimePersistenceIntegrationTest | 8 | 0/0/0 |
 | SchemaHardeningIntegrationTest | 37 | 0/0/0 |
 
-The 152 existing executions and 47 new Phase 2 executions are green. The clean gate deletes target, compiles committed ordinary source files, migrates empty PostgreSQL databases through V11 and starts Spring with Hibernate validation. The complete local build log is `.tools/final-mvn-clean-test.log` (ignored, not a build input or committed artifact). No `.tools/` source generator was executed or required. Final independent review found no remaining Important/Critical issues, including the narrow legacy-test update.
+The 152 existing executions and 47 new Phase 2 executions were green at Phase 2 completion. The clean gate deletes target, compiles committed ordinary source files, migrates empty PostgreSQL databases through V11 and starts Spring with Hibernate validation. The local build log path was `.tools/final-mvn-clean-test.log` (ignored and replaced by later checkpoint runs, not a build input or committed artifact). No `.tools/` source generator was executed or required. Final independent review found no remaining Important/Critical issues, including the narrow legacy-test update.
 
 ## Architecture conflicts / before Phase 3
 
 No conflict requiring a V1–V10 or approved access-contract change was found. Phase 2 has no negative/non-TB closure-reason model; closure remains deferred as specified. Real SITB source authority requires an authorized ownership/integration contract. The next clinical phase requires its own approved laboratory/treatment specification; no Phase 3 work was started.
+
+## Phase 2.1 transition addendum
+
+Initial case state now follows the confirming diagnosis disposition: TREAT_HERE → ACTIVE, REFERRED → REFERRED, NOT_TREATED/UNKNOWN → 409 CLINICAL_STATE_CONFLICT. REFERRED requires a present, active destination distinct from the source. Successful confirmation retains registration.facility as currentFacility and converts registration to CONVERTED_TO_CASE; rejection creates no case/success audit and preserves registration status/version. Narrative diagnosisResult is unchanged and drives no classification.
+
+REFERRED is pre-treatment. The destination remains on the confirming diagnosis; no referral row, transfer or acceptance occurs. Source clinical visibility remains unchanged. Future treatment initiation requires ACTIVE status; destination activation belongs to the approved future referral workflow.
+
+Current patient-list filters now permit only registrationStatus OPEN/DIAGNOSED and caseStatus ACTIVE/REFERRED; historical values return 400 VALIDATION_ERROR. V1–V11 are unchanged, V12 is absent, and no Phase 3 work is included. See the [Phase 2.1 report](PHASE2_1_REPORT.md) for checkpoint files and clean-build evidence.

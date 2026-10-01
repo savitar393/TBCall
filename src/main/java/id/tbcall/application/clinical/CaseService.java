@@ -34,11 +34,29 @@ public class CaseService {
         if(found.isEmpty()) throw ApplicationFailure.invalid("Diagnosis harus berasal dari registrasi yang sama.");
         Diagnosis diagnosis=found.getFirst();
         if(diagnosis.getAnatomicalSiteCode()==null || diagnosis.getDiagnosisTypeCode()==null) throw ApplicationFailure.invalid("Diagnosis harus memiliki lokasi anatomi dan jenis diagnosis.");
+        String initialStatus=initialCaseStatus(registration,diagnosis);
         source.requireLocalCreate(actor,"CASE_WRITE",registration.getFacility().getId(),"TB_CASE");
         TBCase tbCase=new TBCase(); tbCase.setRegistration(registration); tbCase.setConfirmingDiagnosis(diagnosis); tbCase.setCurrentFacility(registration.getFacility());
-        validation.mergeCase(tbCase,input); validation.tbCase(tbCase); tbCase.setConfirmedAt(OffsetDateTime.now(clock)); tbCase.setStatus("ACTIVE");
+        validation.mergeCase(tbCase,input); validation.tbCase(tbCase); tbCase.setConfirmedAt(OffsetDateTime.now(clock)); tbCase.setStatus(initialStatus);
         registration.setStatus("CONVERTED_TO_CASE"); em.persist(tbCase);
         ClinicalErrors.flush(em); audit.record(actor.userId(),"TB_CASE_CONFIRMED","TB_CASE",tbCase.getId()); return views.tbCase(tbCase);
+    }
+    private String initialCaseStatus(TBRegistration registration,Diagnosis diagnosis) {
+        return switch(Objects.toString(diagnosis.getTreatmentDisposition(),"")) {
+            case "TREAT_HERE" -> "ACTIVE";
+            case "REFERRED" -> {
+                Facility target=diagnosis.getReferredToFacility();
+                Facility destination=target==null ? null : em.find(Facility.class,target.getId(),LockModeType.PESSIMISTIC_READ);
+                if(destination==null || !Boolean.TRUE.equals(destination.getActive())
+                        || registration.getFacility().getId().equals(destination.getId())) {
+                    throw new ApplicationFailure(409,"CLINICAL_STATE_CONFLICT","Status data tidak sesuai",
+                            "Konfirmasi kasus dirujuk memerlukan fasyankes tujuan yang aktif dan berbeda dari fasyankes registrasi.");
+                }
+                yield "REFERRED";
+            }
+            default -> throw new ApplicationFailure(409,"CLINICAL_STATE_CONFLICT","Status data tidak sesuai",
+                    "Disposisi diagnosis tidak memenuhi syarat untuk dikonfirmasi sebagai kasus TBC aktif atau dirujuk.");
+        };
     }
     public CaseView update(CurrentActor actor,UUID id,CaseInput input,String match) {
         TBCase tbCase=access.tbCase(actor,"CASE_WRITE",id); IfMatch.require(match,tbCase.getVersion());

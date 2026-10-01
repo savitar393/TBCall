@@ -1,4 +1,4 @@
-# TBCall backend — Phase 2 clinical intake and case confirmation
+# TBCall backend — Phase 2.1 clinical transition hardening
 
 This backend implements the migration-managed persistence foundation, Phase 1 identity/authorization, Phase 1.1 administrative provisioning and account recovery, and Phase 2 clinical intake through explicit TB case confirmation. Laboratory/treatment APIs, later clinical phases, frontend, SITB connector and clinical automation remain unimplemented.
 
@@ -42,9 +42,9 @@ Versioned responses include their resource ID, `version` and ETag. Use `If-Match
 
 ## Phase 2 clinical intake
 
-The [clinical intake guide](docs/CLINICAL_INTAKE.md) lists all 13 endpoints, request examples, projections, state transitions and version requirements. The [approved Phase 2 architecture](docs/architecture/TBCall_Application_API_v1.2_Phase2_Clinical_Intake.md) is the contract. Patient, registration, diagnosis and case remain distinct records. New-patient registration is atomic; confirmation explicitly transitions a DIAGNOSED registration to CONVERTED_TO_CASE and creates one ACTIVE case.
+The [clinical intake guide](docs/CLINICAL_INTAKE.md) lists all 13 endpoints, request examples, projections, state transitions and version requirements. The [approved Phase 2 architecture](docs/architecture/TBCall_Application_API_v1.2_Phase2_Clinical_Intake.md) and [Phase 2.1 checkpoint](docs/architecture/TBCall_Application_API_v1.2.1_Phase2.1_Transition_Hardening.md) define the contract. Patient, registration, diagnosis and case remain distinct records. New-patient registration is atomic; confirmation transitions a DIAGNOSED registration to CONVERTED_TO_CASE and creates one ACTIVE case for TREAT_HERE or one REFERRED case for REFERRED. NOT_TREATED/UNKNOWN cannot confirm a case. REFERRED retains the source currentFacility and creates no referral row or transfer. Future treatment initiation requires ACTIVE status. Current patient-list filters accept only OPEN/DIAGNOSED registrations and ACTIVE/REFERRED cases.
 
-V11 adds only PATIENT_IDENTITY_RESOLVE for TB_OFFICER and the partial other-identity index. V1–V10 are unchanged. Current clinical patient scope is narrower than historical identity-link scope. Each clinical write checks permission, resource scope, create/edit source authority and applicable If-Match; admin/lab/program roles have no clinical bypass. Patients receive only the verified SELF projection. The [Phase 2 report](docs/PHASE2_REPORT.md) records changes and verification.
+V11 adds only PATIENT_IDENTITY_RESOLVE for TB_OFFICER and the partial other-identity index. Phase 2.1 leaves V1–V11 unchanged and adds no V12. Current clinical patient scope is narrower than historical identity-link scope. Each clinical write checks permission, resource scope, create/edit source authority and applicable If-Match; admin/lab/program roles have no clinical bypass. Patients receive only the verified SELF projection. The [Phase 2 report](docs/PHASE2_REPORT.md) and [Phase 2.1 report](docs/PHASE2_1_REPORT.md) record changes and verification.
 
 ## Ownership and mapping
 
