@@ -1,4 +1,4 @@
-# Otorisasi dan lingkup identitas — Phase 1, 1.1 dan 2
+# Otorisasi dan lingkup identitas — Phase 1, 1.1, 2 dan 3A
 
 Otorisasi adalah **permission + scope + field projection**. Peran administrator tidak memiliki bypass akses klinis. [Arsitektur Application/API v1](architecture/TBCall_Application_API_v1.md) tetap menjadi kontrak untuk fase berikutnya.
 
@@ -18,7 +18,7 @@ Session filter memuat identitas ACTIVE, assignment peran beserta nama Indonesia,
 | Supporter case | role TREATMENT_SUPPORTER + permission use-case + active linked supporter pada case |
 | Lab request | role LAB_STAFF + permission use-case + testingFacility request dalam assignment aktif |
 
-Policy lab merupakan dasar scope request yang diarahkan ke laboratorium, bukan izin membaca pasien umum atau menulis pengobatan. Phase 2 menetapkan DTO SELF terbatas dalam [CLINICAL_INTAKE.md](CLINICAL_INTAKE.md); proyeksi supporter dan detail lab tetap menunggu fase berikutnya. Referral exceptions dan regional scope belum diimplementasikan.
+Policy lab merupakan dasar scope request yang diarahkan ke laboratorium, bukan izin membaca pasien umum atau menulis pengobatan. Phase 2 menetapkan DTO SELF terbatas dalam [CLINICAL_INTAKE.md](CLINICAL_INTAKE.md). Detail lab Phase 3A memakai proyeksi minimum tersendiri; proyeksi lab untuk patient/supporter masih ditunda. Referral exceptions dan regional scope belum diimplementasikan.
 
 ## Staff-assisted SELF
 
@@ -67,3 +67,13 @@ POST `/patients/resolve` adalah pengecualian lookup exact untuk membuat registra
 SYSTEM_ADMIN, FACILITY_ADMIN, PROGRAM_MONITOR dan LAB_STAFF tidak mendapat akses Phase 2 tanpa role TB_OFFICER, permission dan scope yang diperlukan. GET `/me/patient` memerlukan PATIENT + PATIENT_READ + link SELF VERIFIED; pencabutan link langsung menutup akses pada request berikutnya. Tidak ada HIV/DM, NIK/BPJS, notes, audit/sync atau data supporter pada proyeksi SELF.
 
 V11 hanya memberi PATIENT_IDENTITY_RESOLVE kepada TB_OFFICER dan menambah partial index untuk other_identity_number. V1–V10 tetap utuh. [Arsitektur Phase 2](architecture/TBCall_Application_API_v1.2_Phase2_Clinical_Intake.md) menetapkan kontrak endpoint dan batas field.
+
+## Laboratory Phase 3A
+
+- Create request, record source specimen dan cancel: TB_OFFICER + LAB_REQUEST_WRITE + assignment aktif pada requestingFacility. Owner registrasi mengikuti facility registrasi; owner kasus mengikuti currentFacility.
+- List/detail: LAB_REQUEST_READ dengan TB_OFFICER pada requestingFacility atau LAB_STAFF pada testingFacility. Actor dengan kedua role mendapat union tanpa duplikasi. Filter facility hanya menerima UUID dalam assignment aktif actor; predicate scope sesuai role tetap berlaku.
+- Receipt, result FINAL dan correction: LAB_STAFF + LAB_RESULT_WRITE + assignment aktif pada testingFacility. TB_OFFICER tanpa LAB_STAFF tidak dapat menulis hasil, termasuk pada INTERNAL request.
+- Payload hasil pada GET detail memerlukan LAB_RESULT_READ tambahan. Respons writer berada dalam izin LAB_RESULT_WRITE. DTO hanya memberi UUID/nama/jenis kelamin/tanggal lahir pasien dan konteks request, bukan NIK/BPJS, HIV/DM, alamat, account, audit/sync atau riwayat klinis lain.
+- Tidak ada bypass untuk SYSTEM_ADMIN, FACILITY_ADMIN, PROGRAM_MONITOR, PATIENT atau TREATMENT_SUPPORTER. Role/permission/tanpa assignment menghasilkan 403; resource tidak ada/di luar scope menghasilkan 404 yang sama.
+
+`LaboratorySourceAuthorityPolicy` terpisah dari `ClinicalSourceAuthorityPolicy`: source-side writes memanggil policy dengan requestingFacility, laboratory-side writes dengan testingFacility. Prototype memeriksa role/permission/facility dan hanya mengizinkan write lokal. Semua clinical source checks tetap berlaku. Tidak ada perubahan grant/migrasi. Lihat [LABORATORY.md](LABORATORY.md).

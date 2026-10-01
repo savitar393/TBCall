@@ -1,6 +1,6 @@
-# TBCall backend — Phase 2.1 clinical transition hardening
+# TBCall backend — Phase 3A laboratory workflow
 
-This backend implements the migration-managed persistence foundation, Phase 1 identity/authorization, Phase 1.1 administrative provisioning and account recovery, and Phase 2 clinical intake through explicit TB case confirmation. Laboratory/treatment APIs, later clinical phases, frontend, SITB connector and clinical automation remain unimplemented.
+This backend implements the migration-managed persistence foundation, Phase 1 identity/authorization, Phase 1.1 administrative provisioning and account recovery, Phase 2 clinical intake through explicit TB case confirmation, and Phase 3A laboratory requests, specimens and results. Treatment Phase 3B, later clinical phases, frontend, SITB connector and clinical automation remain unimplemented.
 
 ## Requirements
 
@@ -45,6 +45,12 @@ Versioned responses include their resource ID, `version` and ETag. Use `If-Match
 The [clinical intake guide](docs/CLINICAL_INTAKE.md) lists all 13 endpoints, request examples, projections, state transitions and version requirements. The [approved Phase 2 architecture](docs/architecture/TBCall_Application_API_v1.2_Phase2_Clinical_Intake.md) and [Phase 2.1 checkpoint](docs/architecture/TBCall_Application_API_v1.2.1_Phase2.1_Transition_Hardening.md) define the contract. Patient, registration, diagnosis and case remain distinct records. New-patient registration is atomic; confirmation transitions a DIAGNOSED registration to CONVERTED_TO_CASE and creates one ACTIVE case for TREAT_HERE or one REFERRED case for REFERRED. NOT_TREATED/UNKNOWN cannot confirm a case. REFERRED retains the source currentFacility and creates no referral row or transfer. Future treatment initiation requires ACTIVE status. Current patient-list filters accept only OPEN/DIAGNOSED registrations and ACTIVE/REFERRED cases.
 
 V11 adds only PATIENT_IDENTITY_RESOLVE for TB_OFFICER and the partial other-identity index. Phase 2.1 leaves V1–V11 unchanged and adds no V12. Current clinical patient scope is narrower than historical identity-link scope. Each clinical write checks permission, resource scope, create/edit source authority and applicable If-Match; admin/lab/program roles have no clinical bypass. Patients receive only the verified SELF projection. The [Phase 2 report](docs/PHASE2_REPORT.md) and [Phase 2.1 report](docs/PHASE2_1_REPORT.md) record changes and verification.
+
+## Laboratory Phase 3A
+
+See [LABORATORY.md](docs/LABORATORY.md) for the eight endpoints, facility scopes, ETags, specimen timeline and append-only correction rules, and the [approved architecture](docs/architecture/TBCall_Application_API_v1.3A_Phase3A_Laboratory.md) for the full contract. TB officers create requests and record specimens in requesting-facility scope. Laboratory staff receive specimens and enter/correct results in testing-facility scope. Results do not automatically change diagnosis, drug resistance, case status or treatment, and test-specific clinical interpretation is not encoded. External carried-result ingestion and unusable-specimen notifications are deferred. Phase 3B will consume finalized laboratory data as displayed evidence, without automatic clinical decisions.
+
+Phase 3A adds no migration and preserves V1–V11. A separate `LaboratorySourceAuthorityPolicy` permits prototype local writes after authorization/scope checks and can be replaced independently of the clinical policy when authorized integration is defined. The [Phase 3A report](docs/PHASE3A_REPORT.md) records implementation and clean-build evidence.
 
 ## Ownership and mapping
 
