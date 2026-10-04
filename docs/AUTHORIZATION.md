@@ -1,4 +1,4 @@
-# Otorisasi dan lingkup identitas — Phase 1, 1.1, 2 dan 3A
+# Otorisasi dan lingkup identitas — Phase 1, 1.1, 2, 3A dan 3B
 
 Otorisasi adalah **permission + scope + field projection**. Peran administrator tidak memiliki bypass akses klinis. [Arsitektur Application/API v1](architecture/TBCall_Application_API_v1.md) tetap menjadi kontrak untuk fase berikutnya.
 
@@ -77,3 +77,15 @@ V11 hanya memberi PATIENT_IDENTITY_RESOLVE kepada TB_OFFICER dan menambah partia
 - Tidak ada bypass untuk SYSTEM_ADMIN, FACILITY_ADMIN, PROGRAM_MONITOR, PATIENT atau TREATMENT_SUPPORTER. Role/permission/tanpa assignment menghasilkan 403; resource tidak ada/di luar scope menghasilkan 404 yang sama.
 
 `LaboratorySourceAuthorityPolicy` terpisah dari `ClinicalSourceAuthorityPolicy`: source-side writes memanggil policy dengan requestingFacility, laboratory-side writes dengan testingFacility. Prototype memeriksa role/permission/facility dan hanya mengizinkan write lokal. Semua clinical source checks tetap berlaku. Tidak ada perubahan grant/migrasi. Lihat [LABORATORY.md](LABORATORY.md).
+
+## Treatment Phase 3B
+
+TB_OFFICER memerlukan permission command dan assignment fasilitas aktif. Treatment mengikuti **treatment.facility dan case.currentFacility**; kedua fasilitas harus dalam scope. Start mengikuti currentFacility kasus. Target follow-up juga harus aktif/in scope. FOLLOW_UP_WRITE diperlukan untuk schedule/complete; ADVERSE_EVENT_WRITE untuk create/update; OUTCOME_WRITE untuk closure. If-Match berlaku untuk metadata treatment, schedule follow-up (versi treatment), completion (versi follow-up), adverse update, dan outcome (versi treatment). Tidak ada bypass admin/lab/program.
+
+PATIENT memerlukan permission dan link SELF VERIFIED. TREATMENT_SUPPORTER memerlukan permission dan link aktif ke case yang tepat; outsider menghasilkan 404. Perubahan link/membership berlaku pada request berikutnya. Proyeksi SELF dan supporter terpisah dari DTO staf. Patient tidak mendapat lab/HIV/DM/free-text klinis/operational details/identitas user lain. Supporter juga tidak mendapat adverse events, outcome atau follow-up klinis. FOLLOW_UP_READ tidak diberikan ke supporter. Lihat [TREATMENT.md](TREATMENT.md).
+
+ADHERENCE_RECORD/READ tidak memberi akses klinis umum. Source HEALTH_WORKER/PATIENT/TREATMENT_SUPPORTER dan recordedBy berasal dari actor/jalur autentikasi, bukan input. Satu actor hanya boleh satu laporan per treatment/hari, walaupun memakai beberapa role; actor berbeda boleh memberi bukti independen. Bukti append-only tidak memutasi status klinis dan tidak memakai clinical/SITB source authority. ClinicalSourceAuthorityPolicy tetap wajib untuk start/update treatment, schedule/complete follow-up, create/update adverse event dan outcome. LaboratorySourceAuthorityPolicy tidak berubah.
+
+V12 tidak mengubah grant V7 atau V1–V11. Index open-treatment V1 dengan PLANNED/ACTIVE/PAUSED dipakai apa adanya. Audit hanya memuat actor/action/target/correlation, tanpa payload klinis.
+
+Proyeksi aggregate treatment juga memeriksa permission READ tiap child (kepatuhan, follow-up, adverse event, outcome dan referensi lab). Pencabutan child permission langsung mengosongkan daftar atau memberi summary/outcome null; TREATMENT_READ tidak menjadi bypass permission child. Grant standar V7 tetap menghasilkan seluruh field yang disetujui untuk peran tersebut.

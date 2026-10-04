@@ -12,7 +12,10 @@ import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.*;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.boot.test.context.TestConfiguration;
 import org.springframework.boot.webmvc.test.autoconfigure.AutoConfigureMockMvc;
+import org.springframework.context.annotation.Bean;
+import org.springframework.context.annotation.Primary;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.test.context.*;
 import org.springframework.test.context.bean.override.mockito.MockitoSpyBean;
@@ -32,6 +35,12 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 @SpringBootTest(properties={"tbcall.security.production=false","tbcall.security.expose-verification-tokens=true"})
 @ActiveProfiles("test") @AutoConfigureMockMvc @Testcontainers
 class LaboratoryIntegrationTest {
+    @TestConfiguration static class TimeConfig {
+        // Keep chronology assertions independent of host clock adjustments and PostgreSQL rounding.
+        @Bean @Primary Clock laboratoryTestClock() {
+            return Clock.fixed(Instant.now().truncatedTo(java.time.temporal.ChronoUnit.MICROS),ZoneOffset.UTC);
+        }
+    }
     @Container static final PostgreSQLContainer POSTGRES=new PostgreSQLContainer("postgres:16-alpine");
     @DynamicPropertySource static void database(DynamicPropertyRegistry r) {
         r.add("spring.datasource.url",POSTGRES::getJdbcUrl); r.add("spring.datasource.username",POSTGRES::getUsername);
@@ -55,7 +64,7 @@ class LaboratoryIntegrationTest {
         officer=user("officer@example.org","TB_OFFICER",sending); user("lab@example.org","LAB_STAFF",testing);
         sourceCookie=login("officer@example.org"); labCookie=login("lab@example.org"); caller=sourceCookie;
         patient=jdbc.queryForObject("insert into patients(full_name,nik,bpjs_number,birth_date,citizenship,sex_code,address) values ('Pasien Lab','1234567890123456','BPJS-SECRET','1990-01-01','WNI','PEREMPUAN','Alamat rahasia') returning id",UUID.class);
-        registration=jdbc.queryForObject("insert into tb_registrations(patient_id,facility_id,registration_date,status,hiv_status_code,dm_status_code,referral_notes) values (?,?,current_date,'OPEN','POSITIF','YA','Catatan klinis rahasia') returning id",UUID.class,patient,sending);
+        registration=jdbc.queryForObject("insert into tb_registrations(patient_id,facility_id,registration_date,status,hiv_status_code,dm_status_code,referral_notes) values (?,?,?,'OPEN','POSITIF','YA','Catatan klinis rahasia') returning id",UUID.class,patient,sending,LocalDate.now(clock));
     }
     @ParameterizedTest @ValueSource(booleans={true,false})
     void requestDerivesFacilitiesOwnerReferralAndInitialTests(boolean internal) throws Exception {

@@ -54,6 +54,12 @@ Phase 3A adds no migration and preserves V1–V11. A separate `LaboratorySourceA
 
 [Phase 3A.1](docs/architecture/TBCall_Application_API_v1.3A.1_Phase3A.1_Result_Lineage_Hardening.md) makes `/results` the first FINAL entry for an exact test/specimen-or-null lineage. Existing FINAL/CORRECTED lineages must use corrections; duplicate FINAL returns 409 LAB_RESULT_ALREADY_EXISTS without mutation. Late first entries remain allowed after case conversion/outcome. The [Phase 3A.1 report](docs/PHASE3A_1_REPORT.md) records verification; Phase 3B outcome creation must lock TBCase before Treatment and check outcome absence before insertion.
 
+## Treatment Phase 3B
+
+See [TREATMENT.md](docs/TREATMENT.md) for the 18 treatment, adherence, follow-up, adverse-event, outcome and safe patient/supporter routes. The [schema-reconciled architecture](docs/architecture/TBCall_Application_API_v1.3B.1_Phase3B_Treatment_Monitoring_Schema_Reconciled.md) supersedes the earlier blocked draft and incorporates the approved reuse of the existing V1 PLANNED/ACTIVE/PAUSED open-treatment index.
+
+V12 adds structured follow-up observations, replaces dose treatment/day uniqueness with actor/day uniqueness, and adds TREATMENT_SUPPORTER provenance while preserving legacy statuses/sources. V1–V11 and laboratory semantics remain unchanged. Clinician-selected regimens and explicit drug snapshots are recorded without calculating doses or inferring outcomes. Outcome closure locks TBCase before Treatment and serializes with follow-up laboratory corrections. See [PHASE3B_REPORT.md](docs/PHASE3B_REPORT.md) for verification and architectural decisions. Phase 4 is not implemented.
+
 ## Ownership and mapping
 
 Phase 1.1 adds facility provisioning, exact masked administrative user lookup, facility memberships, global role/status management, verification resend and password reset. See [ADMINISTRATION.md](docs/ADMINISTRATION.md), [ACCOUNT_RECOVERY.md](docs/ACCOUNT_RECOVERY.md) and the [approved Phase 1.1 architecture](docs/architecture/TBCall_Application_API_v1.1_Admin_Recovery.md) for endpoint contracts. V10 adds only USER_ACCOUNT_MANAGE for SYSTEM_ADMIN and a verification-token index; V1–V9 are unchanged. Recovery responses stay generic; delivery availability is checked before identity lookup. A real delivery adapter and edge/distributed rate limiting are required before public internet exposure.

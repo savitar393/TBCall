@@ -1,6 +1,7 @@
 package id.tbcall.persistence.entity;
 
 import jakarta.persistence.*;
+import java.math.BigDecimal;
 import java.time.OffsetDateTime;
 import java.util.UUID;
 import lombok.Getter;
@@ -50,6 +51,15 @@ public class FollowUp {
 
     @Column(name = "notes", columnDefinition = "text")
     private String notes;
+
+    @Column(name = "weight_kg", precision = 6, scale = 2)
+    private BigDecimal weightKg;
+
+    @Column(name = "symptom_summary", columnDefinition = "text")
+    private String symptomSummary;
+
+    @Column(name = "adherence_assessment", length = 80)
+    private String adherenceAssessment;
 
     @Column(name = "created_at", insertable = false, updatable = false)
     private OffsetDateTime createdAt;
