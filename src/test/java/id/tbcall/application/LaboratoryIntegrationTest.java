@@ -343,6 +343,112 @@ class LaboratoryIntegrationTest {
         call(post("/api/v1/lab-results/"+first.path("id").asText()+"/corrections").header("If-Match","\"0\""),body,400);
         assertThat(jdbc.queryForObject("select count(*) from lab_results",Integer.class)).isEqualTo(1);
     }
+    @Test void duplicateFinalForUsableSpecimenDoesNotMutateVersionsRowsOrAudit() throws Exception {
+        JsonNode r=create(false,List.of("TCM")),s=add(r,false); caller=labCookie; JsonNode usable=receive(s,true);
+        JsonNode first=result(r,usable); assertThat(first.path("status").asText()).isEqualTo("FINAL");
+        assertThat(first.path("sequenceNo").asInt()).isEqualTo(1);
+        assertDuplicateUnchanged(r,usable);
+    }
+    @Test void duplicateNullFinalAfterCorrectionMustStillUseCorrectionCommand() throws Exception {
+        JsonNode r=create(false,List.of("TCM")); caller=labCookie; JsonNode first=result(r,null);
+        JsonNode corrected=call(post("/api/v1/lab-results/"+first.path("id").asText()+"/corrections").header("If-Match","\"0\""),correction(),201);
+        assertDuplicateUnchanged(r,null);
+        JsonNode next=call(post("/api/v1/lab-results/"+corrected.path("id").asText()+"/corrections").header("If-Match","\"0\""),correction(),201);
+        assertThat(next.path("sequenceNo").asInt()).isEqualTo(3);
+    }
+    @Test void separateSpecimenAndNullLineagesPreservePartialAndCompleteAggregation() throws Exception {
+        JsonNode r=create(false,List.of("TCM","MIKROSKOPIS_BTA")),a=add(r,false),b=add(r,false); caller=labCookie;
+        JsonNode usableA=receive(a,true),usableB=receive(b,true); result(r,usableA);
+        JsonNode second=call(post(resultPath(r)).header("If-Match",currentTestVersion(r)),resultInput(usableB),201);
+        JsonNode noSpecimen=call(post(resultPath(r)).header("If-Match",currentTestVersion(r)),resultInput(null),201);
+        assertThat(second.path("sequenceNo").asInt()).isEqualTo(1); assertThat(noSpecimen.path("sequenceNo").asInt()).isEqualTo(1);
+        JsonNode partial=call(get(path(r)),null,200); assertThat(partial.path("status").asText()).isEqualTo("PARTIAL");
+        assertThat(partial.path("completeness").path("completedTests").asInt()).isEqualTo(1);
+        assertThat(partial.path("tests").get(0).path("latestResults")).hasSize(3);
+        assertDuplicateUnchanged(r,usableA); assertDuplicateUnchanged(r,usableB); assertDuplicateUnchanged(r,null);
+        String remaining="/api/v1/lab-request-tests/"+r.path("tests").get(1).path("id").asText()+"/results";
+        call(post(remaining).header("If-Match","\"0\""),resultInput(null),201);
+        JsonNode completed=call(get(path(r)),null,200); assertThat(completed.path("status").asText()).isEqualTo("COMPLETED");
+        assertThat(completed.path("completeness").path("completedTests").asInt()).isEqualTo(2);
+    }
+    @ParameterizedTest @CsvSource({"DIAGNOSIS,false","DIAGNOSIS,true","FOLLOW_UP,false","FOLLOW_UP,true"})
+    void lateFirstFinalRemainsAllowedButBothRevisionPathsStayClosed(String reason,boolean withSpecimen) throws Exception {
+        UUID caseId=null; Map<String,Object> body=request(false,List.of("TCM","MIKROSKOPIS_BTA"));
+        if("FOLLOW_UP".equals(reason)) { caseId=tbCase("ACTIVE"); body.remove("registrationId"); body.put("caseId",caseId); body.put("requestReasonCode",reason); }
+        JsonNode r=call(post("/api/v1/lab-requests"),body,201),usable=null;
+        if(withSpecimen) { JsonNode s=add(r,false); caller=labCookie; usable=receive(s,true); }
+        caller=sourceCookie;
+        if("DIAGNOSIS".equals(reason)) {
+            JsonNode diagnosis=call(post("/api/v1/registrations/"+registration+"/diagnoses").header("If-Match","\"0\""),Map.of("diagnosisDate",LocalDate.now(clock).toString(),"anatomicalSiteCode","PARU","diagnosisTypeCode","KLINIS","diagnosisResult","Catatan","treatmentDisposition","TREAT_HERE"),201);
+            call(post("/api/v1/registrations/"+registration+"/cases").header("If-Match","\"1\""),Map.of("diagnosisId",diagnosis.path("id").asText(),"caseCategoryCode","TB_SO","previousTreatmentCategoryCode","BARU"),201);
+        } else {
+            UUID treatment=jdbc.queryForObject("insert into treatments(case_id,facility_id,start_date) values (?,?,current_date) returning id",UUID.class,caseId,sending);
+            String outcome=jdbc.queryForObject("select code from treatment_outcome_codes where active=true limit 1",String.class);
+            jdbc.update("insert into treatment_outcomes(treatment_id,outcome_code,outcome_date) values (?,?,current_date)",treatment,outcome);
+        }
+        var registrations=jdbc.queryForList("select * from tb_registrations order by id"); var cases=jdbc.queryForList("select * from tb_cases order by id");
+        var treatments=jdbc.queryForList("select * from treatments order by id"); var outcomes=jdbc.queryForList("select * from treatment_outcomes order by id");
+        caller=labCookie; JsonNode first=result(r,usable); assertThat(first.path("sequenceNo").asInt()).isEqualTo(1);
+        assertDuplicateUnchanged(r,usable);
+        JsonNode conflict=call(post("/api/v1/lab-results/"+first.path("id").asText()+"/corrections").header("If-Match","\"0\""),correction(),409);
+        assertThat(conflict.path("code").asText()).isEqualTo("LAB_RESULT_STATE_CONFLICT");
+        String remaining="/api/v1/lab-request-tests/"+r.path("tests").get(1).path("id").asText()+"/results";
+        call(post(remaining).header("If-Match","\"0\""),resultInput(usable),201);
+        assertThat(call(get(path(r)),null,200).path("status").asText()).isEqualTo("COMPLETED");
+        assertThat(jdbc.queryForList("select * from tb_registrations order by id")).isEqualTo(registrations);
+        assertThat(jdbc.queryForList("select * from tb_cases order by id")).isEqualTo(cases);
+        assertThat(jdbc.queryForList("select * from treatments order by id")).isEqualTo(treatments);
+        assertThat(jdbc.queryForList("select * from treatment_outcomes order by id")).isEqualTo(outcomes);
+        assertThat(jdbc.queryForObject("select count(*) from audit_logs where action='LAB_RESULT_CORRECTED'",Integer.class)).isZero();
+    }
+    @ParameterizedTest @CsvSource({"PRELIMINARY,false","PRELIMINARY,true","CANCELLED,false","CANCELLED,true"})
+    void firstFinalAfterNonfinalHistoryUsesMaximumSequence(String historicalStatus,boolean withSpecimen) throws Exception {
+        JsonNode r=create(false,List.of("TCM")),usable=null;
+        if(withSpecimen) { JsonNode s=add(r,false); caller=labCookie; usable=receive(s,true); } else caller=labCookie;
+        UUID test=UUID.fromString(r.path("tests").get(0).path("id").asText()),specimen=usable==null ? null : UUID.fromString(usable.path("id").asText());
+        jdbc.update("insert into lab_results(lab_request_test_id,specimen_id,sequence_no,status,tested_at,result_text) values (?,?,7,?,now(),'Historical result')",test,specimen,historicalStatus);
+        JsonNode first=result(r,usable); assertThat(first.path("status").asText()).isEqualTo("FINAL");
+        assertThat(first.path("sequenceNo").asInt()).isEqualTo(8);
+        assertThat(jdbc.queryForObject("select status from lab_results where lab_request_test_id=? and sequence_no=7",String.class,test)).isEqualTo(historicalStatus);
+    }
+    @ParameterizedTest @CsvSource({"FINAL,false","FINAL,true","CORRECTED,false","CORRECTED,true"})
+    void anyFinalOrCorrectedHistoryBlocksInitialEntryEvenWithLaterCancelledRow(String historicalStatus,boolean withSpecimen) throws Exception {
+        JsonNode r=create(false,List.of("TCM")),usable=null;
+        if(withSpecimen) { JsonNode s=add(r,false); caller=labCookie; usable=receive(s,true); } else caller=labCookie;
+        UUID test=UUID.fromString(r.path("tests").get(0).path("id").asText()),specimen=usable==null ? null : UUID.fromString(usable.path("id").asText());
+        jdbc.update("insert into lab_results(lab_request_test_id,specimen_id,sequence_no,status,tested_at,result_text) values (?,?,7,?,now(),'Historical result')",test,specimen,historicalStatus);
+        jdbc.update("insert into lab_results(lab_request_test_id,specimen_id,sequence_no,status,tested_at,result_text) values (?,?,9,'CANCELLED',now(),'Cancelled history')",test,specimen);
+        assertDuplicateUnchanged(r,usable);
+    }
+    @Test void concurrentFirstFinalForSpecimenHasOneWinnerAndRefreshingVersionCannotSupersedeIt() throws Exception {
+        JsonNode r=create(false,List.of("TCM")),s=add(r,false); caller=labCookie; JsonNode usable=receive(s,true);
+        String endpoint=resultPath(r),payload=json.writeValueAsString(resultInput(usable));
+        try(var pool=Executors.newFixedThreadPool(2)) {
+            CountDownLatch ready=new CountDownLatch(2),start=new CountDownLatch(1);
+            Callable<Integer> task=() -> { ready.countDown(); if(!start.await(30,TimeUnit.SECONDS)) throw new IllegalStateException("Concurrent start timed out"); return mvc.perform(post(endpoint).cookie(labCookie).with(csrf()).header("If-Match","\"0\"").contentType("application/json").content(payload)).andReturn().getResponse().getStatus(); };
+            var a=pool.submit(task); var b=pool.submit(task);
+            try { assertThat(ready.await(30,TimeUnit.SECONDS)).isTrue(); } finally { start.countDown(); }
+            assertThat(List.of(a.get(30,TimeUnit.SECONDS),b.get(30,TimeUnit.SECONDS))).containsExactlyInAnyOrder(201,409);
+        }
+        assertThat(jdbc.queryForObject("select count(*) from lab_results",Integer.class)).isEqualTo(1);
+        assertThat(jdbc.queryForObject("select count(*) from audit_logs where action='LAB_RESULT_RECORDED'",Integer.class)).isEqualTo(1);
+        assertDuplicateUnchanged(r,usable);
+    }
+    private String currentTestVersion(JsonNode r) throws Exception { return "\""+call(get(path(r)),null,200).path("tests").get(0).path("version").asLong()+"\""; }
+    private void assertDuplicateUnchanged(JsonNode r,JsonNode specimen) throws Exception {
+        UUID id=UUID.fromString(r.path("id").asText());
+        var request=jdbc.queryForMap("select * from lab_requests where id=?",id);
+        var tests=jdbc.queryForList("select * from lab_request_tests where lab_request_id=? order by id",id);
+        var results=jdbc.queryForList("select v.* from lab_results v join lab_request_tests t on t.id=v.lab_request_test_id where t.lab_request_id=? order by v.id",id);
+        var audits=jdbc.queryForList("select * from audit_logs where action='LAB_RESULT_RECORDED' order by id");
+        JsonNode conflict=call(post(resultPath(r)).header("If-Match",currentTestVersion(r)),resultInput(specimen),409);
+        assertThat(conflict.path("code").asText()).isEqualTo("LAB_RESULT_ALREADY_EXISTS");
+        assertThat(conflict.path("detail").asText()).containsIgnoringCase("koreksi");
+        assertThat(jdbc.queryForMap("select * from lab_requests where id=?",id)).isEqualTo(request);
+        assertThat(jdbc.queryForList("select * from lab_request_tests where lab_request_id=? order by id",id)).isEqualTo(tests);
+        assertThat(jdbc.queryForList("select v.* from lab_results v join lab_request_tests t on t.id=v.lab_request_test_id where t.lab_request_id=? order by v.id",id)).isEqualTo(results);
+        assertThat(jdbc.queryForList("select * from audit_logs where action='LAB_RESULT_RECORDED' order by id")).isEqualTo(audits);
+    }
     private JsonNode create(boolean internal,List<String> types) throws Exception { return call(post("/api/v1/lab-requests"),request(internal,types),201); }
     private Map<String,Object> request(boolean internal,List<String> types) { return new HashMap<>(Map.of("registrationId",registration,"testingFacilityId",internal ? sending : testing,"requestReasonCode","DIAGNOSIS","testTypeCodes",types,"notes","notes sensibles")); }
     private JsonNode add(JsonNode r,boolean sent) throws Exception { return call(post(path(r)+"/specimens").header("If-Match",version(path(r))),specimen(sent),201); }

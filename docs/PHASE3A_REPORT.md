@@ -2,6 +2,8 @@
 
 Base commit: `a2edfb1582d0a7e9d469713d0308038740a1bf24`. Contract: [Application/API v1.3A](architecture/TBCall_Application_API_v1.3A_Phase3A_Laboratory.md). The final handoff identifies the completion commit containing this report.
 
+This report preserves the original Phase 3A behavior and build evidence as history. The Phase 3A.1 addendum below and [Phase 3A.1 report](PHASE3A_1_REPORT.md) define the current first-FINAL lineage rule.
+
 ## Files created/changed
 
 | Files | Purpose |
@@ -103,3 +105,9 @@ Exact Maven summary:
 All 215 existing and 52 new executions are green. The clean gate deletes target, recompiles 157 ordinary main Java source files, applies V1–V11 from empty PostgreSQL and starts Spring with Hibernate validation. Compilation has no dependency on executing `.tools/` generators. Local toolchain helpers/logs and target build artifacts remain ignored; they are not application sources. The full local log is `.tools/final-mvn-clean-test.log` (not committed). Kemenkes PDFs and the local task prompt are not committed.
 
 Independent read-only review found no Critical/Important defects. Its minor multi-statement read-consistency finding was resolved using REPEATABLE_READ for queries; follow-up review verified the fix and documentation with no remaining findings. The successive-FINAL owner-gate interaction and future outcome lock protocol are explicitly retained as architectural follow-ups above. Staged diff checks confirmed that migrations, persistence/clinical/security sources, clinical source policy and pom.xml remain unchanged.
+
+## Phase 3A.1 checkpoint addendum
+
+The preceding behavior and 267-test clean-build evidence are the historical Phase 3A checkpoint at ff2a56c885c036da1ced99e8b294dbaae788b119. [Phase 3A.1](architecture/TBCall_Application_API_v1.3A.1_Phase3A.1_Result_Lineage_Hardening.md) resolves its successive-FINAL follow-up: `/results` creates only the first FINAL for an exact `(test, specimen-or-null)` lineage with no existing FINAL/CORRECTED. Subsequent FINAL returns 409 LAB_RESULT_ALREADY_EXISTS without row/version/status/success-audit mutation. Supersession uses the unchanged correction command and owner barriers. Late first entries after conversion/outcome remain allowed; historical nonfinal-only lineages retain max sequence +1.
+
+The future outcome lock order is explicitly TBCase PESSIMISTIC_WRITE -> Treatment PESSIMISTIC_WRITE -> verify no existing outcome -> create TreatmentOutcome. No treatment/outcome service, migration, new clinical interpretation or authorization/source-policy change is introduced. See [Phase 3A.1 report](PHASE3A_1_REPORT.md) for current verification evidence and files changed.

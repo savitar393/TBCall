@@ -37,6 +37,7 @@ public class LabResultService {
             if(found.isEmpty()) throw ApplicationFailure.missing(); specimen=found.getFirst();
             if(!Boolean.TRUE.equals(specimen.getExaminationPossible())) throw LabErrors.specimenState();
         }
+        if(hasReportedResult(test,specimen)) throw LabErrors.alreadyExists();
         source.requireLocalCreate(actor,"LAB_RESULT_WRITE",request.getTestingFacility().getId(),"LAB_RESULT");
         return append(actor,request,test,specimen,nextSequence(test,specimen),"FINAL",input.testedAt(),input.resultCode(),input.resultValue(),input.resultText(),"LAB_RESULT_RECORDED");
     }
@@ -66,6 +67,13 @@ public class LabResultService {
     }
     private void writable(LabRequest request,LabRequestTest test) {
         if("CANCELLED".equals(request.getStatus()) || "CANCELLED".equals(test.getStatus())) throw LabErrors.resultState();
+    }
+    private boolean hasReportedResult(LabRequestTest test,LabSpecimen specimen) {
+        // The request/test locks serialize first entry. Nonfinal history only affects
+        // nextSequence; an already reported lineage must use the correction command.
+        var query=em.createQuery("select count(v) from LabResult v where v.labRequestTest.id=:test and v.status in ('FINAL','CORRECTED') and "+(specimen==null ? "v.specimen is null" : "v.specimen.id=:specimen"),Long.class).setParameter("test",test.getId());
+        if(specimen!=null) query.setParameter("specimen",specimen.getId());
+        return query.getSingleResult()>0;
     }
     private int nextSequence(LabRequestTest test,LabSpecimen specimen) {
         var query=em.createQuery("select max(v.sequenceNo) from LabResult v where v.labRequestTest.id=:test and "+(specimen==null ? "v.specimen is null" : "v.specimen.id=:specimen"),Integer.class).setParameter("test",test.getId());

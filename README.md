@@ -1,4 +1,4 @@
-# TBCall backend — Phase 3A laboratory workflow
+# TBCall backend — Phase 3A.1 laboratory result-lineage hardening
 
 This backend implements the migration-managed persistence foundation, Phase 1 identity/authorization, Phase 1.1 administrative provisioning and account recovery, Phase 2 clinical intake through explicit TB case confirmation, and Phase 3A laboratory requests, specimens and results. Treatment Phase 3B, later clinical phases, frontend, SITB connector and clinical automation remain unimplemented.
 
@@ -51,6 +51,8 @@ V11 adds only PATIENT_IDENTITY_RESOLVE for TB_OFFICER and the partial other-iden
 See [LABORATORY.md](docs/LABORATORY.md) for the eight endpoints, facility scopes, ETags, specimen timeline and append-only correction rules, and the [approved architecture](docs/architecture/TBCall_Application_API_v1.3A_Phase3A_Laboratory.md) for the full contract. TB officers create requests and record specimens in requesting-facility scope. Laboratory staff receive specimens and enter/correct results in testing-facility scope. Results do not automatically change diagnosis, drug resistance, case status or treatment, and test-specific clinical interpretation is not encoded. External carried-result ingestion and unusable-specimen notifications are deferred. Phase 3B will consume finalized laboratory data as displayed evidence, without automatic clinical decisions.
 
 Phase 3A adds no migration and preserves V1–V11. A separate `LaboratorySourceAuthorityPolicy` permits prototype local writes after authorization/scope checks and can be replaced independently of the clinical policy when authorized integration is defined. The [Phase 3A report](docs/PHASE3A_REPORT.md) records implementation and clean-build evidence.
+
+[Phase 3A.1](docs/architecture/TBCall_Application_API_v1.3A.1_Phase3A.1_Result_Lineage_Hardening.md) makes `/results` the first FINAL entry for an exact test/specimen-or-null lineage. Existing FINAL/CORRECTED lineages must use corrections; duplicate FINAL returns 409 LAB_RESULT_ALREADY_EXISTS without mutation. Late first entries remain allowed after case conversion/outcome. The [Phase 3A.1 report](docs/PHASE3A_1_REPORT.md) records verification; Phase 3B outcome creation must lock TBCase before Treatment and check outcome absence before insertion.
 
 ## Ownership and mapping
 

@@ -1,6 +1,8 @@
-# Laboratory workflow — Phase 3A
+# Laboratory workflow — Phase 3A and 3A.1
 
 Contract: [approved Phase 3A architecture](architecture/TBCall_Application_API_v1.3A_Phase3A_Laboratory.md), based on Phase 2.1 commit `a2edfb1582d0a7e9d469713d0308038740a1bf24`.
+
+[Phase 3A.1 result-lineage hardening](architecture/TBCall_Application_API_v1.3A.1_Phase3A.1_Result_Lineage_Hardening.md) supersedes successive-FINAL behavior from Phase 3A while preserving authorization, source policy, projections, aggregation and correction barriers. This is TBCall application semantics, not a claim about SITB physical API design.
 
 V1–V11, entities and existing clinical/identity behavior are unchanged. Flyway remains authoritative and Hibernate validates its schema. No new migration is required.
 
@@ -54,15 +56,21 @@ Initial result input: optional specimenId, required testedAt (not future), and a
 
 One status component recomputes test RESULT_AVAILABLE from FINAL/CORRECTED evidence. Some completed tests set PARTIAL; every non-cancelled test completed sets COMPLETED. Otherwise receipt/shipping state remains. IN_PROGRESS is not introduced by this checkpoint. No result value is interpreted into diagnosis, resistance, case state, treatment or regimen eligibility.
 
-Results are sequenced independently for `(test, specimen)` and `(test, null)`. A next FINAL entry is permitted using the current test ETag. A correction must target the latest FINAL/CORRECTED row in that same lineage and requires that result's ETag. It appends CORRECTED with the same test/specimen and sequence +1, using newly supplied testedAt/result fields. The original row, timestamps and version remain unchanged. Detail displays only the latest lineage rows.
+Results are sequenced independently for `(test, specimen)` and `(test, null)`. `POST /lab-request-tests/{testId}/results` is the **first FINAL entry** for an exact previously unreported lineage: no FINAL/CORRECTED row may already exist in that lineage. Different specimens and the null-specimen context each permit their own first FINAL; a requested test is not globally limited to one result. Historical PRELIMINARY/CANCELLED rows alone do not block first entry, whose sequence remains max(existing sequence in that lineage) +1.
+
+With a current test ETag, an existing FINAL/CORRECTED lineage returns 409 `LAB_RESULT_ALREADY_EXISTS` with Indonesian detail directing the caller to corrections when allowed. The rejection creates no result, does not advance sequence or request/test/result versions, leaves status unchanged and emits no LAB_RESULT_RECORDED. Missing/stale If-Match and optional specimen validation retain their existing precedence.
+
+`POST /lab-results/{resultId}/corrections` supersedes an already reported lineage while correction is still allowed. A correction must target the latest FINAL/CORRECTED row in that same lineage and requires that result's ETag. It appends CORRECTED with the same test/specimen and sequence +1, using newly supplied testedAt/result fields. The original row, timestamps and version remain unchanged. Detail displays only the latest lineage rows.
 
 Diagnostic correction is allowed only while the registration is OPEN/DIAGNOSED; confirmed CONVERTED_TO_CASE blocks correction. Case FOLLOW_UP correction is blocked if any treatment for that case has a TreatmentOutcome. Cancelled requests/tests cannot receive results/corrections.
 
-The approved contract applies those owner barriers to corrections specifically, while initial FINAL entry uses the next sequence and only cancelled request/test barriers. Thus another FINAL with a current test ETag can advance a lineage after its correction gate closes. This checkpoint preserves that distinction. Before Phase 3B, clarify whether subsequent FINAL entries should share the correction editability barriers; doing so changes the approved command contract.
+The owner barriers apply to revision of an existing result. A **late first FINAL** for a previously missing lineage remains allowed after registration CONVERTED_TO_CASE or after a follow-up TreatmentOutcome. Existing results cannot bypass a closed correction gate by posting another FINAL. Cancelled request/test barriers continue to apply to late first entry.
 
-Commands lock the request before children, serialize sequence/status decisions and invalidate aggregate ETags even when status stays unchanged. Results also invalidate test ETags. Corrections first lock the owner, then request/test/result; the registration lock is shared with case confirmation. V6 relational triggers and unique lineage indexes remain final protection. There are no silent retries. **Future Phase 3B outcome writers must lock the case before creating the outcome, matching the correction gate's lock order.**
+Commands lock the request before children, serialize sequence/status decisions and invalidate aggregate ETags even when status stays unchanged. Results also invalidate test ETags. Initial entry locks request -> requested test -> optional specimen before the exact-lineage existence check. Corrections first lock the owner, then request/test/result; the registration lock is shared with case confirmation. V6 relational triggers and unique lineage indexes remain final protection. There are no silent retries.
 
-Conflict codes: LAB_REQUEST_STATE_CONFLICT, LAB_SPECIMEN_STATE_CONFLICT, LAB_RESULT_STATE_CONFLICT, LAB_RESULT_NOT_LATEST, plus existing precondition/optimistic/reference errors.
+**Future Phase 3B outcome creation must lock TBCase PESSIMISTIC_WRITE, then Treatment PESSIMISTIC_WRITE, verify no existing outcome, then create TreatmentOutcome.** The shared case lock serializes outcome creation with follow-up correction eligibility. This checkpoint documents that contract and implements no outcome service.
+
+Conflict codes: LAB_REQUEST_STATE_CONFLICT, LAB_SPECIMEN_STATE_CONFLICT, LAB_RESULT_STATE_CONFLICT, LAB_RESULT_NOT_LATEST, LAB_RESULT_ALREADY_EXISTS, plus existing precondition/optimistic/reference errors.
 
 ## Source authority and audit
 
