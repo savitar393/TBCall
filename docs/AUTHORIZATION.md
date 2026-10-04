@@ -1,4 +1,4 @@
-# Otorisasi dan lingkup identitas — Phase 1, 1.1, 2, 3A dan 3B
+# Otorisasi dan lingkup identitas — Phase 1, 1.1, 2, 3A, 3B dan 4A
 
 Otorisasi adalah **permission + scope + field projection**. Peran administrator tidak memiliki bypass akses klinis. [Arsitektur Application/API v1](architecture/TBCall_Application_API_v1.md) tetap menjadi kontrak untuk fase berikutnya.
 
@@ -89,3 +89,13 @@ ADHERENCE_RECORD/READ tidak memberi akses klinis umum. Source HEALTH_WORKER/PATI
 V12 tidak mengubah grant V7 atau V1–V11. Index open-treatment V1 dengan PLANNED/ACTIVE/PAUSED dipakai apa adanya. Audit hanya memuat actor/action/target/correlation, tanpa payload klinis.
 
 Proyeksi aggregate treatment juga memeriksa permission READ tiap child (kepatuhan, follow-up, adverse event, outcome dan referensi lab). Pencabutan child permission langsung mengosongkan daftar atau memberi summary/outcome null; TREATMENT_READ tidak menjadi bypass permission child. Grant standar V7 tetap menghasilkan seluruh field yang disetujui untuk peran tersebut.
+
+## Referral and transfer Phase 4A
+
+TB_OFFICER + REFERRAL_WRITE dengan assignment aktif pada source boleh send/cancel; destination boleh receive/return/report. REFERRAL_READ pada recorded source/destination memberi handoff read, terpisah dari ordinary current clinical scope. Incoming memakai destination; outgoing memakai source. Tidak ada bypass role admin/lab/program/patient/supporter. Semua transition existing referral memakai Referral If-Match.
+
+Report memindahkan case.currentFacility dan (untuk transfer) treatment.facility ke destination pada row yang sama. Destination mendapat ordinary clinical access; source kehilangan akses itu kecuali memiliki assignment destination terpisah. Source tetap boleh membaca outgoing referral. SELF/supporter links tidak berubah. Historical follow-up/lab facility tidak direlokasi; aturan scope lamanya tetap berlaku.
+
+DTO handoff eksplisit hanya memberi patient UUID/display name, case category/status, treatment summary terbatas, facility, state/time dan referral notes/reasons kepada kedua officer yang berwenang. Tidak memberi NIK/BPJS, HIV/DM, lab, diagnosis prose, drug/dose narratives, account atau audit/sync. Tidak ada patient/supporter referral portal.
+
+ReferralSourceAuthorityPolicy memeriksa create/transition lokal setelah permission/scope di bawah lock TBCase -> Treatment(if any) -> Referral. ClinicalSourceAuthorityPolicy dan LaboratorySourceAuthorityPolicy tidak berubah. V13 tidak mengubah grant V7. Lima audit referral hanya memuat actor/action/target/correlation. Lihat [REFERRALS.md](REFERRALS.md).

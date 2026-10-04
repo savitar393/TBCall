@@ -61,6 +61,9 @@ public class Referral {
     @Column(name = "cancel_reason", columnDefinition = "text")
     private String cancelReason;
 
+    @Column(name = "return_reason", columnDefinition = "text")
+    private String returnReason;
+
     @Column(name = "notes", columnDefinition = "text")
     private String notes;
 

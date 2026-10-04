@@ -1,4 +1,4 @@
-# TBCall backend — Phase 3A.1 laboratory result-lineage hardening
+# TBCall backend — Phase 4A referral and transfer continuity
 
 This backend implements the migration-managed persistence foundation, Phase 1 identity/authorization, Phase 1.1 administrative provisioning and account recovery, Phase 2 clinical intake through explicit TB case confirmation, and Phase 3A laboratory requests, specimens and results. Treatment Phase 3B, later clinical phases, frontend, SITB connector and clinical automation remain unimplemented.
 
@@ -58,7 +58,11 @@ Phase 3A adds no migration and preserves V1–V11. A separate `LaboratorySourceA
 
 See [TREATMENT.md](docs/TREATMENT.md) for the 18 treatment, adherence, follow-up, adverse-event, outcome and safe patient/supporter routes. The [schema-reconciled architecture](docs/architecture/TBCall_Application_API_v1.3B.1_Phase3B_Treatment_Monitoring_Schema_Reconciled.md) supersedes the earlier blocked draft and incorporates the approved reuse of the existing V1 PLANNED/ACTIVE/PAUSED open-treatment index.
 
-V12 adds structured follow-up observations, replaces dose treatment/day uniqueness with actor/day uniqueness, and adds TREATMENT_SUPPORTER provenance while preserving legacy statuses/sources. V1–V11 and laboratory semantics remain unchanged. Clinician-selected regimens and explicit drug snapshots are recorded without calculating doses or inferring outcomes. Outcome closure locks TBCase before Treatment and serializes with follow-up laboratory corrections. See [PHASE3B_REPORT.md](docs/PHASE3B_REPORT.md) for verification and architectural decisions. Phase 4 is not implemented.
+V12 adds structured follow-up observations, replaces dose treatment/day uniqueness with actor/day uniqueness, and adds TREATMENT_SUPPORTER provenance while preserving legacy statuses/sources. V1–V11 and laboratory semantics remain unchanged. Clinician-selected regimens and explicit drug snapshots are recorded without calculating doses or inferring outcomes. Outcome closure locks TBCase before Treatment and serializes with follow-up laboratory corrections. See [PHASE3B_REPORT.md](docs/PHASE3B_REPORT.md) for verification and architectural decisions. Phase 4A adds the referral continuity described below; Phase 4B/4C remain deferred.
+
+## Referral and transfer Phase 4A
+
+See [REFERRALS.md](docs/REFERRALS.md) for the eight referral routes, source/destination scopes, state model, versions and handoff privacy. [Approved v1.4A](docs/architecture/TBCall_Application_API_v1.4A_Phase4A_Referral_Transfer.md) keeps the same case and treatment across transfer; current ownership moves only on destination report. V13 adds the in-flight referral constraint, source list index and return reason while preserving V1–V12. Historical drugs, dose/follow-up/adverse/laboratory data and user links stay attached without relocation or automation. See [PHASE4A_REPORT.md](docs/PHASE4A_REPORT.md) for verification and the file manifest. Contacts/TPT, monitoring, alerts, notifications and SITB networking remain deferred.
 
 ## Ownership and mapping
 
