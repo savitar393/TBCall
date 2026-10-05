@@ -1,0 +1,81 @@
+# TBCall frontend — F1 foundation
+
+Next.js App Router browser foundation for the existing Spring Boot backend. Implemented routes: `/login`, `/`, `/forbidden`. The dashboard shows only the signed-in account's identity and access context from `/me`.
+
+## Requirements and commands
+
+Use Node.js 24.15–24.x and **pnpm 11.19.0**. The verified runtime is Node.js 24.19.0. Use pnpm consistently; commit `pnpm-lock.yaml` when changing dependencies.
+
+From the repository root on Windows:
+
+```powershell
+cd frontend
+pnpm install --frozen-lockfile
+Copy-Item .env.example .env.local
+pnpm dev
+```
+
+Open `http://localhost:3000`. `.env.local` is ignored. The sole application setting is the **server-only** `TBCALL_BACKEND_URL`, an HTTP(S) origin such as `http://127.0.0.1:8080`, without credentials, a path, query or fragment. It must never be a `NEXT_PUBLIC_*` setting. Missing/invalid configuration or an unreachable backend produces safe problem JSON with HTTP 503.
+
+Start the existing backend separately using its root README configuration. F1 does not start PostgreSQL or provision accounts. For local HTTP development, use the backend's existing `TBCALL_PRODUCTION=false` and `TBCALL_COOKIE_SECURE=false` settings; production requires HTTPS and secure cookies. Use a separately provisioned active account. Verification delivery/recovery and registration have no F1 screens.
+
+Required checks, all from `frontend/`:
+
+```powershell
+pnpm run lint
+pnpm run typecheck
+pnpm test
+pnpm run build
+```
+
+Production:
+
+```powershell
+pnpm run build
+pnpm start
+```
+
+`typecheck` runs Next route type generation before strict TypeScript checking, so a fresh clone needs no generated files or `.tools/` scripts. `build` also generates Next types. `next-env.d.ts` is Next's standard checked-in declaration entry; its generated `.next/types` imports are fulfilled by those commands. `.next/`, `node_modules/`, coverage, logs and TypeScript incremental caches are ignored.
+
+`pnpm-workspace.yaml` explicitly allows only the pinned `unrs-resolver` native resolver's install bootstrap. Its age exception is limited to the pinned React/Vite plugin; it does not allow arbitrary package build scripts. All direct dependency versions are pinned in `package.json`; transitive versions are locked.
+
+## Proxy and authentication
+
+```text
+Browser /api/tbcall/v1/...
+  -> Next route handler
+  -> TBCALL_BACKEND_URL/api/v1/...
+```
+
+The route handler accepts GET, POST, PATCH and DELETE, validates/encodes path segments and passes the original query to the fixed configured origin. It never follows upstream redirects. Only Cookie, Content-Type, Accept, X-XSRF-TOKEN, If-Match and X-Request-ID are forwarded. Status/body, Content-Type, ETag, X-Request-ID and independent Set-Cookie headers are preserved. Responses are `no-store`; cookies and bodies are never logged.
+
+1. Bootstrap GET `/me` establishes the browser's XSRF cookie, including on an expected anonymous 401.
+2. Login POST reads `XSRF-TOKEN` immediately before sending `X-XSRF-TOKEN`. Its response does not establish frontend identity; a new `/me` response does.
+3. Logout POST sends fresh CSRF, then GET `/me` refreshes the cookie. Protected in-memory queries are canceled/removed and the browser returns to `/login`, including when that final GET fails.
+4. `CSRF_INVALID` refreshes `/me` once and asks the person to submit manually. No failed mutation is replayed.
+
+`TBCALL_SESSION` is opaque and HttpOnly. Browser code never reads/decodes it. No session/CSRF token is stored by application code. TanStack Query is memory-only; protected query state is cleared on session loss, account/context change and logout. Login credentials stay in transient form/request state rather than TanStack mutation variables.
+
+## Client and authorization
+
+`lib/api/client.ts` uses native fetch with same-origin credentials, a fresh UUID request ID, safe problem handling and optional **explicit server ETag** (`If-Match`). It never synthesizes ETags or automatically retries writes. 401 clears session/navigates to login; 403 routes to forbidden; optimistic 409 refetches active queries after a failed mutation; authority 409 displays read-only guidance; 428 and network/5xx errors show safe Indonesian messages with correlation IDs. Raw server prose is not displayed.
+
+Navigation consumes the exact permission codes supplied by `/me`, with no role-name assumptions. F1's Beranda and Akun/context both expose the authenticated `/me` context and have no separate backend permission gate. Future entries must declare their actual required permission codes. UI gating is convenience; Spring Boot enforces authorization.
+
+## UI, privacy and security
+
+The Indonesian shell has a collapsible desktop sidebar, modal mobile drawer, identity/role/facility summaries and logout. Associated labels, visible focus, skip link, announced errors, reduced motion and 44px button/input touch targets are included. Only SELF link state and the supporter-case **count** are displayed; linked patient/case IDs are not rendered.
+
+There is no browser persistence, offline cache or service worker. No clinical requests, KPIs, workflow links or SITB networking are implemented.
+
+Each page response receives a fresh CSP nonce and `no-store`. Next applies the nonce to its scripts; dynamic rendering supports this [documented Next.js CSP approach](https://nextjs.org/docs/app/guides/content-security-policy). The initial document nonce also configures `get-nonce` for Radix's injected scroll-lock stylesheet and is retained across client navigation. Zod uses interpreted (`jitless`) validation so it never attempts a Function/eval capability probe. Production scripts have no unsafe-inline/unsafe-eval permission or broad wildcard. Same-origin connections, frame denial, nosniff, no-referrer and restrictive Permissions-Policy apply. API responses have a separate `default-src 'none'` sandbox CSP so an upstream HTML error cannot run scripts.
+
+Development alone permits script `unsafe-eval`, inline style elements and WebSocket schemes for Next's dev server. Production allows **inline style attributes only** for Radix overlay/scroll management; script attributes remain forbidden. No external font/CDN is used. HTTPS, edge limits and an appropriate deployed origin remain deployment responsibilities.
+
+`components/ui/` contains the checked-in shadcn/ui New York Button, Input, Label, Card and Sheet sources, adapted for Indonesian drawer labels, Tailwind 4 and touch targets. `LICENSE.shadcn` retains the upstream MIT license. See [shadcn's manual installation](https://ui.shadcn.com/docs/installation/manual); application compilation does not invoke a UI generator.
+
+## Tests and scope
+
+Vitest + React Testing Library/user-event cover the native client, real HTTP proxy boundary, session lifecycle/cache clearing, forms, permission filtering, safe errors and drawer focus. Fixtures model existing backend responses; they are not a SITB service/database. See [the implementation guide](../docs/FRONTEND_FOUNDATION.md) and [checkpoint report](../docs/FRONTEND_F1_REPORT.md).
+
+F2 needs separately approved clinical workflows, endpoint projections and permission/scope/ETag integration. Registration/recovery, patient/supporter workflows, administration and real SITB networking remain later scopes.

@@ -1,6 +1,6 @@
 # TBCall backend — Phase 5A integration boundary
 
-This backend implements the migration-managed persistence foundation, identity/authorization and administration, clinical intake, laboratory workflows, treatment Phase 3B, Phase 4A referral/transfer continuity, Phase 4B contact investigation/contact-driven TPT, Phase 4C manual monitoring/overdue alerts/IN_APP notifications, and Phase 5A local integration metadata/source-authority boundary. Frontend, SITB networking and clinical automation remain unimplemented.
+This backend implements the migration-managed persistence foundation, identity/authorization and administration, clinical intake, laboratory workflows, treatment Phase 3B, Phase 4A referral/transfer continuity, Phase 4B contact investigation/contact-driven TPT, Phase 4C manual monitoring/overdue alerts/IN_APP notifications, and Phase 5A local integration metadata/source-authority boundary. The F1 frontend foundation is described below. SITB networking and clinical automation remain unimplemented.
 
 ## Requirements
 
@@ -10,6 +10,12 @@ This backend implements the migration-managed persistence foundation, identity/a
 - Docker-compatible container runtime for `mvn test`
 
 Set `TBCALL_DB_URL`, `TBCALL_DB_USER`, and `TBCALL_DB_PASSWORD` for a PostgreSQL database, then start with `.\mvnw.cmd spring-boot:run` on Windows. For tests at `D:\TBCall`, run `.\mvnw.cmd clean test`; Maven does not need to be globally installed. On Unix use `./mvnw`. The database user needs permission to install the V1 `pgcrypto`, `citext`, and `pg_trgm` extensions and create schema objects. Testcontainers starts empty PostgreSQL 16 databases and Spring Boot applies V1 through V17 before Hibernate validates the mappings. All Java sources are committed under `src/main/java`; no generation helper or local reference PDF is required to compile or test a clone.
+
+## Frontend F1 foundation
+
+The [Next.js frontend](frontend/README.md) lives under `frontend/` and requires Node.js 24.15–24.x and pnpm 11.19.0. From that directory run `pnpm install --frozen-lockfile`, copy `.env.example` to ignored `.env.local`, and run `pnpm dev`. Server-only `TBCALL_BACKEND_URL` points to the separately running backend. Browser calls use a fixed same-origin proxy; existing opaque-session cookies, CSRF, authorization and ETag contracts are preserved.
+
+F1 implements only `/login`, `/`, `/forbidden` and an Indonesian responsive identity/context shell. It has no clinical workflow screens, browser persistence or SITB calls. Frontend checks are `pnpm run lint`, `pnpm run typecheck`, `pnpm test`, and `pnpm run build`. See [FRONTEND_FOUNDATION.md](docs/FRONTEND_FOUNDATION.md), the [approved architecture](docs/architecture/TBCall_Frontend_v1.0_F1_Foundation.md) and [F1 report](docs/FRONTEND_F1_REPORT.md). Backend source and migrations are unchanged by this checkpoint.
 
 ## Identity configuration and browser use
 
