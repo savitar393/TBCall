@@ -21,7 +21,7 @@ class MonitoringSchemaIntegrationTest {
             UUID k=id(s,"insert into tb_cases(registration_id,current_facility_id,case_category_code,previous_treatment_category_code) values ('"+r+"','"+f+"','TB_SO','BARU') returning id");
             UUID t=id(s,"insert into treatments(case_id,facility_id,start_date,status) values ('"+k+"','"+f+"',current_date,'ACTIVE') returning id");
             UUID plan=id(s,"insert into monitoring_plans(treatment_id,start_date) values ('"+t+"',current_date) returning id");
-            Flyway.configure().dataSource(POSTGRES.getJdbcUrl(),POSTGRES.getUsername(),POSTGRES.getPassword()).load().migrate();
+            Flyway.configure().dataSource(POSTGRES.getJdbcUrl(),POSTGRES.getUsername(),POSTGRES.getPassword()).target("15").load().migrate();
             assertThat(index(s,"uq_monitoring_plan_active_treatment")).isEqualTo(original);
             assertThat(index(s,"uq_monitoring_plan_active_tpt")).contains("preventive_treatment_id");
             violation(s,"insert into monitoring_plans(start_date) values (current_date)","23514");

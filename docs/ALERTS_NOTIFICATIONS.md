@@ -8,6 +8,15 @@ Only an explicit OVERDUE monitoring event opens an automatic alert. Type MONITOR
 
 Treatment lineage includes patient/case/treatment; contact/TPT are null. TPT lineage includes preventiveTreatment/contact when applicable, direct/linked patient when available, and no case/treatment. V15 adds a monitoring/TPT lineage trigger while retaining V6 verbatim. Null patient supports unlinked contact-owned TPT. A unique event index permits one alert ever, including after staff resolution.
 
+### Phase 4C.1 post-review schema hardening
+
+V15 implemented Phase 4C. Subsequent review identified that nullable `alerts.patient_id` could bypass V6's ordinary NULL comparisons for direct treatment/case alerts, and `contact_id` could exist without TPT. V16 independently closes those two gaps:
+
+- `chk_alert_patient_required_except_tpt`: `patient_id IS NOT NULL OR preventive_treatment_id IS NOT NULL`.
+- `chk_alert_contact_requires_tpt`: `contact_id IS NULL OR preventive_treatment_id IS NOT NULL`.
+
+Both guards apply on INSERT and UPDATE and reject violations with SQLSTATE `23514`. Generic patient-only alerts preserve V1 behavior. Unlinked contact-owned TPT may retain NULL patient; matching linked/direct patient TPT alerts remain valid. V1–V15, both lineage triggers/functions, all endpoint/service behavior and the approved v1.4C architecture remain unchanged. V16 performs no data repair; conflicting pre-existing rows cause migration failure and require review rather than automatic changes.
+
 All routes below are under `/api/v1`; lists use page 0/size 20 by default, max 50.
 
 | Method | Route | Permission/scope |

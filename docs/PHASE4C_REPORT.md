@@ -2,6 +2,8 @@
 
 Approved base: `62551397a38f8ff54ce895fb2ad152690bc177b1`. Implementation branch: `feat/phase4c-monitoring`. Scope: manual operational monitoring, overdue alerts and IN_APP notifications only.
 
+The Phase 4C sections below retain the historical V15 implementation and its 694-test result. The separate Phase 4C.1 post-review checkpoint is recorded at the end of this report.
+
 ## Files
 
 Created:
@@ -124,3 +126,93 @@ Independent final read-only review found no production correctness, privacy or c
 ## Before SITB integration architecture
 
 No Phase 4C schema blocker is known. The next architecture must define authorized SITB access/API contracts, source authority/field ownership, external identifiers, reconciliation/conflicts/write-back, synchronization transactions/idempotency, credentials/security and operational failure handling. No SITB physical schema/API claims or fake SITB database are introduced. External notification delivery and automatic clinical decision/schedule engines remain deferred.
+
+## Phase 4C.1 — post-review alert lineage hardening
+
+Approved base: `6401328b9a5da525cff0ad2b20d8119b677f183d`. Branch: `feat/phase4c-monitoring`. This checkpoint addresses a schema-integrity gap in the approved V15 contract, without changing the Phase 4C endpoint/service behavior or starting SITB integration.
+
+### Review finding and V16
+
+V15 made alert patient nullable for contact-owned TPT. V6's ordinary `<>` comparisons then permitted NULL-patient direct treatment/case alerts, because PostgreSQL `IF NULL` does not raise. V15 also left contact IDs possible without a preventive-treatment target. The application generates valid monitoring alerts; this checkpoint hardens database writes rather than changing HTTP behavior.
+
+`V16__alert_nullable_patient_lineage_hardening.sql` contains only these authorized guards (plus explanatory comments):
+
+```sql
+ALTER TABLE alerts
+    ADD CONSTRAINT chk_alert_patient_required_except_tpt
+        CHECK (
+            patient_id IS NOT NULL
+            OR preventive_treatment_id IS NOT NULL
+        ),
+    ADD CONSTRAINT chk_alert_contact_requires_tpt
+        CHECK (
+            contact_id IS NULL
+            OR preventive_treatment_id IS NOT NULL
+        );
+```
+
+The named constraints reject violations with SQLSTATE `23514` on INSERT and UPDATE. Generic non-TPT alerts require a patient, preserving V1's intent. Generic patient-only alerts remain valid. Contact-owned TPT may still have NULL patient, and linked/direct matching-patient TPT remains valid. No broader target-shape constraint, trigger replacement, reference data or data cleanup is added. Existing invalid imported/manual rows would cause V16 to fail, requiring explicit review rather than silent repair.
+
+### Changed-file manifest
+
+Created:
+
+- `src/main/resources/db/migration/V16__alert_nullable_patient_lineage_hardening.sql`
+- `src/test/java/id/tbcall/persistence/AlertLineageHardeningSchemaIntegrationTest.java`
+- `docs/superpowers/plans/2026-10-05-phase4c1.md`
+
+Modified:
+
+- `src/test/java/id/tbcall/persistence/PersistenceIntegrationTest.java`: fresh database expectation extends through V16; Hibernate validation/startup coverage retained.
+- `src/test/java/id/tbcall/persistence/MonitoringSchemaIntegrationTest.java`: explicitly target V15 in the historical V14→V15 regression.
+- `docs/PHASE4C_REPORT.md`: separate checkpoint report; historical Phase 4C result retained.
+- `docs/ALERTS_NOTIFICATIONS.md`: document both invariants and valid shapes.
+- `README.md`: fresh migration endpoint advances to V16.
+
+All Java files under `src/main/java`, application configuration, dependencies and V1–V15 remain unchanged. The approved Phase 4C architecture is not rewritten. Local task briefs, PDFs, `.tools/` logs and development helpers are excluded.
+
+### Regression coverage
+
+Twenty-five new PostgreSQL Testcontainers cases:
+
+- 1 V15→V16 upgrade case: seven pre-existing valid alert shapes remain byte-for-byte identical when represented as full row JSON; both V6/V15 function and trigger definitions remain identical; only V16 is applied.
+- 6 direct treatment-only/case-only/combined alert cases: NULL patient rejected on INSERT and UPDATE by the exact patient guard.
+- 2 generic non-TPT alert cases: NULL patient rejected on INSERT and UPDATE by the exact patient guard.
+- 6 generic/case/treatment alert cases: contact without TPT rejected on INSERT and UPDATE by the exact contact guard.
+- 5 accepted-shape cases: treatment monitoring, unlinked contact TPT monitoring with NULL patient, linked contact TPT with matching patient, direct patient TPT, generic patient-only alert.
+- 2 V6 regressions: wrong patient rejected for direct case/treatment alerts by the existing lineage trigger.
+- 3 V15 regressions: wrong TPT contact, patient or monitoring-event target rejected by the existing lineage trigger.
+
+Each negative test asserts SQLSTATE `23514` and the exact PostgreSQL constraint identity. Fresh V1–V16 migrations, Hibernate validation and application startup are covered by the updated persistence test and the existing Spring integration suites. The original V15 schema regression remains active separately.
+
+TDD evidence: against V15, 25 cases ran with 15 expected failures, 0 errors, 0 skipped: all 14 invalid INSERT/UPDATE shapes were accepted and the upgrade assertion found no V16. Valid shapes and existing trigger checks passed. Initial test compilation/resource-reference and absent-target setup errors were corrected before this behavior-level RED run.
+
+### Final verification
+
+Focused GREEN: 33 tests, 0 failures, 0 errors, 0 skipped, BUILD SUCCESS (25 new schema cases + 1 historical V15 schema case + 7 persistence cases). Total time 31.678 s; finished 2026-10-05T13:23:34+07:00. The independent read-only reviewer found no critical, important or minor issue and requested no revisions.
+
+All 15 historical migration Git content hashes match the approved base; none of those files was edited. V1–V15 repository contents remain byte-for-byte unchanged. No application Java, configuration, dependency or approved architecture diff exists. Windows working-tree line endings are subject to the existing Git configuration; no line-ending conversion is introduced by this checkpoint.
+
+Final Windows clean verification used Java 21 and the Maven Wrapper with Docker Desktop/PostgreSQL Testcontainers:
+
+```text
+.\mvnw.cmd clean test
+Tests run: 719, Failures: 0, Errors: 0, Skipped: 0
+BUILD SUCCESS
+Total time: 10:39 min
+Finished at: 2026-10-05T13:35:23+07:00
+```
+
+Exit code: 0. Independently summed all 18 fresh Surefire XML reports: 719 tests, 0 failures, 0 errors, 0 skipped. All previous 694 cases and the 25 new cases passed. The build covers fresh V1–V16 migration, V15→V16 with existing valid alerts, Hibernate validation/application startup, retained V6/V15 trigger behavior and earlier phases. No source/test changes followed this build; finalization changes documentation only.
+
+Expected negative-test database messages, existing Mockito/JVM warnings and known cached-test-context/Hikari reconnect warnings caused no failures. No production behavior was changed to suppress warnings. Logs stay ignored under `.tools/`. No generated source directory, local prompt, PDF or ignored file is included in the eight-file checkpoint. Final commit identity and remote push verification are returned in the completion response. Deferred minors: none.
+
+### Implementation rulings
+
+- Retain the explicitly requested Windows feature checkout rather than create a worktree. Cost if wrong: changes remain on this branch until commit.
+- Use native Windows verification commands and this plan/report as the execution record instead of Unix skill helper scripts. Cost if wrong: process records require manual checking; application/build behavior is unaffected.
+- Production migration locking/load was not measured; the approved two CHECK constraints remain ordinary validated PostgreSQL constraints. Cost if wrong: deployment timing requires evaluation against production-sized data.
+- No live/imported database was supplied; fixture compatibility is proven and V16 intentionally fails on incompatible existing rows. Cost if wrong: such rows require explicit review before deployment.
+- Broader lineage constraints and SITB work remain outside the authorized brief. Cost if wrong: future architecture must address any additional invariants separately.
+
+No schema/specification conflict has been identified in existing approved application fixtures. No additional architectural decision is required for these two guards. Authorized SITB integration architecture remains a separate future task.
