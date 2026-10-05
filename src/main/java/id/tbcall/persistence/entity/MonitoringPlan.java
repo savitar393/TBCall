@@ -29,6 +29,10 @@ public class MonitoringPlan {
     @JoinColumn(name = "treatment_id")
     private Treatment treatment;
 
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "preventive_treatment_id")
+    private PreventiveTreatment preventiveTreatment;
+
     @Column(name = "status", length = 30)
     private String status = "ACTIVE";
 

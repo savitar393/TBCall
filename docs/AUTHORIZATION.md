@@ -1,4 +1,4 @@
-# Otorisasi dan lingkup identitas — Phase 1, 1.1, 2, 3A, 3B dan 4A
+# Otorisasi dan lingkup identitas — melalui Phase 4C
 
 Otorisasi adalah **permission + scope + field projection**. Peran administrator tidak memiliki bypass akses klinis. [Arsitektur Application/API v1](architecture/TBCall_Application_API_v1.md) tetap menjadi kontrak untuk fase berikutnya.
 
@@ -113,3 +113,11 @@ PATIENT + TPT_READ + VERIFIED SELF mendapat hanya status, safe regimen display/d
 ContactSourceAuthorityPolicy terpisah dengan prototype lokal untuk contact writes, investigation transitions dan TPT writes setelah permission/scope di bawah lock. Clinical/Laboratory/Referral policies tidak berubah. Lock create: TBCase; investigasi: Contact -> ContactInvestigation; TPT start: Contact -> ContactInvestigation -> open check/insert; TPT update/close: Contact -> PreventiveTreatment. Scalar IDs mendahului hydration; READ_COMMITTED; no retries. Existing writes memerlukan resource If-Match.
 
 Keempat belas audit contact/IK/TPT hanya menyimpan actor/action/target/correlation, tanpa identitas kontak, eligibility, result, notes, regimenDescription atau closureReason. Source denial rollback tidak meninggalkan partial mutation/success audit. Lihat [CONTACT_INVESTIGATION.md](CONTACT_INVESTIGATION.md), [TPT.md](TPT.md) dan [PHASE4B_REPORT.md](PHASE4B_REPORT.md).
+
+## Phase 4C operational authorization
+
+Monitoring staff routes require TB_OFFICER plus MONITORING_READ or MONITORING_MANAGE and current target facility. LAB_STAFF's legacy MONITORING_READ does not grant staff monitoring access; admin/program roles have no bypass. Independent MonitoringSourceAuthorityPolicy protects officer plan/event commands and grants no clinical or external mutation authority.
+
+Alert staff routes require TB_OFFICER plus ALERT_READ/ALERT_ACKNOWLEDGE/ALERT_RESOLVE and current Treatment or recorded TPT facility. Patient reads/receipts require PATIENT, the matching permission and VERIFIED SELF. Supporter reads/receipts require TREATMENT_SUPPORTER, permission and active case link; only Treatment targets qualify. Receipt records never change global alert state.
+
+NOTIFICATION_READ_SELF gives each active authenticated user access to their own notification rows only. Fanout additionally verifies active users, active officer memberships, verified SELF links or active linked supporters and the notification permission. No supporter TPT access is inferred. Details: [MONITORING.md](MONITORING.md), [ALERTS_NOTIFICATIONS.md](ALERTS_NOTIFICATIONS.md).

@@ -41,6 +41,14 @@ public class Alert {
     private Treatment treatment;
 
     @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "contact_id")
+    private Contact contact;
+
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "preventive_treatment_id")
+    private PreventiveTreatment preventiveTreatment;
+
+    @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "monitoring_event_id")
     private MonitoringEvent monitoringEvent;
 
