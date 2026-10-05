@@ -3,3 +3,4 @@ target/
 docs/reference-local/
 .idea/
 *.iml
+/phase4b-clean-test.log

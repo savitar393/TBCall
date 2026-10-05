@@ -2,6 +2,8 @@
 
 Base: `e57009842d0cac6ebcc9c7e980c9dfdc6675dde4`. Binding design: [approved v1.4B](architecture/TBCall_Application_API_v1.4B_Phase4B_Contact_Investigation_TPT.md).
 
+Finalized on `wip/phase4b` from preservation commit `68bf8c62758600265ca5fc158c3a1f916840aa5a`. The preserved application, migration and test sources were not restarted, rewritten or changed during finalization.
+
 ## Files changed
 
 Added:
@@ -28,6 +30,9 @@ Added:
 - `docs/PHASE4B_REPORT.md`
 - `docs/architecture/TBCall_Application_API_v1.4B_Phase4B_Contact_Investigation_TPT.md`
 - `docs/superpowers/plans/2026-10-05-phase4b.md`
+- `mvnw.cmd` (user-supplied Apache Maven Wrapper 3.3.4, committed unchanged)
+- `mvnw` (companion wrapper script, committed unchanged)
+- `.mvn/wrapper/maven-wrapper.properties` (Maven 3.9.16 distribution, committed unchanged)
 
 Modified:
 
@@ -37,8 +42,11 @@ Modified:
 - `src/test/java/id/tbcall/persistence/SchemaHardeningIntegrationTest.java` (exact catalog includes the six approved concepts)
 - `README.md`
 - `docs/AUTHORIZATION.md`
+- `.gitignore` (exclude root `phase4b-clean-test.log`)
 
 All 14 new main Java files are ordinary sources under src/main/java; no generator or reference PDF is needed for compilation. Local prompts/PDFs, toolchains, Maven cache/logs, target and review scratch are excluded from the commit.
+
+The completed Phase 4B range contains 32 files: 25 additions and seven modifications. The finalization commit contains only documentation/ignore updates and the existing wrapper files; application/test/migration content matches the preservation commit. No diagnostic log or Kemenkes PDF is committed.
 
 ## V14 and schema boundaries
 
@@ -86,7 +94,44 @@ Initial RED: 90 tests/90 expected failures/zero errors, missing HTTP routes and 
 
 Fresh independent read-only review found no other material production/migration/controller/test/documentation issue. The reviewer did not edit files or execute Maven. The exact migration/catalog expectations were extended, not weakened. All previous clinical tests remain part of the required clean verification.
 
-The full mvn clean test verification is running; final evidence will replace this status before commit.
+The user completed the required clean verification on Windows at `D:\TBCall`, using the supplied wrapper because Maven is not globally installed:
+
+```powershell
+.\mvnw.cmd clean test
+```
+
+Exact reported result:
+
+```text
+Tests run: 589, Failures: 0, Errors: 0, Skipped: 0
+BUILD SUCCESS
+Total time: 09:03 min
+Finished at: 2026-10-05T11:12:59+07:00
+```
+
+This is the previous 468 tests plus 121 Phase 4B tests. Finalization independently summed the current 15 Surefire XML reports and confirmed 589 tests, zero failures/errors/skips, with report timestamps from 11:05 through 11:12 on 2026-10-05. The user confirmed fresh PostgreSQL Testcontainers migration through V14 and Hibernate/application startup. No application or test content changed after that run; no further Maven command was needed for documentation-only finalization.
+
+| Test class | Tests |
+|---|---:|
+| AdminRecoveryIntegrationTest | 40 |
+| ClinicalIntakeIntegrationTest | 63 |
+| ContactTptIntegrationTest | 120 |
+| IdentityAuthorizationIntegrationTest | 46 |
+| LaboratoryIntegrationTest | 68 |
+| ProductionVerificationIntegrationTest | 1 |
+| ReferralIntegrationTest | 69 |
+| SecurityConfigurationTest | 13 |
+| TreatmentIntegrationTest | 113 |
+| ContactTptSchemaIntegrationTest | 1 |
+| PersistenceIntegrationTest | 7 |
+| ReferralSchemaIntegrationTest | 1 |
+| RuntimePersistenceIntegrationTest | 8 |
+| SchemaHardeningIntegrationTest | 37 |
+| TreatmentSchemaIntegrationTest | 2 |
+
+The run contains Hikari warnings from earlier test-class pools attempting to reconnect to already terminated Testcontainers. They produced no failures. No correctness/resource-leak defect was identified in the Phase 4B implementation by the read-only review, and production behavior was not changed to suppress warnings.
+
+Final read-only verification confirms the preservation commit's complete workflow, exactly the approved V14 additions, and unchanged V1–V13/earlier production policies. The earlier independent review has no unresolved finding. Root diagnostic logs are absent/ignored; local task prompts/reference PDFs remain ignored. Sources and tests are ordinary tracked files, with standard build output under ignored target.
 
 ## Judgments and costs
 

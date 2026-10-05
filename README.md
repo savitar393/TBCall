@@ -5,11 +5,11 @@ This backend implements the migration-managed persistence foundation, identity/a
 ## Requirements
 
 - Java 21
-- Maven 3.9 or newer
+- Maven Wrapper (included; downloads Maven 3.9.16), or Maven 3.9 or newer
 - PostgreSQL 15 or newer for application startup
 - Docker-compatible container runtime for `mvn test`
 
-Set `TBCALL_DB_URL`, `TBCALL_DB_USER`, and `TBCALL_DB_PASSWORD` for a PostgreSQL database, then start with `mvn spring-boot:run`. The database user needs permission to install the V1 `pgcrypto`, `citext`, and `pg_trgm` extensions and create schema objects. For tests, run `mvn clean test`; Testcontainers starts empty PostgreSQL 16 databases and Spring Boot applies V1 through V14 before Hibernate validates the mappings. All Java sources are committed under `src/main/java`; no generation helper or local reference PDF is required to compile or test a clone.
+Set `TBCALL_DB_URL`, `TBCALL_DB_USER`, and `TBCALL_DB_PASSWORD` for a PostgreSQL database, then start with `.\mvnw.cmd spring-boot:run` on Windows. For tests at `D:\TBCall`, run `.\mvnw.cmd clean test`; Maven does not need to be globally installed. On Unix use `./mvnw`. The database user needs permission to install the V1 `pgcrypto`, `citext`, and `pg_trgm` extensions and create schema objects. Testcontainers starts empty PostgreSQL 16 databases and Spring Boot applies V1 through V14 before Hibernate validates the mappings. All Java sources are committed under `src/main/java`; no generation helper or local reference PDF is required to compile or test a clone.
 
 ## Identity configuration and browser use
 
