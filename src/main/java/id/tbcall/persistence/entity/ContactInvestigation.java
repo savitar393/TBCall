@@ -54,6 +54,15 @@ public class ContactInvestigation {
     @Column(name = "result_code", length = 100)
     private String resultCode;
 
+    @Column(name = "active_tb_excluded")
+    private Boolean activeTbExcluded;
+
+    @Column(name = "tpt_eligible")
+    private Boolean tptEligible;
+
+    @Column(name = "eligibility_assessed_at")
+    private OffsetDateTime eligibilityAssessedAt;
+
     @Column(name = "return_reason", columnDefinition = "text")
     private String returnReason;
 

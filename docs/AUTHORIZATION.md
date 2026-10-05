@@ -99,3 +99,17 @@ Report memindahkan case.currentFacility dan (untuk transfer) treatment.facility 
 DTO handoff eksplisit hanya memberi patient UUID/display name, case category/status, treatment summary terbatas, facility, state/time dan referral notes/reasons kepada kedua officer yang berwenang. Tidak memberi NIK/BPJS, HIV/DM, lab, diagnosis prose, drug/dose narratives, account atau audit/sync. Tidak ada patient/supporter referral portal.
 
 ReferralSourceAuthorityPolicy memeriksa create/transition lokal setelah permission/scope di bawah lock TBCase -> Treatment(if any) -> Referral. ClinicalSourceAuthorityPolicy dan LaboratorySourceAuthorityPolicy tidak berubah. V13 tidak mengubah grant V7. Lima audit referral hanya memuat actor/action/target/correlation. Lihat [REFERRALS.md](REFERRALS.md).
+
+## Contact investigation and TPT Phase 4B
+
+TB_OFFICER memerlukan CONTACT_READ/WRITE atau TPT_READ/WRITE dan assignment fasilitas aktif. Tidak ada bypass SYSTEM_ADMIN, FACILITY_ADMIN, LAB_STAFF, PROGRAM_MONITOR, PATIENT atau TREATMENT_SUPPORTER. Grant V7 tidak berubah.
+
+Investigasi INTERNAL mengikuti recorded source; OUTGOING_REFERRAL memakai recorded source/destination untuk detail, destination untuk incoming/receive/start/return/complete, dan source untuk outgoing/cancel. Source hanya dapat cancel SENT. Contact read/write mengikuti recorded investigation facilities; contact tanpa investigasi memakai current index-case facility. Demographic PATCH dan exact patient linking memerlukan Contact If-Match. Linking menggunakan Phase 2 WNI/WNA identity reconfirmation; tidak menerima UUID-only, fuzzy matching, overwrite snapshot atau link replacement/unlink.
+
+TPT start membutuhkan COMPLETED + activeTbExcluded=true + tptEligible=true, permission TPT_WRITE dan assignment fasilitas kerja investigasi. TPT owner/contact/indexCase/facility/status berasal dari server. TPT detail/history/update/closure mengikuti recorded TPT.facility, termasuk TPT historis tanpa investigasi setelah transfer kasus indeks. Transfer tidak memindahkan IK/TPT. Contact summary TPT juga memerlukan TPT_READ dan facility scope sendiri.
+
+PATIENT + TPT_READ + VERIFIED SELF mendapat hanya status, safe regimen display/description, dates/duration dan facility display melalui direct patient atau contact.linkedPatient. Multiple ACTIVE menghasilkan 409 ACTIVE_TPT_AMBIGUOUS. Tidak ada index patient/case category, contact private details, eligibility/result/IK notes, officer notes, drugSource, closureReason, audit/sync atau writable aggregate ID/version. Tidak ada supporter TPT maupun patient adherence write. RegimenDescription adalah field safe display; private narrative harus berada dalam notes.
+
+ContactSourceAuthorityPolicy terpisah dengan prototype lokal untuk contact writes, investigation transitions dan TPT writes setelah permission/scope di bawah lock. Clinical/Laboratory/Referral policies tidak berubah. Lock create: TBCase; investigasi: Contact -> ContactInvestigation; TPT start: Contact -> ContactInvestigation -> open check/insert; TPT update/close: Contact -> PreventiveTreatment. Scalar IDs mendahului hydration; READ_COMMITTED; no retries. Existing writes memerlukan resource If-Match.
+
+Keempat belas audit contact/IK/TPT hanya menyimpan actor/action/target/correlation, tanpa identitas kontak, eligibility, result, notes, regimenDescription atau closureReason. Source denial rollback tidak meninggalkan partial mutation/success audit. Lihat [CONTACT_INVESTIGATION.md](CONTACT_INVESTIGATION.md), [TPT.md](TPT.md) dan [PHASE4B_REPORT.md](PHASE4B_REPORT.md).

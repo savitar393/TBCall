@@ -76,6 +76,12 @@ public class PreventiveTreatment {
     @Column(name = "notes", columnDefinition = "text")
     private String notes;
 
+    @Column(name = "regimen_description", columnDefinition = "text")
+    private String regimenDescription;
+
+    @Column(name = "closure_reason", columnDefinition = "text")
+    private String closureReason;
+
     @Column(name = "created_at", insertable = false, updatable = false)
     private OffsetDateTime createdAt;
 

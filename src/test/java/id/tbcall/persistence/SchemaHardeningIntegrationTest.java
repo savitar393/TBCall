@@ -72,7 +72,8 @@ class SchemaHardeningIntegrationTest {
         assertThat(codes("regimens", "active"))
                 .containsExactlyInAnyOrder("SO_6M_2HRZE_4HR", "SO_4M_2HPMZ_2HPM", "SO_CHILD_6M_2RHZ_4RH",
                         "SO_CHILD_6M_2RHZE_4RH", "SO_CHILD_12M_2RHZE_10RH", "SO_CHILD_4M_2RHZ_2RH",
-                        "RO_HR_6RZE_LFX", "RO_BPALM", "RO_BPAL", "RO_9M_ETO", "RO_9M_LZD", "RO_LONG_INDIVIDUAL");
+                        "RO_HR_6RZE_LFX", "RO_BPALM", "RO_BPAL", "RO_9M_ETO", "RO_9M_LZD", "RO_LONG_INDIVIDUAL",
+                        "TPT_SO_6H", "TPT_SO_3HP", "TPT_SO_3HR", "TPT_SO_4R", "TPT_SO_1HP", "TPT_RO_6LFX");
         assertThat(jdbc.queryForObject("select count(*) from regimen_drugs", Integer.class)).isZero();
         assertThat(jdbc.queryForObject("select count(*) from drugs where strength is not null or dosage_form is not null", Integer.class))
                 .isZero();
