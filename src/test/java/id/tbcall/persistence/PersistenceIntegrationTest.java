@@ -66,11 +66,12 @@ class PersistenceIntegrationTest {
     @Test
     void flywayBuildsEmptyDatabaseAndHibernateValidatesIt() {
         assertThat(jdbc.queryForList("select version from flyway_schema_history where success order by installed_rank", String.class))
-                .containsExactly("1", "2", "3", "4", "5", "6", "7", "8", "9", "10", "11", "12", "13", "14", "15", "16");
-        assertThat(jdbc.queryForObject("select count(*) from pg_tables where schemaname = 'public'", Integer.class)).isEqualTo(60);
+                .containsExactly("1", "2", "3", "4", "5", "6", "7", "8", "9", "10", "11", "12", "13", "14", "15", "16", "17");
+        assertThat(jdbc.queryForObject("select count(*) from pg_tables where schemaname = 'public'", Integer.class)).isEqualTo(62);
         assertThat(jdbc.queryForObject("select count(*) from patients", Integer.class)).isZero();
         assertThat(jdbc.queryForObject("select count(*) from roles", Integer.class)).isEqualTo(7);
-        assertThat(jdbc.queryForObject("select count(*) from external_systems", Integer.class)).isZero();
+        assertThat(jdbc.queryForObject("select count(*) from external_systems", Integer.class)).isEqualTo(1);
+        assertThat(jdbc.queryForObject("select active from external_systems where code='SITB'", Boolean.class)).isFalse();
         assertThat(jdbc.queryForObject("select count(*) from lab_test_types where code = 'TCM'", Integer.class)).isEqualTo(1);
     }
 

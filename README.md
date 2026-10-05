@@ -1,6 +1,6 @@
-# TBCall backend — Phase 4C monitoring, alerts and IN_APP notifications
+# TBCall backend — Phase 5A integration boundary
 
-This backend implements the migration-managed persistence foundation, identity/authorization and administration, clinical intake, laboratory workflows, treatment Phase 3B, Phase 4A referral/transfer continuity, Phase 4B contact investigation/contact-driven TPT, and Phase 4C manual monitoring/overdue alerts/IN_APP notifications. Frontend, SITB networking and clinical automation remain unimplemented.
+This backend implements the migration-managed persistence foundation, identity/authorization and administration, clinical intake, laboratory workflows, treatment Phase 3B, Phase 4A referral/transfer continuity, Phase 4B contact investigation/contact-driven TPT, Phase 4C manual monitoring/overdue alerts/IN_APP notifications, and Phase 5A local integration metadata/source-authority boundary. Frontend, SITB networking and clinical automation remain unimplemented.
 
 ## Requirements
 
@@ -9,7 +9,7 @@ This backend implements the migration-managed persistence foundation, identity/a
 - PostgreSQL 15 or newer for application startup
 - Docker-compatible container runtime for `mvn test`
 
-Set `TBCALL_DB_URL`, `TBCALL_DB_USER`, and `TBCALL_DB_PASSWORD` for a PostgreSQL database, then start with `.\mvnw.cmd spring-boot:run` on Windows. For tests at `D:\TBCall`, run `.\mvnw.cmd clean test`; Maven does not need to be globally installed. On Unix use `./mvnw`. The database user needs permission to install the V1 `pgcrypto`, `citext`, and `pg_trgm` extensions and create schema objects. Testcontainers starts empty PostgreSQL 16 databases and Spring Boot applies V1 through V16 before Hibernate validates the mappings. All Java sources are committed under `src/main/java`; no generation helper or local reference PDF is required to compile or test a clone.
+Set `TBCALL_DB_URL`, `TBCALL_DB_USER`, and `TBCALL_DB_PASSWORD` for a PostgreSQL database, then start with `.\mvnw.cmd spring-boot:run` on Windows. For tests at `D:\TBCall`, run `.\mvnw.cmd clean test`; Maven does not need to be globally installed. On Unix use `./mvnw`. The database user needs permission to install the V1 `pgcrypto`, `citext`, and `pg_trgm` extensions and create schema objects. Testcontainers starts empty PostgreSQL 16 databases and Spring Boot applies V1 through V17 before Hibernate validates the mappings. All Java sources are committed under `src/main/java`; no generation helper or local reference PDF is required to compile or test a clone.
 
 ## Identity configuration and browser use
 
@@ -87,3 +87,7 @@ The V1 `lab_requests` constraint permits either `registration_id` or `case_id`, 
 See [MONITORING.md](docs/MONITORING.md) and [ALERTS_NOTIFICATIONS.md](docs/ALERTS_NOTIFICATIONS.md) for all 24 routes. V15 adds explicit Treatment/TPT plan targets, TPT alert lineage, unique event alerts, per-user receipts and notification uniqueness, preserving V1–V14 and the original treatment active-plan index. Plans contain explicit officer-entered events under MANUAL_V1; the injected Clock drives due/overdue transitions and terminal target cleanup. Target-first locks serialize with transfer/TPT closure. Alerts use fixed safe WARNING wording and notifications use IN_APP only with minimal payloads. Patient/supporter acknowledgements leave global alert state unchanged. No clinical schedules, laboratory/follow-up records, outcomes, external delivery or SITB networking are inferred or created. See [PHASE4C_REPORT.md](docs/PHASE4C_REPORT.md) and [approved v1.4C](docs/architecture/TBCall_Application_API_v1.4C_Phase4C_Monitoring_Alerts_Notifications.md).
 
 Windows verification requires Java 21 and Docker Desktop: `.\mvnw.cmd clean test`. Monitoring background scheduling is disabled by the test profile; production defaults to a bounded sweep every 60 seconds. Configuration: TBCALL_MONITORING_SCHEDULER_ENABLED and TBCALL_MONITORING_SWEEP_INTERVAL_MS.
+
+## SITB integration boundary Phase 5A
+
+See [INTEGRATION_BOUNDARY.md](docs/INTEGRATION_BOUNDARY.md) for the seven administrator read routes, explicit source-authority checks and privacy boundary, and [PHASE5A_REPORT.md](docs/PHASE5A_REPORT.md) for implementation and verification. [Approved v1.5A](docs/architecture/TBCall_Application_API_v1.5A_SITB_Integration_Boundary.md) authorizes only V17: an inactive TBCall-internal SITB marker, authority/conflict ledgers and sync-item hash/conflict linkage. V1–V16 remain unchanged. External identifiers alone do not confer authority; policies check the actual edited entity and its domain scope after existing access checks. No SITB network call, credential, import, write-back or integration mutation endpoint is implemented. Authorized contemporary interface material is required before Phase 5B.

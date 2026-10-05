@@ -54,7 +54,7 @@ class AlertLineageHardeningSchemaIntegrationTest {
         }
         migrationsExecuted = Flyway.configure()
                 .dataSource(POSTGRES.getJdbcUrl(), POSTGRES.getUsername(), POSTGRES.getPassword())
-                .load().migrate().migrationsExecuted;
+                .target("16").load().migrate().migrationsExecuted;
     }
 
     @BeforeEach

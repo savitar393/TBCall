@@ -48,6 +48,13 @@ public class SyncItem {
     @Column(name = "content_hash", length = 128)
     private String contentHash;
 
+    @Column(name = "local_content_hash", length = 128)
+    private String localContentHash;
+
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "conflict_id")
+    private IntegrationConflict conflict;
+
     @JdbcTypeCode(SqlTypes.JSON)
     @Column(name = "raw_payload", columnDefinition = "jsonb")
     private Map<String, Object> rawPayload;

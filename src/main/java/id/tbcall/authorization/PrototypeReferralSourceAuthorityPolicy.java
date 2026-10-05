@@ -7,12 +7,13 @@ import org.springframework.stereotype.Component;
 @Component
 public class PrototypeReferralSourceAuthorityPolicy implements ReferralSourceAuthorityPolicy {
     private final ScopePolicies scopes;
-    public PrototypeReferralSourceAuthorityPolicy(ScopePolicies scopes) { this.scopes=scopes; }
+    private final ExternalAuthorityRegistry authorities;
+    public PrototypeReferralSourceAuthorityPolicy(ScopePolicies scopes,ExternalAuthorityRegistry authorities) { this.scopes=scopes; this.authorities=authorities; }
     public void requireLocalCreate(CurrentActor actor,String permission,UUID facilityId,UUID caseId) {
         if(!scopes.officerFacility(actor,permission,facilityId)) throw ApplicationFailure.forbidden();
     }
     public void requireLocalTransition(CurrentActor actor,String permission,UUID facilityId,UUID referralId) {
         if(!scopes.officerFacility(actor,permission,facilityId)) throw ApplicationFailure.forbidden();
-        // Prototype records are local. No guessed external ownership or SITB write-back.
+        authorities.requireLocallyWritable("REFERRAL",referralId,"REFERRAL");
     }
 }

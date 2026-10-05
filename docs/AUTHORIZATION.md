@@ -1,6 +1,14 @@
-# Otorisasi dan lingkup identitas — melalui Phase 4C
+# Otorisasi dan lingkup identitas — melalui Phase 5A
 
 Otorisasi adalah **permission + scope + field projection**. Peran administrator tidak memiliki bypass akses klinis. [Arsitektur Application/API v1](architecture/TBCall_Application_API_v1.md) tetap menjadi kontrak untuk fase berikutnya.
+
+## Integration boundary Phase 5A
+
+GET `/api/v1/integrations` dan enam route metadata/detail terkait memerlukan **SYSTEM_ADMIN + INTEGRATION_MANAGE** melalui AdministrativePolicies. Role lain tidak memiliki akses walaupun permission diberikan secara manual. Tidak ada mutation endpoint untuk identifier, authority, conflict, sync atau credential. Unknown code dan run di luar system yang diminta menghasilkan 404 setelah otorisasi. Semua daftar/item dibatasi max 50; tidak ada raw payload, clinical payload/nama pasien atau operator resolution note pada proyeksi.
+
+Setelah role/permission/facility checks yang sudah ada, source policies membaca ExternalAuthorityRegistry pada transaksi write yang sama. Authority aktif adalah exact entity_type/entity_id/authority_scope dengan released_at NULL. Clinical menggunakan CLINICAL, lab LABORATORY, referral REFERRAL, contact/investigation/TPT CONTACT_TPT dengan UUID masing-masing, monitoring MONITORING dengan UUID plan. Matching authority menghasilkan 409 SOURCE_AUTHORITY_CONFLICT dengan detail Indonesia yang aman. Identifier/parent/external facility sendiri tidak membuat authority. Released/unrelated authority tidak menghalangi; create tanpa UUID existing tetap lokal.
+
+SITB adalah kode internal TBCall, seeded inactive dan UNCONFIGURED; tidak ada credential, network, import atau write-back. Active metadata bukan authority lookup switch. Adherence patient/supporter dan automatic monitoring sweep tetap mengikuti perilaku sebelumnya. Success audit tidak dibuat pada browsing/denial. Lihat [INTEGRATION_BOUNDARY.md](INTEGRATION_BOUNDARY.md).
 
 ## Resolusi current actor
 
