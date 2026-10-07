@@ -33,6 +33,8 @@ Backend v1.5A.5 adds the [F2E monitoring reference contract](docs/FRONTEND_MONIT
 
 Backend v1.5A.5.1 completes [authoritative event and self-notification detail reads with ETags](docs/FRONTEND_MONITORING_ETAG_READ_CONTRACTS.md) for existing If-Match commands. Notification GET does not mark READ. Existing write behavior, the reference contract, frontend and V1-V17 remain unchanged; no V18 or F2E UI. See the [checkpoint report](docs/PHASE5A_5_1_REPORT.md).
 
+Backend v1.5A.6 adds the [F3 portal reference contract](docs/FRONTEND_PORTAL_READ_CONTRACTS.md): `GET /api/v1/me/portal-reference-data` for PATIENT or TREATMENT_SUPPORTER with at least one actually-held relevant grant. Fourteen ordered code/name groups supply TBCall vocabulary and actor-specific dose choices without requiring facility or resource linkage. See the [checkpoint report](docs/PHASE5A_6_REPORT.md) for verification and the F3 handoff.
+
 Backend v1.5A.1 adds [F2A read contracts](docs/FRONTEND_BACKEND_READ_CONTRACTS.md): scoped diagnosis list/detail with ETag, active clinical reference catalogs and a safe active-facility directory. The [checkpoint report](docs/PHASE5A_1_REPORT.md) records verification. This addition preserves clinical writes, frontend F1 and V1–V17; it adds no migration or F2A UI.
 
 Production defaults: `TBCALL_PRODUCTION=true`, secure cookies and verification-secret exposure disabled. Registration requires an email/SMS `VerificationDeliveryPort` adapter; the default port returns 503 and rolls back registration when delivery is unavailable. No outbound adapter or fake SITB service is provided.
