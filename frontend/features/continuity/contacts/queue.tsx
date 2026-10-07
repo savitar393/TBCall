@@ -1,0 +1,10 @@
+"use client";
+import { useState } from "react";
+import Link from "next/link";
+import { useQuery } from "@tanstack/react-query";
+import { useSession } from "@/lib/auth/session";
+import { Button } from "@/components/ui/button";
+import { continuityQueries as q } from "../queries";
+import { QueryState,Pagination,label } from "../display";
+import type { Side } from "../types";
+export function InvestigationQueue(){const {user}=useSession(),[side,setSide]=useState<Side>("incoming"),[page,setPage]=useState(0),query=useQuery(q.investigations(user!.id,side,page)),ref=useQuery(q.contactReferences(user!.id));return <><h1 className="text-2xl font-semibold">Investigasi kontak</h1><div className="flex gap-3" role="group" aria-label="Arah investigasi">{(["incoming","outgoing"] as const).map(s=><Button key={s} variant={side===s?"default":"outline"} aria-pressed={side===s} onClick={()=>{setSide(s);setPage(0);}}>{s==="incoming"?"Masuk":"Keluar"}</Button>)}</div><p>Investigasi internal dibuka melalui detail kontak.</p>{ref.isError&&<QueryState query={ref}/>}<p role="status">Daftar {side==="incoming"?"masuk":"keluar"}</p>{query.isPending||query.isError?<QueryState query={query}/>:<>{!query.data.data.content.length&&<p>Belum ada investigasi rujukan.</p>}<div className="grid gap-4 md:grid-cols-2">{query.data.data.content.map(i=><article key={i.id} className="space-y-2 rounded-xl border bg-white p-5 break-words"><h2 className="font-semibold">{i.contact.fullName}</h2><p>{i.contact.birthDate??"—"} · {i.contact.sexCode??"—"} · {i.contact.phone??"—"}</p><p>Kasus indeks: {i.indexCase.id} · {i.indexCase.categoryCode??"—"}</p><p>{label(ref.data?.data.workflowTypes,i.workflowType)} · {label(ref.data?.data.investigationStatuses,i.status)}</p><p>{i.sourceFacility.name} → {i.destinationFacility?.name??"—"}</p><p>Diminta: {i.requestedAt} · Diterima: {i.receivedAt??"—"} · Diinvestigasi: {i.investigatedAt??"—"}</p><Link className="text-primary underline" href={`/contact-investigations/${i.id}`}>Buka investigasi</Link></article>)}</div><Pagination page={page} total={query.data.data.totalElements} setPage={setPage}/></>}</>;}

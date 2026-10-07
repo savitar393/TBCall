@@ -1,4 +1,4 @@
-# TBCall frontend — F1 foundation, F2A intake, F2B laboratory and F2C treatment
+# TBCall frontend - F1 foundation and F2A-F2D staff workflows
 
 Next.js App Router frontend for the existing Spring Boot backend. F1 routes: `/login`, `/`, `/forbidden`. The dashboard shows the signed-in account's identity and access context from `/me`. F2A adds officer patient → registration → diagnosis → case intake using backend read contracts at commit `863ca8c23b15dd57f3fc85db9618a75537212609`.
 
@@ -12,13 +12,19 @@ See [F2A guide](../docs/FRONTEND_F2A_CLINICAL_INTAKE.md), [architecture](../docs
 
 Routes: `/laboratory`, `/laboratory/requests/[requestId]`, `/laboratory/requests/new/registration/[registrationId]`, `/laboratory/requests/new/case/[caseId]`. The shared queue requires officer/lab staff plus LAB_REQUEST_READ. Officer source actions and lab testing actions independently check permissions and assigned requesting/testing facilities. Result rendering requires LAB_RESULT_READ. Creation uses the existing contextual owner, live reasons/test types and explicit testing facility selection. Specimen/cancel use actual request ETags; child receive/result/correction use the laboratory-only published numeric versions. Writes refetch authoritative state, preserve drafts on conflicts, require manual review and never replay.
 
-See [F2B guide](../docs/FRONTEND_F2B_LABORATORY.md), [architecture](../docs/architecture/TBCall_Frontend_v1.2_F2B_Laboratory.md) and [report](../docs/FRONTEND_F2B_REPORT.md). Contracts use backend base `e13e3e3c934298d9a76827b40f2d934d21eb6bfe`; strict schemas, per-user abortable queries and snapshot-guarded memory-only commands preserve privacy. Browser timezone is explicit. Backend/tests/V1–V17 remain unchanged. F2D and later UI require separate approval.
+See [F2B guide](../docs/FRONTEND_F2B_LABORATORY.md), [architecture](../docs/architecture/TBCall_Frontend_v1.2_F2B_Laboratory.md) and [report](../docs/FRONTEND_F2B_REPORT.md). Contracts use backend base `e13e3e3c934298d9a76827b40f2d934d21eb6bfe`; strict schemas, per-user abortable queries and snapshot-guarded memory-only commands preserve privacy. Browser timezone is explicit. Backend/tests/V1–V17 remain unchanged. Later UI require separate approval.
 
 ## F2C staff treatment
 
 Routes: `/cases/[caseId]/treatments` and `/treatments/[treatmentId]`, with a contextual `Pengobatan` link from case detail. Explicit TB_OFFICER + TREATMENT_READ and independent action permissions protect live-catalog start, metadata editing, separate dose evidence, follow-up schedule/complete, adverse create/edit and explicitly confirmed final outcome. Actual treatment ETags and published child versions are kept separate; commands await refetch and never retry or infer clinical decisions. Backend base: `6afcfe697ceebfe2ebfd2edbd6030815e005a2bd`.
 
-See [F2C guide](../docs/FRONTEND_F2C_TREATMENT.md), [architecture](../docs/architecture/TBCall_Frontend_v1.3_F2C_Treatment.md) and [report](../docs/FRONTEND_F2C_REPORT.md). All treatment queries are per-user and abortable; clinical drafts remain memory-only. Backend/tests/V1–V17 remain unchanged. F2D and later workflows remain deferred.
+See [F2C guide](../docs/FRONTEND_F2C_TREATMENT.md), [architecture](../docs/architecture/TBCall_Frontend_v1.3_F2C_Treatment.md) and [report](../docs/FRONTEND_F2C_REPORT.md). All treatment queries are per-user and abortable; clinical drafts remain memory-only. Backend/tests/V1–V17 remain unchanged. F2D continuity is documented below; later workflows remain deferred.
+
+## F2D staff continuity
+
+Routes: `/referrals`, `/referrals/[referralId]`, `/cases/[caseId]/referrals/new`, `/cases/[caseId]/contacts`, `/contacts/[contactId]`, `/contact-investigations`, `/contact-investigations/[investigationId]`, `/preventive-treatments/[tptId]`. Explicit TB_OFFICER and independent referral/contact/TPT permissions protect live preparation, fixed pre-treatment destination, exact ACTIVE episode transfer, contact snapshots/exact identity linking, explicit investigation completion and clinician-controlled TPT start/edit/closure. Actual GET ETags, session-scoped abortable queries and guarded commands preserve concurrency/privacy; no clinical inference or automatic write replay.
+
+See [F2D guide](../docs/FRONTEND_F2D_CONTINUITY.md), [architecture](../docs/architecture/TBCall_Frontend_v1.4_F2D_Continuity.md) and [report](../docs/FRONTEND_F2D_REPORT.md). Approved backend base: `584fdea9bbe420c771593d52e2028407c6738c9c`. Backend/tests/V1-V17 remain unchanged. F2E, portals, administration and SITB networking remain deferred.
 
 ## Requirements and commands
 
@@ -84,7 +90,7 @@ Navigation consumes the exact permission codes supplied by `/me`, with no role-n
 
 The Indonesian shell has a collapsible desktop sidebar, modal mobile drawer, identity/role/facility summaries and logout. Associated labels, visible focus, skip link, announced errors, reduced motion and 44px button/input touch targets are included. Only SELF link state and the supporter-case **count** are displayed; linked patient/case IDs are not rendered.
 
-There is no browser persistence, offline cache or service worker. F1 itself has no clinical workflows; F2A/F2B add only their approved workflows. KPIs, downstream workflow UI and SITB networking are deferred.
+There is no browser persistence, offline cache or service worker. F1 itself has no clinical workflows; F2A-F2D add only their approved workflows. KPIs, downstream workflow UI and SITB networking are deferred.
 
 Each page response receives a fresh CSP nonce and `no-store`. Next applies the nonce to its scripts; dynamic rendering supports this [documented Next.js CSP approach](https://nextjs.org/docs/app/guides/content-security-policy). The initial document nonce also configures `get-nonce` for Radix's injected scroll-lock stylesheet and is retained across client navigation. Zod uses interpreted (`jitless`) validation so it never attempts a Function/eval capability probe. Production scripts have no unsafe-inline/unsafe-eval permission or broad wildcard. Same-origin connections, frame denial, nosniff, no-referrer and restrictive Permissions-Policy apply. API responses have a separate `default-src 'none'` sandbox CSP so an upstream HTML error cannot run scripts.
 
@@ -96,4 +102,4 @@ Development alone permits script `unsafe-eval`, inline style elements and WebSoc
 
 Vitest + React Testing Library/user-event cover the native client, real HTTP proxy boundary, session lifecycle/cache clearing, forms, permission filtering, safe errors and drawer focus. Fixtures model existing backend responses; they are not a SITB service/database. See [the implementation guide](../docs/FRONTEND_FOUNDATION.md) and [checkpoint report](../docs/FRONTEND_F1_REPORT.md).
 
-F2C and later UI need separately approved workflows, projections and permission/scope/ETag integration. Account registration/recovery, patient/supporter workflows, administration and real SITB networking remain later scopes.
+Later UI need separately approved workflows, projections and permission/scope/ETag integration. Account registration/recovery, patient/supporter workflows, administration and real SITB networking remain later scopes.

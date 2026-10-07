@@ -1,0 +1,11 @@
+import type { z } from "@/lib/validation";
+import type * as s from "./schemas";
+export type Referral=z.infer<typeof s.referralSchema>;
+export type Contact=z.infer<typeof s.contactSchema>;
+export type Investigation=z.infer<typeof s.investigationSchema>;
+export type Tpt=z.infer<typeof s.tptSchema>;
+export type Preparation=z.infer<typeof s.preparationSchema>;
+export type Body=Record<string,string|number|boolean|null>;
+export type Dirty=Partial<Record<string,unknown>>;
+export type Side="incoming"|"outgoing";
+export type Context={caseId?:string;contactId?:string;treatmentId?:string};

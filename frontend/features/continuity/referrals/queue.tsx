@@ -1,0 +1,10 @@
+"use client";
+import { useState } from "react";
+import Link from "next/link";
+import { useQuery } from "@tanstack/react-query";
+import { useSession } from "@/lib/auth/session";
+import { Button } from "@/components/ui/button";
+import { continuityQueries as q } from "../queries";
+import { QueryState,Pagination,label } from "../display";
+import type { Side } from "../types";
+export function ReferralQueue(){const {user}=useSession(),[side,setSide]=useState<Side>("incoming"),[page,setPage]=useState(0),query=useQuery(q.referrals(user!.id,side,page)),ref=useQuery(q.referralReferences(user!.id));return <><h1 className="text-2xl font-semibold">Rujukan</h1><div className="flex gap-3" role="group" aria-label="Arah rujukan">{(["incoming","outgoing"] as const).map(s=><Button key={s} variant={side===s?"default":"outline"} aria-pressed={side===s} onClick={()=>{setSide(s);setPage(0);}}>{s==="incoming"?"Masuk":"Keluar"}</Button>)}</div>{ref.isError&&<QueryState query={ref}/>}<p role="status">Daftar {side==="incoming"?"masuk":"keluar"}</p>{query.isPending||query.isError?<QueryState query={query}/>:<>{!query.data.data.content.length&&<p>Belum ada rujukan.</p>}<div className="grid gap-4 md:grid-cols-2">{query.data.data.content.map(r=><article key={r.id} className="space-y-2 rounded-xl border bg-white p-5 break-words"><h2 className="font-semibold">{r.patient.fullName}</h2><p>{r.tbCase.categoryCode??"—"} · {r.tbCase.status}</p><p>{label(ref.data?.data.referralTypes,r.referralType)} · {label(ref.data?.data.referralStatuses,r.status)}</p><p>{r.sourceFacility.name} → {r.destinationFacility.name}</p><p>Dikirim: {r.sentAt} · Diterima: {r.receivedAt??"—"}</p><p>Dilaporkan datang: {r.patientReportedAt??"—"} · Dibatalkan: {r.cancelledAt??"—"}</p>{r.treatment&&<p>{r.treatment.regimenName??r.treatment.regimenCode??"Paduan tercatat"} · {r.treatment.status} · {r.treatment.startDate} – {r.treatment.plannedEndDate??"—"}</p>}<Link className="text-primary underline" href={`/referrals/${r.id}`}>Buka rujukan</Link></article>)}</div><Pagination page={page} total={query.data.data.totalElements} setPage={setPage}/></>}</>;}

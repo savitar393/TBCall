@@ -1,6 +1,6 @@
 # TBCall backend — Phase 5A integration boundary
 
-This backend implements the migration-managed persistence foundation, identity/authorization and administration, clinical intake, laboratory workflows, treatment Phase 3B, Phase 4A referral/transfer continuity, Phase 4B contact investigation/contact-driven TPT, Phase 4C manual monitoring/overdue alerts/IN_APP notifications, and Phase 5A local integration metadata/source-authority boundary. The F1 frontend foundation, F2A officer clinical intake, F2B laboratory workflow and F2C staff treatment are described below. SITB networking and clinical automation remain unimplemented.
+This backend implements the migration-managed persistence foundation, identity/authorization and administration, clinical intake, laboratory workflows, treatment Phase 3B, Phase 4A referral/transfer continuity, Phase 4B contact investigation/contact-driven TPT, Phase 4C manual monitoring/overdue alerts/IN_APP notifications, and Phase 5A local integration metadata/source-authority boundary. The F1 frontend foundation, F2A officer clinical intake, F2B laboratory workflow, F2C staff treatment and F2D staff continuity are described below. SITB networking and clinical automation remain unimplemented.
 
 ## Requirements
 
@@ -23,7 +23,9 @@ F2B adds [shared laboratory queue and contextual source/testing workflows](docs/
 
 ## Identity configuration and browser use
 
-F2C adds [staff treatment workflows](docs/FRONTEND_F2C_TREATMENT.md): contextual case episodes/start, treatment metadata, separate dose evidence, follow-up, adverse events and explicit final outcome. Live catalogs, independent permissions, parent/child ETag separation, session isolation and manual conflict review preserve existing treatment semantics. See the [approved architecture](docs/architecture/TBCall_Frontend_v1.3_F2C_Treatment.md) and [report](docs/FRONTEND_F2C_REPORT.md). Java, backend tests and V1–V17 remain unchanged. F2D and later UI remain deferred.
+F2C adds [staff treatment workflows](docs/FRONTEND_F2C_TREATMENT.md): contextual case episodes/start, treatment metadata, separate dose evidence, follow-up, adverse events and explicit final outcome. Live catalogs, independent permissions, parent/child ETag separation, session isolation and manual conflict review preserve existing treatment semantics. See the [approved architecture](docs/architecture/TBCall_Frontend_v1.3_F2C_Treatment.md) and [report](docs/FRONTEND_F2C_REPORT.md). Java, backend tests and V1–V17 remain unchanged. F2D continuity is documented below; later UI remain deferred.
+
+F2D adds [staff continuity](docs/FRONTEND_F2D_CONTINUITY.md): incoming/outgoing referrals, live preparation and explicit transfer, contacts/exact patient links, contact investigation transitions and explicit contact-driven TPT. Independent permissions, actual GET ETags, per-user abortable queries, manual conflict review and no clinical inference preserve existing contracts at base `584fdea9bbe420c771593d52e2028407c6738c9c`. See the [approved architecture](docs/architecture/TBCall_Frontend_v1.4_F2D_Continuity.md) and [report](docs/FRONTEND_F2D_REPORT.md). Java/backend tests/V1-V17 remain unchanged; F2E and later UI are deferred.
 
 Backend v1.5A.1 adds [F2A read contracts](docs/FRONTEND_BACKEND_READ_CONTRACTS.md): scoped diagnosis list/detail with ETag, active clinical reference catalogs and a safe active-facility directory. The [checkpoint report](docs/PHASE5A_1_REPORT.md) records verification. This addition preserves clinical writes, frontend F1 and V1–V17; it adds no migration or F2A UI.
 
