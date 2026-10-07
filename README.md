@@ -1,6 +1,6 @@
 # TBCall backend — Phase 5A integration boundary
 
-This backend implements the migration-managed persistence foundation, identity/authorization and administration, clinical intake, laboratory workflows, treatment Phase 3B, Phase 4A referral/transfer continuity, Phase 4B contact investigation/contact-driven TPT, Phase 4C manual monitoring/overdue alerts/IN_APP notifications, and Phase 5A local integration metadata/source-authority boundary. The F1 frontend foundation is described below. SITB networking and clinical automation remain unimplemented.
+This backend implements the migration-managed persistence foundation, identity/authorization and administration, clinical intake, laboratory workflows, treatment Phase 3B, Phase 4A referral/transfer continuity, Phase 4B contact investigation/contact-driven TPT, Phase 4C manual monitoring/overdue alerts/IN_APP notifications, and Phase 5A local integration metadata/source-authority boundary. The F1 frontend foundation and F2A officer clinical intake are described below. SITB networking and clinical automation remain unimplemented.
 
 ## Requirements
 
@@ -16,6 +16,8 @@ Set `TBCALL_DB_URL`, `TBCALL_DB_USER`, and `TBCALL_DB_PASSWORD` for a PostgreSQL
 The [Next.js frontend](frontend/README.md) lives under `frontend/` and requires Node.js 24.15–24.x and pnpm 11.19.0. From that directory run `pnpm install --frozen-lockfile`, copy `.env.example` to ignored `.env.local`, and run `pnpm dev`. Server-only `TBCALL_BACKEND_URL` points to the separately running backend. Browser calls use a fixed same-origin proxy; existing opaque-session cookies, CSRF, authorization and ETag contracts are preserved.
 
 F1 implements only `/login`, `/`, `/forbidden` and an Indonesian responsive identity/context shell. It has no clinical workflow screens, browser persistence or SITB calls. Frontend checks are `pnpm run lint`, `pnpm run typecheck`, `pnpm test`, and `pnpm run build`. See [FRONTEND_FOUNDATION.md](docs/FRONTEND_FOUNDATION.md), the [approved architecture](docs/architecture/TBCall_Frontend_v1.0_F1_Foundation.md) and [F1 report](docs/FRONTEND_F1_REPORT.md). Backend source and migrations are unchanged by this checkpoint.
+
+F2A adds [officer clinical intake](docs/FRONTEND_F2A_CLINICAL_INTAKE.md): masked worklist, transient new/existing-patient registration wizard, versioned patient/registration/diagnosis/case edits, stateless diagnosis recovery and explicit case confirmation. See the [approved F2A architecture](docs/architecture/TBCall_Frontend_v1.1_F2A_Clinical_Intake.md) and [F2A report](docs/FRONTEND_F2A_REPORT.md). This is frontend-only; Java, backend tests and V1–V17 remain unchanged. Laboratory and later UI are deferred.
 
 ## Identity configuration and browser use
 

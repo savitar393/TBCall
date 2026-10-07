@@ -1,0 +1,6 @@
+import type { ReferenceData } from "../types";
+import { Field, Group } from "./fields";
+export function CaseFields({ references }: { references: ReferenceData }) {
+  return <><Group title="Klasifikasi kasus"><Field name="caseCategoryCode" label="Kategori kasus" options={references.caseCategories} required /><Field name="drugResistancePatternCode" label="Pola resistansi obat" options={references.drugResistancePatterns} /><Field name="previousTreatmentCategoryCode" label="Kategori pengobatan sebelumnya" options={references.previousTreatmentCategories} required /><Field name="icd10Code" label="Kode ICD-10" /></Group>
+    <Group title="Data kasus"><Field name="healthWorker" label="Tenaga kesehatan" options={[{ code: "true", name: "Ya" }, { code: "false", name: "Tidak" }]} /><Field name="pregnancyStatusCode" label="Status kehamilan" options={references.pregnancyStatuses} /><Field name="heightCm" label="Tinggi (cm)" /><Field name="weightKg" label="Berat (kg)" /><Field name="bcgStatusCode" label="Status BCG" options={references.bcgStatuses} /><Field name="hivStatusCode" label="Status HIV" options={references.hivStatuses} /><Field name="dmStatusCode" label="Status DM" options={references.dmStatuses} /></Group></>;
+}

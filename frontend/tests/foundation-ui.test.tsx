@@ -168,13 +168,13 @@ describe("authenticated responsive identity shell", () => {
       expect(getComputedStyle(document.body).overflow).toBe("hidden");
     });
   });
-  it("has a skip link, main landmark and working account anchor without dead clinical routes", async () => {
+  it("has a skip link, main landmark and working account anchor alongside authorized clinical navigation", async () => {
     transport.mockResolvedValue(Response.json(fixtureUser)); renderPage(<HomePage />);
     await screen.findByRole("heading", { name: "Selamat datang" });
     expect(screen.getByRole("link", { name: "Lewati ke konten utama" })).toHaveAttribute("href", "#main-content");
     expect(screen.getByRole("main")).toHaveAttribute("id", "main-content");
     expect(screen.getByRole("heading", { name: "Akun & konteks akses" }).parentElement).toHaveAttribute("id", "akun");
-    for (const link of screen.getAllByRole("link")) expect(["/", "/#akun", "#main-content"]).toContain(link.getAttribute("href"));
+    for (const link of screen.getAllByRole("link")) expect(["/", "/#akun", "#main-content", "/patients"]).toContain(link.getAttribute("href"));
   });
   it("renders the forbidden route with a meaningful Indonesian heading and working home link", async () => {
     path.current = "/forbidden"; transport.mockResolvedValue(Response.json(fixtureUser));

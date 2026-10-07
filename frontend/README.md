@@ -1,6 +1,12 @@
-# TBCall frontend — F1 foundation
+# TBCall frontend — F1 foundation and F2A clinical intake
 
-Next.js App Router browser foundation for the existing Spring Boot backend. Implemented routes: `/login`, `/`, `/forbidden`. The dashboard shows only the signed-in account's identity and access context from `/me`.
+Next.js App Router frontend for the existing Spring Boot backend. F1 routes: `/login`, `/`, `/forbidden`. The dashboard shows the signed-in account's identity and access context from `/me`. F2A adds officer patient → registration → diagnosis → case intake using backend read contracts at commit `863ca8c23b15dd57f3fc85db9618a75537212609`.
+
+## F2A clinical intake
+
+Routes: `/patients`, `/intake/new`, `/patients/[patientId]`, `/registrations/[registrationId]`, `/diagnoses/[diagnosisId]`, `/cases/[caseId]`. Navigation/routes require the backend's explicit TB_OFFICER actor gate and independent permissions from `/me`; role names never imply grants. Forms use live catalogs, assigned registration facilities, exact transient identity confirmation, server ETags, dirty-only PATCH and explicit conflict review without replay. Queries are user-scoped, abortable and memory-only; no clinical browser persistence or sensitive page query/history/metadata/log state.
+
+See [F2A guide](../docs/FRONTEND_F2A_CLINICAL_INTAKE.md), [architecture](../docs/architecture/TBCall_Frontend_v1.1_F2A_Clinical_Intake.md) and [checkpoint report](../docs/FRONTEND_F2A_REPORT.md). Java source, backend tests and V1–V17 are untouched. Laboratory and all later workflow UI require separate approval.
 
 ## Requirements and commands
 
