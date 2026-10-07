@@ -1,0 +1,10 @@
+import type { z } from "@/lib/validation";
+import type * as s from "./schemas";
+export type References = z.infer<typeof s.referencesSchema>;
+export type Plan = z.infer<typeof s.planSchema>;
+export type Event = z.infer<typeof s.eventSchema>;
+export type Alert = z.infer<typeof s.alertSchema>;
+export type Notification = z.infer<typeof s.notificationSchema>;
+export type TargetType = "TREATMENT" | "TPT";
+export type Body = Record<string, unknown>;
+export type Dirty = Record<string, unknown>;

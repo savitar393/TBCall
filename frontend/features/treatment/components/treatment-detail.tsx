@@ -8,6 +8,7 @@ import { QueryState } from "@/features/clinical-intake/components/query-state";
 import { DisplayFields } from "@/features/clinical-intake/components/record-display";
 import { treatmentQueries } from "../queries";
 import { canTreatment } from "../permissions";
+import { canMonitoring } from "@/features/monitoring/permissions";
 import { DoseEvidence } from "./dose-evidence";
 import { TreatmentEditor,type Editor } from "./treatment-editor";
 export function TreatmentDetail({id}:{id:string}){
@@ -15,6 +16,7 @@ export function TreatmentDetail({id}:{id:string}){
  const [editor,setEditor]=useState<Editor|null>(null),[saved,setSaved]=useState(false);if(!t)return <QueryState query={query}/>;
  const ref=refs.data?.data,active=t.status==="ACTIVE",allow=!query.isError&&!query.isFetching,label=(code:string)=>ref?.treatmentStatuses.find(o=>o.code===code)?.name??code,select=(e:Editor)=>{setSaved(false);setEditor(e);};
  return <div className="space-y-5"><h1 className="text-2xl font-semibold">Detail pengobatan</h1><section aria-label="Ringkasan pengobatan" className="space-y-3 rounded-xl border bg-white p-5"><h2 className="font-semibold">{t.patient.displayName}</h2><p>{t.facility.name} · {t.regimen?.name??"Paduan tidak tersedia"} · {label(t.status)}</p><p>Mulai: {t.startDate} · Akhir rencana: {t.plannedEndDate??"—"} · Akhir aktual: {t.actualEndDate??"—"}</p>{canTreatment(user,"CASE_READ")&&<Link href={`/cases/${t.caseId}`} className="text-primary underline">Buka kasus</Link>} <Link href={`/cases/${t.caseId}/treatments`} className="text-primary underline">Episode pengobatan kasus</Link></section>
+ {canMonitoring(user,"TREATMENT_READ","MONITORING_READ")&&<Link className="text-primary underline" href={`/treatments/${id}/monitoring`}>Pemantauan</Link>}
  <Button variant="outline" disabled={query.isFetching} onClick={()=>void query.refetch()}>Muat ulang pengobatan</Button>{query.isError&&<QueryState query={query}/>} {refs.isError&&<QueryState query={refs}/>} {context.isError&&<QueryState query={context}/>}
  <section aria-label="Metadata pengobatan" className="space-y-3"><h2 className="font-semibold">Metadata pengobatan</h2><DisplayFields values={[["Berat awal (kg)",t.initialWeightKg],["Bentuk OAT",t.oatForm],["Sumber obat",t.drugSource],["Awal intensif",t.intensiveStartDate],["Akhir intensif",t.intensiveEndDate],["Awal lanjutan",t.continuationStartDate],["Akhir lanjutan",t.continuationEndDate],["Deskripsi paduan",t.regimenDescription],["Catatan",t.notes]]}/></section>
  <section aria-label="Obat pengobatan" className="space-y-3"><h2 className="font-semibold">Obat pengobatan</h2>{t.drugs.map(d=><article key={d.id} className="space-y-2 rounded-xl border bg-white p-4"><h3 className="font-semibold">{d.drugName}</h3><p>{d.treatmentPhase??"—"} · {d.doseValue??"—"} {d.doseUnit??""} · Frekuensi per minggu: {d.frequencyPerWeek??"—"}</p><p>{d.startDate} – {d.endDate??"—"} · Batch: {d.batchNumber??"—"} · Sumber: {d.drugSource??"—"}</p><p className="whitespace-pre-wrap break-words">{d.notes??"—"}</p></article>)}</section>

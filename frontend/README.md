@@ -1,4 +1,4 @@
-# TBCall frontend - F1 foundation and F2A-F2D staff workflows
+# TBCall frontend - F1 foundation and F2A-F2E staff workflows
 
 Next.js App Router frontend for the existing Spring Boot backend. F1 routes: `/login`, `/`, `/forbidden`. The dashboard shows the signed-in account's identity and access context from `/me`. F2A adds officer patient → registration → diagnosis → case intake using backend read contracts at commit `863ca8c23b15dd57f3fc85db9618a75537212609`.
 
@@ -24,11 +24,17 @@ See [F2C guide](../docs/FRONTEND_F2C_TREATMENT.md), [architecture](../docs/archi
 
 Routes: `/referrals`, `/referrals/[referralId]`, `/cases/[caseId]/referrals/new`, `/cases/[caseId]/contacts`, `/contacts/[contactId]`, `/contact-investigations`, `/contact-investigations/[investigationId]`, `/preventive-treatments/[tptId]`. Explicit TB_OFFICER and independent referral/contact/TPT permissions protect live preparation, fixed pre-treatment destination, exact ACTIVE episode transfer, contact snapshots/exact identity linking, explicit investigation completion and clinician-controlled TPT start/edit/closure. Actual GET ETags, session-scoped abortable queries and guarded commands preserve concurrency/privacy; no clinical inference or automatic write replay.
 
-See [F2D guide](../docs/FRONTEND_F2D_CONTINUITY.md), [architecture](../docs/architecture/TBCall_Frontend_v1.4_F2D_Continuity.md) and [report](../docs/FRONTEND_F2D_REPORT.md). Approved backend base: `584fdea9bbe420c771593d52e2028407c6738c9c`. Backend/tests/V1-V17 remain unchanged. F2E, portals, administration and SITB networking remain deferred.
+See [F2D guide](../docs/FRONTEND_F2D_CONTINUITY.md), [architecture](../docs/architecture/TBCall_Frontend_v1.4_F2D_Continuity.md) and [report](../docs/FRONTEND_F2D_REPORT.md). Approved backend base: `584fdea9bbe420c771593d52e2028407c6738c9c`. Backend/tests/V1-V17 remain unchanged. F2E is documented below; portals, administration and SITB networking remain deferred.
+
+## F2E staff monitoring, alerts and notifications
+
+Routes: `/treatments/[treatmentId]/monitoring`, `/preventive-treatments/[tptId]/monitoring`, `/monitoring-plans/[planId]`, `/alerts`, `/alerts/[alertId]`, `/notifications`. Explicit TB_OFFICER and independent read/manage/acknowledge/resolve permissions protect manually entered plans/events, staff alerts and current-user IN_APP notifications. Live references, actual detail GET ETags, awaited refetches and manual conflict review preserve backend state and source authority. No schedule, due date or clinical decision is inferred. Queries and commands are isolated by account/context and stay in memory; notification refresh is explicit.
+
+See [F2E guide](../docs/FRONTEND_F2E_MONITORING.md), [architecture](../docs/architecture/TBCall_Frontend_v1.5_F2E_Monitoring.md) and [report](../docs/FRONTEND_F2E_REPORT.md). Approved backend base: `24a922a067191f0788de444a054b2334355aac5e`. Backend/tests/V1–V17, scheduler/fanout and source-authority rules remain unchanged. F3/F4 and SITB networking remain deferred.
 
 ## Requirements and commands
 
-Use Node.js 24.15–24.x and **pnpm 11.19.0**. The verified runtime is Node.js 24.19.0. Use pnpm consistently; commit `pnpm-lock.yaml` when changing dependencies.
+Use Node.js 24.15–24.x and **pnpm 11.19.0**. The F2E verification runtime is Node.js 24.15.0. Use pnpm consistently; commit `pnpm-lock.yaml` when changing dependencies.
 
 From the repository root on Windows:
 
@@ -90,7 +96,7 @@ Navigation consumes the exact permission codes supplied by `/me`, with no role-n
 
 The Indonesian shell has a collapsible desktop sidebar, modal mobile drawer, identity/role/facility summaries and logout. Associated labels, visible focus, skip link, announced errors, reduced motion and 44px button/input touch targets are included. Only SELF link state and the supporter-case **count** are displayed; linked patient/case IDs are not rendered.
 
-There is no browser persistence, offline cache or service worker. F1 itself has no clinical workflows; F2A-F2D add only their approved workflows. KPIs, downstream workflow UI and SITB networking are deferred.
+There is no browser persistence, offline cache or service worker. F1 itself has no clinical workflows; F2A-F2E add only their approved workflows. KPIs, patient/supporter portals, administration and SITB networking are deferred.
 
 Each page response receives a fresh CSP nonce and `no-store`. Next applies the nonce to its scripts; dynamic rendering supports this [documented Next.js CSP approach](https://nextjs.org/docs/app/guides/content-security-policy). The initial document nonce also configures `get-nonce` for Radix's injected scroll-lock stylesheet and is retained across client navigation. Zod uses interpreted (`jitless`) validation so it never attempts a Function/eval capability probe. Production scripts have no unsafe-inline/unsafe-eval permission or broad wildcard. Same-origin connections, frame denial, nosniff, no-referrer and restrictive Permissions-Policy apply. API responses have a separate `default-src 'none'` sandbox CSP so an upstream HTML error cannot run scripts.
 

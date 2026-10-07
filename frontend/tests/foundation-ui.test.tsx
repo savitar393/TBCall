@@ -174,7 +174,9 @@ describe("authenticated responsive identity shell", () => {
     expect(screen.getByRole("link", { name: "Lewati ke konten utama" })).toHaveAttribute("href", "#main-content");
     expect(screen.getByRole("main")).toHaveAttribute("id", "main-content");
     expect(screen.getByRole("heading", { name: "Akun & konteks akses" }).parentElement).toHaveAttribute("id", "akun");
-    for (const link of screen.getAllByRole("link")) expect(["/", "/#akun", "#main-content", "/patients"]).toContain(link.getAttribute("href"));
+    expect(screen.getByRole("link", { name: "Notifikasi" })).toHaveAttribute("href", "/notifications");
+    expect(screen.queryByRole("link", { name: "Peringatan" })).not.toBeInTheDocument();
+    for (const link of screen.getAllByRole("link")) expect(["/", "/#akun", "#main-content", "/patients", "/notifications"]).toContain(link.getAttribute("href"));
   });
   it("renders the forbidden route with a meaningful Indonesian heading and working home link", async () => {
     path.current = "/forbidden"; transport.mockResolvedValue(Response.json(fixtureUser));
