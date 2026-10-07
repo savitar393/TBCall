@@ -9,6 +9,7 @@ import { clinicalNavigation } from "@/features/clinical-intake/permissions";
 import { laboratoryNavigation } from "@/features/laboratory/permissions";
 import { continuityNavigation } from "@/features/continuity/permissions";
 import { monitoringNavigation } from "@/features/monitoring/permissions";
+import { portalNavigation } from "@/features/portal/permissions";
 import { cn } from "@/lib/utils";
 import { Brand } from "./brand";
 import { ApiFeedback } from "./api-feedback";
@@ -22,7 +23,7 @@ export function AppShell({ children }: { children: ReactNode }) {
   const [drawer, setDrawer] = useState(false);
   if (!session.user) return null;
   const user = session.user;
-  const items = [...filterNavigation(foundationNavigation, user.permissions), ...clinicalNavigation(user), ...laboratoryNavigation(user), ...continuityNavigation(user), ...monitoringNavigation(user)];
+  const items = [...filterNavigation(foundationNavigation, user.permissions), ...clinicalNavigation(user), ...laboratoryNavigation(user), ...continuityNavigation(user), ...monitoringNavigation(user), ...portalNavigation(user)];
   const identity = user.email ?? user.phone ?? "Pengguna TBCall";
   const navigation = (mobile = false) => <nav id={mobile ? "mobile-nav" : "desktop-nav"} aria-label={`Navigasi utama ${mobile ? "seluler" : "desktop"}`} className="space-y-2">
     {items.map((item) => {
@@ -39,7 +40,7 @@ export function AppShell({ children }: { children: ReactNode }) {
       <Brand compact={collapsed} />
       <div className="mt-10">{navigation()}</div>
       <div className="mt-auto space-y-5 pt-8">
-        {!collapsed && <div className="rounded-xl bg-background p-4"><p className="text-xs font-medium uppercase tracking-wider text-muted-foreground">Fasilitas aktif</p><p className="mt-2 flex items-start gap-2 text-sm"><Building2 aria-hidden="true" className="mt-0.5 size-4 shrink-0" />{user.activeFacilities[0]?.name ?? "Belum ada fasilitas aktif"}</p>{user.activeFacilities.length > 1 && <p className="mt-1 text-xs text-muted-foreground">dan {user.activeFacilities.length - 1} fasilitas lainnya</p>}</div>}
+        {!collapsed && user.activeFacilities.length > 0 && <div className="rounded-xl bg-background p-4"><p className="text-xs font-medium uppercase tracking-wider text-muted-foreground">Fasilitas aktif</p><p className="mt-2 flex items-start gap-2 text-sm"><Building2 aria-hidden="true" className="mt-0.5 size-4 shrink-0" />{user.activeFacilities[0]?.name}</p>{user.activeFacilities.length > 1 && <p className="mt-1 text-xs text-muted-foreground">dan {user.activeFacilities.length - 1} fasilitas lainnya</p>}</div>}
         <Button variant="ghost" className="w-full" aria-controls="desktop-nav" aria-expanded={!collapsed} aria-label={collapsed ? "Perluas navigasi" : "Ciutkan navigasi"} onClick={() => setCollapsed(!collapsed)}>
           {collapsed ? <ChevronRight aria-hidden="true" /> : <><ChevronLeft aria-hidden="true" /><span>Ciutkan menu</span></>}
         </Button>

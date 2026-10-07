@@ -1,0 +1,16 @@
+import type { Me } from "@/lib/auth/types";
+export const caseId = "22222222-2222-4222-8222-222222222222", id = "11111111-1111-4111-8111-111111111111";
+export const date = "2026-10-07", time = "2026-10-07T10:00:00+07:00";
+export const facility = { id, name: "Fasilitas contoh" };
+export const patient: Me = { id: "portal-patient", email: "patient@example.test", phone: null, status: "ACTIVE", roles: [{ code: "PATIENT", name: "Pasien" }], permissions: ["PATIENT_READ", "TREATMENT_READ", "ADHERENCE_READ", "ADHERENCE_RECORD", "FOLLOW_UP_READ", "TPT_READ", "MONITORING_READ", "ALERT_READ", "ALERT_ACKNOWLEDGE", "NOTIFICATION_READ_SELF"], activeFacilities: [], patientLink: { id, patientId: id, version: 0 }, supporterCaseIds: [] };
+export const supporter: Me = { ...patient, id: "portal-supporter", roles: [{ code: "TREATMENT_SUPPORTER", name: "Pendamping" }], patientLink: null, supporterCaseIds: [caseId] };
+export const selfPatient = { patientId: id, fullName: "Nama pasien privat", sex: { code: "P", name: "Perempuan" }, birthPlace: null, birthDate: null, birthDateUnknown: true, phone: null, address: null, registrations: [], cases: [] };
+export const dose = { id, scheduledDate: date, recordedAt: time, status: "MISSED", administrationMode: null, source: "PATIENT" };
+export const treatment = { id, status: "ACTIVE", regimen: { code: "R", name: "Regimen tercatat" }, startDate: date, plannedEndDate: null, actualEndDate: null, drugs: [], recentDoseEvents: [dose], outcome: null, adverseEvents: [] };
+export const supporterTreatment = { id, caseId, patientDisplayName: "Nama pasien privat", status: "ACTIVE", regimen: treatment.regimen, startDate: date, plannedEndDate: null, drugs: [], adherenceSummary: { totalReports: 2, reportsByStatus: { MISSED: 2 } }, recentDoseEvents: [dose] };
+export const followUp = { id, treatmentId: id, followUpType: "CLINICAL_REVIEW", scheduledAt: time, completedAt: null, facility, status: "SCHEDULED" };
+export const tpt = { status: "ACTIVE", regimenDisplay: "TPT tercatat", regimenDescription: null, startDate: date, plannedEndDate: null, actualEndDate: null, durationValue: null, durationUnit: null, facility };
+export const event = { targetType: "TREATMENT", eventType: "CLINICAL_REVIEW", scheduledAt: time, dueAt: null, status: "SCHEDULED", completedAt: null };
+export const alert = { id, version: 7, alertType: "MONITORING_OVERDUE", severity: "WARNING", status: "OPEN", triggeredAt: time, dueAt: null, eventType: "CLINICAL_REVIEW", message: "Jadwal pemantauan tercatat terlambat.", acknowledged: false };
+export const notification = { id, version: 91, alertId: id, channel: "IN_APP", status: "DELIVERED", scheduledAt: time, deliveredAt: time, readAt: null, alertType: "MONITORING_OVERDUE", severity: "WARNING" };
+export const page = <T,>(item: T) => ({ content: [item], page: 0, size: 20, totalElements: 1 });
