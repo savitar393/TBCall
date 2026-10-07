@@ -1,0 +1,3 @@
+import { ApiFeedback } from "@/components/api-feedback";
+import type { ApiError } from "@/lib/api/problem";
+export function TreatmentFeedback({error}:{error:ApiError|null}){if(error?.problem.status===409&&error.kind!=="stale"&&error.kind!=="source-authority")return <div role="alert" className="rounded-xl border bg-amber-50 p-4"><p className="font-semibold">{error.problem.code==="DOSE_EVENT_ALREADY_RECORDED"?"Bukti dosis sudah tercatat":"Status pengobatan telah berubah"}</p><p>Tinjau data terbaru sebelum mengirim kembali. Catatan yang ada tidak ditimpa.</p></div>;return <ApiFeedback error={error}/>;}

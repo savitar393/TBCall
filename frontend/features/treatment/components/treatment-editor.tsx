@@ -1,0 +1,24 @@
+"use client";
+import { useMemo } from "react";
+import { useSession } from "@/lib/auth/session";
+import type { TreatmentDetail,References } from "../types";
+import { canTreatment } from "../permissions";
+import { treatmentApi } from "../api";
+import { treatmentChildEtagFromVersion } from "../etag";
+import * as v from "../forms/values";
+import * as m from "../forms/mappers";
+import { MetadataFields,DoseFields,ScheduleFields,CompleteFields,AdverseFields,OutcomeFields } from "../forms/fields";
+import { TreatmentForm } from "./treatment-form";
+export type Editor={kind:"metadata"|"dose"|"schedule"|"adverse"|"outcome"}|{kind:"complete"|"updateAdverse";id:string};
+export function TreatmentEditor({editor,treatment,etag,references,caseActive,available,onSuccess,onClose}:{editor:Editor;treatment:TreatmentDetail;etag?:string;references?:References;caseActive:boolean;available:boolean;onSuccess():void;onClose():void}){
+ const {user}=useSession(),active=treatment.status==="ACTIVE",a=editor.kind==="updateAdverse"?treatment.adverseEvents.find(a=>a.id===editor.id):undefined,f=editor.kind==="complete"?treatment.followUps.find(f=>f.id===editor.id):undefined;
+ const metadata=useMemo(()=>v.metadataValues(treatment),[treatment]),dose=useMemo(()=>v.doseValues(),[]),schedule=useMemo(()=>v.scheduleValues(),[]),complete=useMemo(()=>v.completeValues(),[]),adverse=useMemo(()=>v.adverseValues(a),[a]),outcome=useMemo(()=>v.outcomeValues(),[]);
+ const common={caseId:treatment.caseId,onSuccess,onClose};
+ if(editor.kind==="metadata")return <TreatmentForm {...common} initial={metadata} schema={v.metadataFormSchema(treatment.startDate)} available={available&&active&&canTreatment(user,"TREATMENT_WRITE")&&!!etag} submitLabel="Simpan metadata" save={(values,dirty,signal)=>treatmentApi.update(treatment.id,m.metadataPatch(values,dirty),etag!,signal)}><MetadataFields/></TreatmentForm>;
+ if(editor.kind==="schedule")return <TreatmentForm {...common} initial={schedule} schema={v.scheduleFormSchema.refine(values=>!values.facilityId||!!user?.activeFacilities.some(f=>f.id===values.facilityId),{path:["facilityId"],message:"Pilih fasilitas aktif yang ditugaskan."})} available={available&&active&&canTreatment(user,"FOLLOW_UP_WRITE")&&!!etag} submitLabel="Simpan jadwal" save={(values,_,signal)=>treatmentApi.schedule(treatment.id,m.scheduleInput(values),etag!,signal)}><ScheduleFields facilities={user!.activeFacilities}/></TreatmentForm>;
+ if(editor.kind==="complete")return <TreatmentForm {...common} initial={complete} schema={v.completeFormSchema(f?.scheduledAt??"")} available={available&&active&&canTreatment(user,"FOLLOW_UP_WRITE","FOLLOW_UP_READ")&&f?.status==="SCHEDULED"&&!!user?.activeFacilities.some(scope=>scope.id===f.facility?.id)} submitLabel="Simpan penyelesaian" save={(values,_,signal)=>treatmentApi.complete(f!.id,m.completeInput(values),treatmentChildEtagFromVersion(f!.version),signal)}><CompleteFields/></TreatmentForm>;
+ if(editor.kind==="adverse"||editor.kind==="updateAdverse")return <TreatmentForm {...common} initial={adverse} schema={v.adverseFormSchema(a)} available={available&&canTreatment(user,"ADVERSE_EVENT_WRITE")&&(editor.kind==="adverse"?active:!!a&&canTreatment(user,"ADVERSE_EVENT_READ"))} submitLabel="Simpan kejadian" save={(values,dirty,signal)=>editor.kind==="adverse"?treatmentApi.adverse(treatment.id,m.adverseInput(values),signal):treatmentApi.updateAdverse(a!.id,m.adversePatch(values,dirty,a),treatmentChildEtagFromVersion(a!.version),signal)}><AdverseFields editing={editor.kind==="updateAdverse"}/></TreatmentForm>;
+ if(!references)return <p role="status">Referensi tindakan belum tersedia.</p>;
+ if(editor.kind==="dose")return <TreatmentForm {...common} initial={dose} schema={v.doseFormSchema(treatment.startDate).refine(values=>references.staffDoseStatuses.some(o=>o.code===values.status)&&(!values.administrationMode||references.administrationModes.some(o=>o.code===values.administrationMode)),{path:["status"],message:"Pilih opsi bukti dari referensi."})} available={available&&active&&canTreatment(user,"ADHERENCE_RECORD")} submitLabel="Simpan bukti dosis" save={(values,_,signal)=>treatmentApi.dose(treatment.id,m.doseInput(values),signal)}><DoseFields references={references}/></TreatmentForm>;
+ return <TreatmentForm {...common} initial={outcome} confirmationField="confirmed" schema={v.outcomeFormSchema(treatment.startDate).refine(values=>references.outcomeCodes.some(o=>o.code===values.outcomeCode),{path:["outcomeCode"],message:"Pilih kode hasil akhir dari referensi aktif."})} available={available&&active&&caseActive&&!treatment.outcome&&canTreatment(user,"OUTCOME_WRITE","OUTCOME_READ")&&!!etag} submitLabel="Simpan hasil akhir" save={(values,_,signal)=>treatmentApi.outcome(treatment.id,m.outcomeInput(values),etag!,signal)}><OutcomeFields references={references}/></TreatmentForm>;
+}

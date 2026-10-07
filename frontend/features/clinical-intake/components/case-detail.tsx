@@ -7,6 +7,7 @@ import { Button } from "@/components/ui/button";
 import { clinicalApi } from "../api";
 import { clinicalQueries } from "../queries";
 import { canClinical } from "../permissions";
+import { canTreatment } from "@/features/treatment/permissions";
 import { caseFormSchema, caseValues } from "../forms/values";
 import { casePatch } from "../forms/mappers";
 import { CaseFields } from "../forms/case-fields";
@@ -22,6 +23,7 @@ export function CaseDetail({ id }: { id: string }) {
   const c = query.data.data; const ref = references.data?.data;
   const label = (group: "caseCategories" | "drugResistancePatterns" | "pregnancyStatuses" | "bcgStatuses" | "previousTreatmentCategories" | "hivStatuses" | "dmStatuses", code: string | null) => ref?.[group].find(o => o.code === code)?.name ?? code;
   return <>{references.isError && references.data && <QueryState query={references} />}<h1 className="text-2xl font-semibold">Detail kasus</h1><WorklistLink /><PatientHeading patientId={c.patient.patientId} name={c.patient.fullName} />
+    {canTreatment(user) && <Link className="inline-block text-primary underline" href={`/cases/${id}/treatments`}>Pengobatan</Link>}
     {canClinical(user, "LAB_REQUEST_WRITE") && c.status === "ACTIVE" && <Link className="inline-block text-primary underline" href={`/laboratory/requests/new/case/${id}`}>Buat permintaan laboratorium</Link>}
     <DisplayFields values={[["Status", ref?.caseStatusFilters.find(o => o.code === c.status)?.name ?? c.status], ["Fasilitas saat ini", c.currentFacility.name], ["Kategori kasus", label("caseCategories", c.caseCategoryCode)], ["Pola resistansi obat", label("drugResistancePatterns", c.drugResistancePatternCode)], ["Tenaga kesehatan", c.healthWorker], ["Kehamilan", label("pregnancyStatuses", c.pregnancyStatusCode)], ["Tinggi (cm)", c.heightCm], ["Berat (kg)", c.weightKg], ["BCG", label("bcgStatuses", c.bcgStatusCode)], ["Pengobatan sebelumnya", label("previousTreatmentCategories", c.previousTreatmentCategoryCode)], ["HIV", label("hivStatuses", c.hivStatusCode)], ["DM", label("dmStatuses", c.dmStatusCode)], ["ICD-10", c.icd10Code], ["Dikonfirmasi pada", c.confirmedAt]]} />
     <section className="space-y-2 rounded-xl border bg-white p-5"><h2 className="font-semibold">Registrasi dan diagnosis konfirmasi</h2><p className="text-sm">{c.registration.registrationDate} · {c.registration.facility.name} · {c.registration.status}</p>{canClinical(user, "REGISTRATION_READ") && <Link className="text-sm text-primary underline" href={`/registrations/${c.registration.id}`}>Buka registrasi</Link>}{c.confirmingDiagnosis && <><p className="text-sm">{c.confirmingDiagnosis.diagnosisDate} · {c.confirmingDiagnosis.anatomicalSite?.name} · {c.confirmingDiagnosis.diagnosisType?.name}</p>{canClinical(user, "DIAGNOSIS_READ") && <Link className="inline-block text-sm text-primary underline" href={`/diagnoses/${c.confirmingDiagnosis.id}`}>Buka diagnosis</Link>}</>}</section>

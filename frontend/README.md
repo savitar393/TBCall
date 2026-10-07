@@ -1,4 +1,4 @@
-# TBCall frontend — F1 foundation, F2A intake and F2B laboratory
+# TBCall frontend — F1 foundation, F2A intake, F2B laboratory and F2C treatment
 
 Next.js App Router frontend for the existing Spring Boot backend. F1 routes: `/login`, `/`, `/forbidden`. The dashboard shows the signed-in account's identity and access context from `/me`. F2A adds officer patient → registration → diagnosis → case intake using backend read contracts at commit `863ca8c23b15dd57f3fc85db9618a75537212609`.
 
@@ -12,7 +12,13 @@ See [F2A guide](../docs/FRONTEND_F2A_CLINICAL_INTAKE.md), [architecture](../docs
 
 Routes: `/laboratory`, `/laboratory/requests/[requestId]`, `/laboratory/requests/new/registration/[registrationId]`, `/laboratory/requests/new/case/[caseId]`. The shared queue requires officer/lab staff plus LAB_REQUEST_READ. Officer source actions and lab testing actions independently check permissions and assigned requesting/testing facilities. Result rendering requires LAB_RESULT_READ. Creation uses the existing contextual owner, live reasons/test types and explicit testing facility selection. Specimen/cancel use actual request ETags; child receive/result/correction use the laboratory-only published numeric versions. Writes refetch authoritative state, preserve drafts on conflicts, require manual review and never replay.
 
-See [F2B guide](../docs/FRONTEND_F2B_LABORATORY.md), [architecture](../docs/architecture/TBCall_Frontend_v1.2_F2B_Laboratory.md) and [report](../docs/FRONTEND_F2B_REPORT.md). Contracts use backend base `e13e3e3c934298d9a76827b40f2d934d21eb6bfe`; strict schemas, per-user abortable queries and snapshot-guarded memory-only commands preserve privacy. Browser timezone is explicit. Backend/tests/V1–V17 remain unchanged. F2C and later UI require separate approval.
+See [F2B guide](../docs/FRONTEND_F2B_LABORATORY.md), [architecture](../docs/architecture/TBCall_Frontend_v1.2_F2B_Laboratory.md) and [report](../docs/FRONTEND_F2B_REPORT.md). Contracts use backend base `e13e3e3c934298d9a76827b40f2d934d21eb6bfe`; strict schemas, per-user abortable queries and snapshot-guarded memory-only commands preserve privacy. Browser timezone is explicit. Backend/tests/V1–V17 remain unchanged. F2D and later UI require separate approval.
+
+## F2C staff treatment
+
+Routes: `/cases/[caseId]/treatments` and `/treatments/[treatmentId]`, with a contextual `Pengobatan` link from case detail. Explicit TB_OFFICER + TREATMENT_READ and independent action permissions protect live-catalog start, metadata editing, separate dose evidence, follow-up schedule/complete, adverse create/edit and explicitly confirmed final outcome. Actual treatment ETags and published child versions are kept separate; commands await refetch and never retry or infer clinical decisions. Backend base: `6afcfe697ceebfe2ebfd2edbd6030815e005a2bd`.
+
+See [F2C guide](../docs/FRONTEND_F2C_TREATMENT.md), [architecture](../docs/architecture/TBCall_Frontend_v1.3_F2C_Treatment.md) and [report](../docs/FRONTEND_F2C_REPORT.md). All treatment queries are per-user and abortable; clinical drafts remain memory-only. Backend/tests/V1–V17 remain unchanged. F2D and later workflows remain deferred.
 
 ## Requirements and commands
 

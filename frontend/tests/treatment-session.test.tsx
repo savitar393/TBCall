@@ -1,0 +1,40 @@
+import { act,screen,waitFor } from "@testing-library/react";
+import userEvent from "@testing-library/user-event";
+import { QueryClient,useQueryClient } from "@tanstack/react-query";
+import { expect,it,vi } from "vitest";
+import { useSession } from "@/lib/auth/session";
+import { treatmentQueries } from "@/features/treatment/queries";
+import { treatmentOfficer,treatmentDetail,treatmentIds,treatmentReferences } from "./treatment-fixtures";
+import { treatmentBackend,renderTreatment,routing,failure } from "./treatment-harness";
+import { ids } from "./clinical-fixtures";
+vi.mock("next/navigation",()=>({useRouter:()=>routing,usePathname:()=>"/treatments/id"}));
+it.each(["references","episodes","detail","doses","caseContext"] as const)("%s query uses actor key and consumes AbortSignal",async name=>{
+ const client=new QueryClient({defaultOptions:{queries:{retry:false}}}),calls=treatmentBackend();
+ const options={references:treatmentQueries.references(treatmentOfficer.id),episodes:treatmentQueries.episodes(treatmentOfficer.id,ids.tbCase),detail:treatmentQueries.detail(treatmentOfficer.id,treatmentIds.treatment),doses:treatmentQueries.doses(treatmentOfficer.id,treatmentIds.treatment),caseContext:treatmentQueries.caseContext(treatmentOfficer.id,ids.tbCase)}[name];
+ expect(options.queryKey.slice(0,2)).toEqual(["treatment",treatmentOfficer.id]);await client.fetchQuery(options as ReturnType<typeof treatmentQueries.references>);expect(calls[0].options.signal).toBeInstanceOf(AbortSignal);client.clear();
+});
+it("late old-account treatment GET is aborted and absent from new account cache and screen",async()=>{
+ let changed=false,resolve!:(r:Response)=>void,signal:AbortSignal|undefined,client!:QueryClient;
+ treatmentBackend(c=>c.url.endsWith("/me")?Response.json(changed?{...treatmentOfficer,id:"new-account"}:treatmentOfficer):c.url.endsWith(treatmentIds.treatment)?changed?Response.json({...treatmentDetail,patient:{...treatmentDetail.patient,displayName:"Pasien akun baru"}}):(signal=c.options.signal as AbortSignal,new Promise<Response>(r=>{resolve=r;})):undefined);
+ function Switch(){const session=useSession();client=useQueryClient();return <button onClick={()=>{changed=true;void session.refresh();}}>Ganti akun</button>;}
+ await renderTreatment("detail",treatmentIds.treatment,<Switch/>);await waitFor(()=>expect(resolve).toBeDefined());await userEvent.click(screen.getByText("Ganti akun"));await screen.findByText("Pasien akun baru");expect(signal?.aborted).toBe(true);
+ await act(async()=>{resolve(Response.json(treatmentDetail));await Promise.resolve();});expect(screen.queryByText(treatmentDetail.patient.displayName)).not.toBeInTheDocument();expect(client.getQueryCache().findAll({queryKey:["treatment",treatmentOfficer.id]})).toHaveLength(0);
+});
+it.each([false,true])("late old-account treatment command (error=%s) cannot invalidate or navigate in new session",async fails=>{
+ let changed=false,resolve!:(r:Response)=>void,signal:AbortSignal|undefined,client!:QueryClient;
+ const calls=treatmentBackend(c=>c.url.endsWith("/me")?Response.json(changed?{...treatmentOfficer,id:"new-account"}:treatmentOfficer):c.options.method==="PATCH"?(signal=c.options.signal as AbortSignal,new Promise<Response>(r=>{resolve=r;})):undefined);
+ function Switch(){const session=useSession();client=useQueryClient();return <button onClick={()=>{changed=true;void session.refresh().then(()=>client.setQueryData(["treatment","new-account","sentinel"],"new-data"));}}>Ganti akun</button>;}
+ await renderTreatment("detail",treatmentIds.treatment,<Switch/>);await userEvent.click(await screen.findByRole("button",{name:"Ubah metadata"}));await userEvent.type(screen.getByLabelText("Bentuk OAT"),"Private old draft");await userEvent.click(screen.getByRole("button",{name:"Simpan metadata"}));await waitFor(()=>expect(resolve).toBeDefined());await userEvent.click(screen.getByText("Ganti akun"));await screen.findByRole("button",{name:"Ubah metadata"});expect(signal?.aborted).toBe(true);const count=calls.length;routing.push.mockClear();routing.replace.mockClear();
+ await act(async()=>{resolve(fails?failure(401,"AUTHENTICATION_REQUIRED"):Response.json(treatmentDetail));await Promise.resolve();});expect(calls).toHaveLength(count);expect(client.getQueryData(["treatment","new-account","sentinel"])).toBe("new-data");expect(client.getMutationCache().getAll()).toHaveLength(0);expect(routing.push).not.toHaveBeenCalled();expect(routing.replace).not.toHaveBeenCalled();expect(screen.queryByText(/Perubahan tersimpan/)).not.toBeInTheDocument();
+});
+it("clinical drafts and failures never enter persistence, logs, history, metadata, chrome or mutation cache",async()=>{
+ const storage=vi.spyOn(Storage.prototype,"setItem"),indexed=vi.fn();vi.stubGlobal("indexedDB",{open:indexed});const logs=[vi.spyOn(console,"log"),vi.spyOn(console,"warn"),vi.spyOn(console,"info"),vi.spyOn(console,"error")],push=vi.spyOn(history,"pushState"),replace=vi.spyOn(history,"replaceState"),title=document.title;let client!:QueryClient;
+ function Probe(){client=useQueryClient();return null;}treatmentBackend(c=>c.options.method==="PATCH"?failure(409,"SOURCE_AUTHORITY_CONFLICT"):undefined);await renderTreatment("detail",treatmentIds.treatment,<Probe/>);await userEvent.click(await screen.findByRole("button",{name:"Ubah metadata"}));await userEvent.type(screen.getByLabelText("Catatan pengobatan"),"Sensitive draft");await userEvent.click(screen.getByRole("button",{name:"Simpan metadata"}));await screen.findByText("Data dikendalikan sumber eksternal");
+ expect(storage).not.toHaveBeenCalled();expect(indexed).not.toHaveBeenCalled();expect(push).not.toHaveBeenCalled();expect(replace).not.toHaveBeenCalled();for(const log of logs)expect(log).not.toHaveBeenCalled();expect(document.title).toBe(title);expect(client.getMutationCache().getAll()).toHaveLength(0);expect(screen.getByRole("navigation")).not.toHaveTextContent(treatmentDetail.patient.displayName);
+});
+it("malformed null-category reference response is safe and never permits a start",async()=>{treatmentBackend(c=>c.url.endsWith("/treatment-reference-data")?Response.json({...treatmentReferences,regimens:[{...treatmentReferences.regimens[0],caseCategoryCode:null}]}):undefined);await renderTreatment("episodes",ids.tbCase);await screen.findAllByText("Layanan belum tersedia");expect(screen.queryByRole("button",{name:"Mulai pengobatan"})).not.toBeInTheDocument();});
+it.each([false,true])("late treatment start after account switch cannot navigate (error=%s)",async fails=>{
+ let changed=false,resolve!:(r:Response)=>void,signal:AbortSignal|undefined;const calls=treatmentBackend(c=>c.url.endsWith("/me")?Response.json(changed?{...treatmentOfficer,id:"new-account"}:treatmentOfficer):c.options.method==="POST"?(signal=c.options.signal as AbortSignal,new Promise<Response>(r=>{resolve=r;})):undefined);
+ function Switch(){const session=useSession();return <button onClick={()=>{changed=true;void session.refresh();}}>Ganti akun</button>;}
+ await renderTreatment("episodes",ids.tbCase,<Switch/>);await userEvent.click(await screen.findByRole("button",{name:"Mulai pengobatan"}));await userEvent.selectOptions(screen.getByLabelText(/Paduan pengobatan/),"SO");await userEvent.type(screen.getByLabelText("Tanggal mulai pengobatan *"),"2026-09-04");await userEvent.selectOptions(screen.getByLabelText(/Obat 1/),"H");await userEvent.type(screen.getByLabelText("Tanggal awal obat 1 *"),"2026-09-04");await userEvent.click(screen.getByRole("button",{name:"Simpan pengobatan"}));await waitFor(()=>expect(resolve).toBeDefined());await userEvent.click(screen.getByText("Ganti akun"));await screen.findByRole("button",{name:"Mulai pengobatan"});expect(signal?.aborted).toBe(true);const count=calls.length;routing.push.mockClear();routing.replace.mockClear();await act(async()=>{resolve(fails?failure(401,"AUTHENTICATION_REQUIRED"):Response.json(treatmentDetail));await Promise.resolve();});expect(calls).toHaveLength(count);expect(routing.push).not.toHaveBeenCalled();expect(routing.replace).not.toHaveBeenCalled();
+});
