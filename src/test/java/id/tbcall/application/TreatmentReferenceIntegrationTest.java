@@ -115,6 +115,20 @@ class TreatmentReferenceIntegrationTest {
         } finally { jdbc.update("delete from regimens where code like '%_REF_%'"); }
     }
 
+    @Test void activeTreatmentRegimenWithoutCategoryIsExcluded() throws Exception {
+        signIn("TB_OFFICER");
+        jdbc.update("insert into regimens(code,name,regimen_kind,tb_case_category_code,active) values ('NULL_CATEGORY_REF','Uncategorized treatment','TB_TREATMENT',null,true)");
+        try {
+            JsonNode catalog=call(get(PATH),null,200).path("regimens");
+            List<String> codes=new ArrayList<>();
+            for(JsonNode entry:catalog) {
+                codes.add(entry.path("code").asText());
+                assertThat(entry.path("caseCategoryCode").isNull()).isFalse();
+            }
+            assertThat(codes).contains("SO_6M_2HRZE_4HR").doesNotContain("NULL_CATEGORY_REF");
+        } finally { jdbc.update("delete from regimens where code='NULL_CATEGORY_REF'"); }
+    }
+
     @ParameterizedTest @CsvSource({"drugs,drugs","outcomeCodes,treatment_outcome_codes"})
     void codeNameCatalogsAreActiveOnlyAndSorted(String group,String table) throws Exception {
         signIn("TB_OFFICER");

@@ -40,7 +40,7 @@ public class TreatmentReferenceService {
     private List<RegimenOption> regimens() {
         return em.createQuery("""
                 select r.code,r.name,r.tbCaseCategoryCode from Regimen r
-                where r.active=true and r.regimenKind='TB_TREATMENT'
+                where r.active=true and r.regimenKind='TB_TREATMENT' and r.tbCaseCategoryCode is not null
                 order by r.tbCaseCategoryCode,r.code
                 """,Object[].class).getResultList().stream()
                 .map(row -> new RegimenOption((String)row[0],(String)row[1],(String)row[2])).toList();

@@ -13,7 +13,7 @@
 
 `GET /api/v1/treatment-reference-data` calls the existing ClinicalAccess officer gate with TREATMENT_READ. AuthorizationResolver supplies only active facility assignments. TB_OFFICER role, independent permission and active facility are all required; PATIENT_READ is not required. Wrong roles with artificial TREATMENT_READ are denied.
 
-Explicit DTOs return seven groups: regimens, drugs, outcomeCodes, treatmentStatuses, staffDoseStatuses, administrationModes, followUpStatuses. Active TB_TREATMENT regimens expose only code/name/caseCategoryCode, sorted category/code. Active drugs/outcomes expose only code/name, sorted code. Four fixed lists match the exact approved codes, Indonesian labels and order; they are TBCall workflow labels, not SITB physical/API codes.
+Explicit DTOs return seven groups: regimens, drugs, outcomeCodes, treatmentStatuses, staffDoseStatuses, administrationModes, followUpStatuses. Active TB_TREATMENT regimens with a non-null case category expose only code/name/caseCategoryCode, sorted category/code. Active drugs/outcomes expose only code/name, sorted code. Four fixed lists match the exact approved codes, Indonesian labels and order; they are TBCall workflow labels, not SITB physical/API codes.
 
 Scalar projections exclude PREVENTIVE/inactive regimens, UUIDs, descriptions, effective dates, regimen composition/dosing/frequency recommendations, strength/dosage form, clinical data and SITB mappings. No success audit or clinical/persistence write side effect. No write-scope expansion, invented free-text catalogs or clinical inference.
 
@@ -28,7 +28,7 @@ Scalar projections exclude PREVENTIVE/inactive regimens, UUIDs, descriptions, ef
 7. `docs/architecture/TBCall_Backend_v1.5A.3_Frontend_F2C_Treatment_Reference.md` — supplied approved architecture.
 8. `README.md` — reference checkpoint link.
 
-## Tests and verification
+## Original v1.5A.3 tests and verification
 
 Existing backend baseline: 973 tests. Preflight existing LaboratoryReferenceIntegrationTest: 29 tests, 0 failures, 0 errors, 0 skipped; BUILD SUCCESS; 01:05 min; finished 2026-10-07T16:30:15+07:00. Docker Desktop 29.8.0, Java 21.0.12.1 and Maven wrapper 3.9.16 verified.
 
@@ -67,8 +67,30 @@ The clean run passed all 973 previous tests plus 24 new treatment-reference test
 
 ## Implementation judgments and F2C handoff
 
-The supplied approved architecture is the design. This bounded addition follows the existing service/controller/DTO reference pattern in the current Windows checkout on a dedicated branch. Reusing ClinicalAccess retains the exact existing active-facility semantics; no separate permission policy is introduced. Regimen caseCategoryCode maps the existing tbCaseCategoryCode field; filtering uses active/kind only, without inferring eligibility from effective dates. Explicit scalar projections prevent entity fields/relationships from leaking.
+The supplied approved architecture is the design. This bounded addition follows the existing service/controller/DTO reference pattern in the current Windows checkout on a dedicated branch. Reusing ClinicalAccess retains the exact existing active-facility semantics; no separate permission policy is introduced. Regimen caseCategoryCode maps the existing tbCaseCategoryCode field; filtering uses active/kind and the v1.5A.3.1 non-null category guard, without inferring eligibility from effective dates. Explicit scalar projections prevent entity fields/relationships from leaking.
 
 No known backend contract blocker before F2C. The UI remains a separate implementation request and must treat these values as options only, retaining backend write/category/active-reference validation. No treatment, adherence, follow-up, adverse-event or outcome behavior was redesigned.
 
 Reviewer set aside medical correctness of unchanged baseline catalog names/content, deferred F2C UI, the unrelated logo (preservation checked), and clean-suite completion (still running during review, subsequently verified above). These remain governed by the approved catalog contract, the explicit task boundary, exclusion/hash checks and the mandatory clean gate respectively. Cost if the boundary assumption is wrong: catalog clinical governance or future UI acceptance needs separate review; no clinical recommendation is supplied by this endpoint. No deferred findings.
+
+## v1.5A.3.1 review correction
+
+- Correction base: `923d1708171ca14d67256e51be6372ee440ecf4a`; same `codex/backend-f2c-treatment-reference` branch, no merge.
+- Added only `r.tbCaseCategoryCode is not null` to the existing active TB_TREATMENT regimen query. Category/code ordering, DTO shape, authorization, other reference groups and all write behavior are unchanged.
+- Added PostgreSQL/Spring regression `activeTreatmentRegimenWithoutCategoryIsExcluded`: inserts an active TB_TREATMENT row with null category, confirms it is absent from the endpoint and a valid categorized regimen remains present; exact fixture cleanup runs in `finally`.
+- RED: the new regression failed against the original query because the endpoint returned a null category (1 test, 1 failure, 0 errors, 0 skipped).
+- Focused GREEN: 25 tests, 0 failures, 0 errors, 0 skipped; BUILD SUCCESS; 40.636 s; finished 2026-10-07T17:15:28+07:00.
+- Exact `.\mvnw.cmd clean test` completed with exit code 0; all 997 existing tests plus the new regression passed. The clean-run Surefire XML confirms `activeTreatmentRegimenWithoutCategoryIsExcluded` passed. Fresh migrations through V17 and Hibernate/application startup passed.
+- Correction changed paths: `src/main/java/id/tbcall/application/treatment/TreatmentReferenceService.java`, `src/test/java/id/tbcall/application/TreatmentReferenceIntegrationTest.java`, `docs/PHASE5A_3_REPORT.md`.
+- V1–V17, frontend files and treatment write behavior remain unchanged; no V18, merge or F2C UI. Local task prompts, the untracked supplied correction brief, logs and unrelated assets are excluded from the commit.
+
+Correction clean result:
+
+```text
+Tests run: 998, Failures: 0, Errors: 0, Skipped: 0
+BUILD SUCCESS
+Total time:  12:06 min
+Finished at: 2026-10-07T17:27:49+07:00
+```
+
+The run emitted background Hikari reconnect warnings against terminated earlier-class containers. During shutdown, Surefire logged `The exit has elapsed 30 seconds after System.exit(0)` and terminated the fork JVM; Maven nevertheless returned exit code 0 and BUILD SUCCESS with no failed/errored/skipped tests. No resource-lifecycle or production behavior changes were made in this narrowly scoped correction. The log remains ignored under `.tools/`.
