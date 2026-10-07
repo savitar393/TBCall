@@ -16,6 +16,7 @@ public class MonitoringQueryService {
     private final EntityManager em; private final MonitoringAccess access; private final MonitoringViews views;
     public MonitoringQueryService(EntityManager em,MonitoringAccess access,MonitoringViews views) { this.em=em; this.access=access; this.views=views; }
     public PlanDetail plan(CurrentActor actor,UUID id) { return views.plan(access.plan(actor,"MONITORING_READ",id,false)); }
+    public EventDetail event(CurrentActor actor,UUID id) { return views.event(access.event(actor,"MONITORING_READ",id,false)); }
     public Page<PlanDetail> history(CurrentActor actor,UUID id,boolean preventive,int page,int size) {
         access.staffTarget(actor,"MONITORING_READ",preventive ? null : id,preventive ? id : null,false);
         return page("p","from MonitoringPlan p where p."+(preventive ? "preventiveTreatment" : "treatment")+".id=:id","p.createdAt desc,p.id desc",Map.of("id",id),MonitoringPlan.class,views::plan,page,size);
@@ -46,6 +47,13 @@ public class MonitoringQueryService {
     public Page<NotificationDetail> notifications(CurrentActor actor,int page,int size) {
         access.permission(actor,"NOTIFICATION_READ_SELF");
         return page("n","from Notification n where n.user.id=:user","n.scheduledAt desc,n.id desc",Map.of("user",actor.userId()),Notification.class,views::notification,page,size);
+    }
+    public NotificationDetail notification(CurrentActor actor,UUID id) {
+        access.permission(actor,"NOTIFICATION_READ_SELF");
+        var rows=em.createQuery("select n from Notification n where n.id=:id and n.user.id=:user",Notification.class)
+                .setParameter("id",id).setParameter("user",actor.userId()).getResultList();
+        if(rows.isEmpty()) throw ApplicationFailure.missing();
+        return views.notification(rows.getFirst());
     }
     private <T,R> Page<R> page(String alias,String from,String order,Map<String,Object> params,Class<T> entity,Function<T,R> projection,int page,int size) {
         MonitoringAccess.page(page,size); var query=em.createQuery("select "+alias+" "+from+" order by "+order,entity); var count=em.createQuery("select count("+alias+") "+from,Long.class);

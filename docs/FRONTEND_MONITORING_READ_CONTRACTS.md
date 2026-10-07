@@ -94,6 +94,8 @@ No changes to MonitoringValidation, monitoring/query/alert/notification services
 
 ## Verification and handoff
 
+Backend v1.5A.5.1 adds [authoritative event and self-notification detail GETs with response ETags](FRONTEND_MONITORING_ETAG_READ_CONTRACTS.md). Existing event commands and notification read use these actual headers; frontend must not synthesize ETags from list versions. The reference endpoint and vocabulary described here are unchanged.
+
 See [checkpoint report](PHASE5A_5_REPORT.md) for the PostgreSQL/Spring test matrix and exact clean-build result. The supplied [architecture](architecture/TBCall_Backend_v1.5A.5_Frontend_F2E_Monitoring_Reference.md) is tracked unchanged.
 
 This contract supplies the missing vocabulary for a separately authorized F2E staff frontend. Staff contextual monitoring/events, alerts and TB Officer IN_APP notifications require that next UI specification/approval. Patient/supporter UI remains deferred to F3. No frontend implementation or live SITB calls are included here.

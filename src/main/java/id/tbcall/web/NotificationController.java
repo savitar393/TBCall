@@ -15,5 +15,6 @@ public class NotificationController {
     private final NotificationService service; private final MonitoringQueryService queries;
     public NotificationController(NotificationService service,MonitoringQueryService queries) { this.service=service; this.queries=queries; }
     @GetMapping Page<NotificationDetail> list(@AuthenticationPrincipal CurrentActor actor,@RequestParam(defaultValue="0") int page,@RequestParam(defaultValue="20") int size) { return queries.notifications(actor,page,size); }
+    @GetMapping("/{id}") ResponseEntity<NotificationDetail> detail(@AuthenticationPrincipal CurrentActor actor,@PathVariable UUID id) { var n=queries.notification(actor,id); return ResponseEntity.ok().eTag(IfMatch.etag(n.version())).body(n); }
     @PostMapping("/{id}/read") ResponseEntity<NotificationDetail> read(@AuthenticationPrincipal CurrentActor actor,@PathVariable UUID id,@Valid @RequestBody EmptyInput input,@RequestHeader(value="If-Match",required=false) String match) { var n=service.read(actor,id,match); return ResponseEntity.ok().eTag(IfMatch.etag(n.version())).body(n); }
 }

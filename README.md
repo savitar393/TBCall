@@ -29,6 +29,8 @@ F2D adds [staff continuity](docs/FRONTEND_F2D_CONTINUITY.md): incoming/outgoing 
 
 Backend v1.5A.5 adds the [F2E monitoring reference contract](docs/FRONTEND_MONITORING_READ_CONTRACTS.md): one officer/facility-gated GET with ten code/name-only groups for existing treatment/TPT monitoring, alerts and IN_APP notifications. At least one actually-held relevant permission is required; successful reads have no audit or write side effect. Existing monitoring behavior, frontend files and V1-V17 are unchanged; no V18 or F2E UI is added. See the [checkpoint report](docs/PHASE5A_5_REPORT.md).
 
+Backend v1.5A.5.1 completes [authoritative event and self-notification detail reads with ETags](docs/FRONTEND_MONITORING_ETAG_READ_CONTRACTS.md) for existing If-Match commands. Notification GET does not mark READ. Existing write behavior, the reference contract, frontend and V1-V17 remain unchanged; no V18 or F2E UI. See the [checkpoint report](docs/PHASE5A_5_1_REPORT.md).
+
 Backend v1.5A.1 adds [F2A read contracts](docs/FRONTEND_BACKEND_READ_CONTRACTS.md): scoped diagnosis list/detail with ETag, active clinical reference catalogs and a safe active-facility directory. The [checkpoint report](docs/PHASE5A_1_REPORT.md) records verification. This addition preserves clinical writes, frontend F1 and V1–V17; it adds no migration or F2A UI.
 
 Production defaults: `TBCALL_PRODUCTION=true`, secure cookies and verification-secret exposure disabled. Registration requires an email/SMS `VerificationDeliveryPort` adapter; the default port returns 503 and rolls back registration when delivery is unavailable. No outbound adapter or fake SITB service is provided.
