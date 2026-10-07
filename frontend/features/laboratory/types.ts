@@ -1,0 +1,16 @@
+import type { z } from "@/lib/validation";
+import type * as schemas from "./schemas";
+export type ReferenceData = z.infer<typeof schemas.referenceDataSchema>;
+export type RequestDetail = z.infer<typeof schemas.requestDetailSchema>;
+export type RequestSummary = z.infer<typeof schemas.requestSummarySchema>;
+export type Specimen = z.infer<typeof schemas.specimenSchema>;
+export type TestDetail = z.infer<typeof schemas.testDetailSchema>;
+export type Result = z.infer<typeof schemas.resultSchema>;
+export type Completeness = z.infer<typeof schemas.completenessSchema>;
+export type OwnerType = "REGISTRATION" | "CASE";
+export type RequestFilters = { page: number; size: number; status?: string; ownerType?: string; requestReasonCode?: string; requestingFacilityId?: string; testingFacilityId?: string };
+export type CreateInput = { registrationId?: string; caseId?: string; testingFacilityId: string; requestReasonCode: string; testTypeCodes: string[]; sampleShippingMethod: string | null; courierName: string | null; notes: string | null };
+export type SpecimenInput = { specimenCode: string | null; specimenType: string; collectedAt: string | null; sentAt: string | null; notes: string | null };
+export type ReceiveInput = { receivedAt: string; conditionOnReceipt: string | null; examinationPossible: boolean; rejectionReason: string | null; notes: string | null };
+export type CorrectionInput = { testedAt: string; resultCode: string | null; resultValue: string | null; resultText: string | null };
+export type ResultInput = CorrectionInput & { specimenId: string | null };

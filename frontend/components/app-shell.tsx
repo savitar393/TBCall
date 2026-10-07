@@ -2,10 +2,11 @@
 import { useState, type ReactNode } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { Building2, ChevronLeft, ChevronRight, Home, LogOut, Menu, UserRound } from "lucide-react";
+import { Building2, ChevronLeft, ChevronRight, FlaskConical, Home, LogOut, Menu, UserRound } from "lucide-react";
 import { useSession } from "@/lib/auth/session";
 import { filterNavigation, foundationNavigation } from "@/lib/navigation";
 import { clinicalNavigation } from "@/features/clinical-intake/permissions";
+import { laboratoryNavigation } from "@/features/laboratory/permissions";
 import { cn } from "@/lib/utils";
 import { Brand } from "./brand";
 import { ApiFeedback } from "./api-feedback";
@@ -19,11 +20,11 @@ export function AppShell({ children }: { children: ReactNode }) {
   const [drawer, setDrawer] = useState(false);
   if (!session.user) return null;
   const user = session.user;
-  const items = [...filterNavigation(foundationNavigation, user.permissions), ...clinicalNavigation(user)];
+  const items = [...filterNavigation(foundationNavigation, user.permissions), ...clinicalNavigation(user), ...laboratoryNavigation(user)];
   const identity = user.email ?? user.phone ?? "Pengguna TBCall";
   const navigation = (mobile = false) => <nav id={mobile ? "mobile-nav" : "desktop-nav"} aria-label={`Navigasi utama ${mobile ? "seluler" : "desktop"}`} className="space-y-2">
     {items.map((item) => {
-      const Icon = item.href === "/" ? Home : UserRound;
+      const Icon = item.href === "/" ? Home : item.href === "/laboratory" ? FlaskConical : UserRound;
       return <Link key={item.href} href={item.href} onClick={() => setDrawer(false)} aria-current={item.href === pathname ? "page" : undefined} title={collapsed && !mobile ? item.label : undefined}
         className={cn("flex min-h-12 items-center gap-3 rounded-xl px-4 text-sm font-medium transition-colors", item.href === pathname ? "bg-primary/10 text-primary" : "text-muted-foreground hover:bg-accent hover:text-foreground", collapsed && !mobile && "justify-center px-2")}>
         <Icon aria-hidden="true" className="size-5 shrink-0" /><span className={collapsed && !mobile ? "sr-only" : ""}>{item.label}</span>
