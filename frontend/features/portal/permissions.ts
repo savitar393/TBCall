@@ -8,6 +8,9 @@ export function hasPortalRole(user: Me | null, mode: PortalMode): boolean {
 export function canPortal(user: Me | null, mode: PortalMode, permission?: string): boolean {
     return hasPortalRole(user, mode) && (!permission || !!user?.permissions.includes(permission));
 }
+export function canSupportCases(user: Me | null): boolean {
+    return hasPortalRole(user, "supporter") && ["TREATMENT_READ", "ADHERENCE_READ", "ADHERENCE_RECORD", "MONITORING_READ", "ALERT_READ"].some(permission => user?.permissions.includes(permission));
+}
 export function linkedCase(user: Me | null, caseId: string): boolean {
     return canPortal(user, "supporter") && !!user?.supporterCaseIds.includes(caseId);
 }
@@ -27,7 +30,7 @@ export function portalNavigation(user: Me): NavigationItem[] {
             if (user.permissions.includes(permission))
                 links.push({ label, href });
     }
-    if (canPortal(user, "supporter"))
+    if (canSupportCases(user))
         links.push({ label: "Pendampingan", href: "/supporting-cases" });
     if (canPortal(user, "either", "NOTIFICATION_READ_SELF"))
         links.push({ label: "Notifikasi Saya", href: "/portal/notifications" });

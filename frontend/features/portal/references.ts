@@ -10,6 +10,5 @@ export function label(options: {
     name: string;
 }[] | undefined, code: string | null | undefined) { return code == null ? "—" : options?.find(o => o.code === code)?.name ?? code; }
 export function doseOptions(ref: PortalReferenceData, actor: "patient" | "supporter") {
-    const allowed = actor === "patient" ? ["TAKEN_SELF_REPORTED", "MISSED", "UNKNOWN"] : ["TAKEN_OBSERVED", "TAKEN_SELF_REPORTED", "MISSED", "UNKNOWN"];
-    return (actor === "patient" ? ref.patientDoseStatuses : ref.supporterDoseStatuses).filter(o => allowed.includes(o.code));
+    return actor === "patient" ? ref.patientDoseStatuses : ref.supporterDoseStatuses;
 }

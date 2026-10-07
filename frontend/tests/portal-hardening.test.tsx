@@ -18,7 +18,7 @@ it("mixed-role navigation independently retains portal and staff authorization",
     const user = { ...f.patient, roles: [...f.patient.roles, { code: "TB_OFFICER", name: "Petugas" }] };
     expect(portalNavigation(user).map(n => n.href)).toContain("/portal/treatment");
     expect(portalNavigation({ ...user, permissions: ["PATIENT_READ"] }).map(n => n.href)).toEqual(["/portal"]);
-    expect(portalNavigation({ ...f.supporter, permissions: [] }).map(n => n.href)).toEqual(["/supporting-cases"]);
+    expect(portalNavigation({ ...f.supporter, permissions: [] }).map(n => n.href)).toEqual([]);
 });
 it("mixed patient/officer shell retains authorized staff links and portal links",async()=>{
   portalBackend({...f.patient,roles:[...f.patient.roles,{code:"TB_OFFICER",name:"Petugas"}],activeFacilities:[f.facility]});await renderPortal("home");await screen.findByText("Nama pasien privat");expect(screen.getByRole("link",{name:"Daftar pasien"})).toHaveAttribute("href","/patients");expect(screen.getByRole("link",{name:"Portal Saya"})).toHaveAttribute("href","/portal");expect(screen.getByText("Fasilitas aktif")).toBeInTheDocument();

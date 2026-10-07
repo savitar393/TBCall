@@ -9,6 +9,7 @@ import { portalApi } from "../api";
 import { portalQueries } from "../queries";
 import { usePortalReferences, doseOptions, label } from "../references";
 import { usePortalCommand } from "../use-command";
+import { localToday } from "../local-date";
 import { card, doseGuidance, Fields, Pagination, PortalState } from "../display";
 import type { PortalTarget } from "../types";
 export function DoseEvidence({ target, active, startDate }: {
@@ -31,20 +32,27 @@ function DoseForm({ target, startDate }: {
 }) {
     const refs = usePortalReferences(), command = usePortalCommand();
     const [scheduledDate, setDate] = useState(""), [status, setStatus] = useState(""), [mode, setMode] = useState(""), [notes, setNotes] = useState("");
+    const [dateError, setDateError] = useState(false);
     if (!refs.data)
         return <PortalState query={refs}/>;
     const options = doseOptions(refs.data.data, target.kind);
-    const modes = refs.data.data.administrationModes.filter(o => ["DIRECTLY_OBSERVED", "SELF_ADMINISTERED", "OTHER"].includes(o.code));
+    const modes = refs.data.data.administrationModes;
     const validStatus = options.some(o => o.code === status);
     const validMode = !mode || modes.some(o => o.code === mode);
     return <form className="space-y-4" onSubmit={e => {
             e.preventDefault();
+            if (scheduledDate > localToday()) {
+                setDateError(true);
+                return;
+            }
+            setDateError(false);
             if (!scheduledDate || !validStatus || !validMode)
                 return;
             void command.run(signal => portalApi.recordDose(target, { scheduledDate, status, ...(mode ? { administrationMode: mode } : {}), ...(notes.trim() ? { notes: notes.trim() } : {}) }, signal), () => { setDate(""); setStatus(""); setMode(""); setNotes(""); });
         }}>
     <h3 className="font-semibold">Catat laporan dosis</h3>
-    <label className="block">Tanggal dosis<Input aria-label="Tanggal dosis" type="date" required min={startDate} value={scheduledDate} onChange={e => setDate(e.target.value)} disabled={command.pending}/></label>
+    <label className="block">Tanggal dosis<Input aria-label="Tanggal dosis" type="date" required min={startDate} max={localToday()} value={scheduledDate} onChange={e => { setDate(e.target.value); setDateError(false); }} disabled={command.pending}/></label>
+    {dateError && <p role="alert">Tanggal dosis tidak boleh setelah hari ini.</p>}
     <label className="block">Status laporan<select className="mt-1 min-h-11 w-full rounded border p-2" aria-label="Status laporan" required value={status} onChange={e => setStatus(e.target.value)} disabled={command.pending}><option value="">Pilih status laporan</option>{options.map(o => <option key={o.code} value={o.code}>{o.name}</option>)}</select></label>
     <label className="block">Cara pemberian (opsional)<select className="mt-1 min-h-11 w-full rounded border p-2" aria-label="Cara pemberian" value={mode} onChange={e => setMode(e.target.value)} disabled={command.pending}><option value="">Tidak diisi</option>{modes.map(o => <option key={o.code} value={o.code}>{o.name}</option>)}</select></label>
     <label className="block">Catatan (opsional)<textarea className="mt-1 w-full rounded border p-2" aria-label="Catatan dosis" value={notes} onChange={e => setNotes(e.target.value)} disabled={command.pending}/></label>

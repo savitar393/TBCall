@@ -12,10 +12,12 @@ Approved base: `f1023b4c459983c8f1edbd01bcc6fca55b1138ef`. This frontend-only ch
 | `/portal/monitoring` | PATIENT + MONITORING_READ | patientLink |
 | `/portal/alerts` | PATIENT + ALERT_READ | patientLink |
 | `/portal/notifications` | PATIENT or TREATMENT_SUPPORTER + NOTIFICATION_READ_SELF | Backend current-user ownership; no facility/link prerequisite |
-| `/supporting-cases` | TREATMENT_SUPPORTER | Only current `/me.supporterCaseIds` |
-| `/supporting-cases/[caseId]` | TREATMENT_SUPPORTER | Current case-ID allowlist before resource queries |
+| `/supporting-cases` | TREATMENT_SUPPORTER + at least one case-workspace permission (below) | Only current `/me.supporterCaseIds` |
+| `/supporting-cases/[caseId]` | TREATMENT_SUPPORTER + at least one case-workspace permission (below) | Current case-ID allowlist before resource queries |
 
 Patient links: Portal Saya, Pengobatan Saya, TPT Saya, Pemantauan Saya, Peringatan Saya, Notifikasi Saya. Supporter links: Pendampingan, Notifikasi Saya. Actually-held permissions gate each section/action; roles imply no grant. Staff-only artificial grants cannot bypass portal roles. Mixed-role actors retain independently authorized staff and portal links. Empty facility boxes are hidden; patient names never label global navigation/chrome.
+
+The [v1.6.1 hardening checkpoint](architecture/TBCall_Frontend_v1.6.1_F3_Portal_Hardening.md) requires one of TREATMENT_READ, ADHERENCE_READ, ADHERENCE_RECORD, MONITORING_READ or ALERT_READ for Pendampingan and both supporter workspace routes. NOTIFICATION_READ_SELF alone permits Notifikasi Saya, while ALERT_ACKNOWLEDGE alone does not permit the case workspace. The shared `canSupportCases` helper applies the workspace gate independently of each section/action's permission.
 
 ## Safe APIs
 
@@ -34,7 +36,7 @@ Unlinked patients receive a neutral message without `/me/patient`. Profile shows
 
 Treatment displays returned regimen, dates/drug snapshots and supplied patient outcomes/adverse events without advice or clinical interpretation. Supporter patientDisplayName stays inside authorized case content. Raw counts are labeled **Jumlah laporan bukti dosis, bukan skor kepatuhan.**
 
-Dose history requires ADHERENCE_READ; recording requires ADHERENCE_RECORD and displayed ACTIVE treatment. Supporter sections remain independently gated; without treatment read, the client never assumes an ACTIVE episode. Explicit scheduledDate/status are required; administrationMode/notes are optional. No default date/status, expected-dose generation, missed-dose inference, adherence/outcome score or automatic replay. Live patient choices exclude TAKEN_OBSERVED/DISPENSED_HOME; supporter choices allow TAKEN_OBSERVED and exclude DISPENSED_HOME. Live administration modes and selected choices are revalidated at submission. A removed choice requires reselection. Date minimum is UX-only; backend validation is final. Dose POST has no ETag. Success clears current drafts; failures preserve them.
+Dose history requires ADHERENCE_READ; recording requires ADHERENCE_RECORD and displayed ACTIVE treatment. Supporter sections remain independently gated; without treatment read, the client never assumes an ACTIVE episode. Explicit scheduledDate/status are required; administrationMode/notes are optional. No default date/status, expected-dose generation, missed-dose inference, adherence/outcome score or automatic replay. Patient choices use the live patientDoseStatuses group directly; supporter choices use supporterDoseStatuses directly; administration choices use administrationModes directly. The server-provided patient group excludes TAKEN_OBSERVED/DISPENSED_HOME, and the supporter group excludes DISPENSED_HOME. No frontend code allowlist filters these groups. Selected choices are revalidated against the current live groups at submission; a removed choice requires reselection. The date input maximum is browser-local today, calculated from local calendar fields without UTC conversion. Submission independently rejects future dates before POST, shows safe feedback and preserves the draft. The date minimum is UX-only; backend validation remains final. Dose POST has no ETag. Success clears current drafts; failures preserve them.
 
 Guidance: **Catatan ini merekam laporan dosis. TBCall tidak menghitung skor kepatuhan atau menentukan keberhasilan pengobatan dari catatan ini.**
 
@@ -53,3 +55,5 @@ No clinical localStorage/sessionStorage/IndexedDB/service-worker cache, logs, UR
 ## Verification and handoff
 
 The [report](FRONTEND_F3_REPORT.md) records manifest, exact gates and regression coverage. Source/tests compile without `.tools/` or local prompts/PDFs. No additional backend contract was required. F4 needs separate approval. A live smoke requires already authorized patient/supporter accounts and linked records; no credentials, provisioning or authentication bypass is introduced.
+
+The narrow correction is recorded separately in the [v1.6.1 patch report](FRONTEND_F3_V1_6_1_REPORT.md).
