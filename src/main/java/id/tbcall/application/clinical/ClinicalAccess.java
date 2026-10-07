@@ -73,4 +73,13 @@ public class ClinicalAccess {
                 .setParameter("id",diagnosis).setParameter("facilities",actor.facilityIds()).getResultList();
         if(found.isEmpty()) throw ApplicationFailure.missing(); return found.getFirst();
     }
+    public Diagnosis diagnosis(CurrentActor actor,UUID id) {
+        officer(actor,"DIAGNOSIS_READ");
+        var found=em.createQuery("""
+                select d from Diagnosis d join fetch d.registration r join fetch r.facility f
+                left join fetch d.referredToFacility
+                where d.id=:id and f.id in :facilities and f.active=true
+                """,Diagnosis.class).setParameter("id",id).setParameter("facilities",actor.facilityIds()).getResultList();
+        if(found.isEmpty()) throw ApplicationFailure.missing(); return found.getFirst();
+    }
 }

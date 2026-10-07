@@ -18,6 +18,16 @@ public class ClinicalQueryService {
     public ClinicalQueryService(EntityManager em,ClinicalAccess access,ClinicalViews views) { this.em=em; this.access=access; this.views=views; }
     public RegistrationView registration(CurrentActor actor,UUID id) { return views.registration(access.registration(actor,"REGISTRATION_READ",id,false)); }
     public CaseView tbCase(CurrentActor actor,UUID id) { return views.tbCase(access.tbCase(actor,"CASE_READ",id)); }
+    public DiagnosisView diagnosis(CurrentActor actor,UUID id) { return views.diagnosis(access.diagnosis(actor,id)); }
+    public List<DiagnosisView> diagnoses(CurrentActor actor,UUID registrationId) {
+        access.registration(actor,"DIAGNOSIS_READ",registrationId,false);
+        var diagnoses=em.createQuery("""
+                select d from Diagnosis d join fetch d.registration left join fetch d.referredToFacility
+                where d.registration.id=:registration order by d.diagnosisDate,d.id
+                """,Diagnosis.class).setParameter("registration",registrationId).getResultList();
+        var labels=views.labels();
+        return diagnoses.stream().map(d -> views.diagnosis(d,labels)).toList();
+    }
     public PatientDetail patient(CurrentActor actor,UUID id) {
         Patient p=access.patient(actor,"PATIENT_READ",id); return detail(actor,p);
     }

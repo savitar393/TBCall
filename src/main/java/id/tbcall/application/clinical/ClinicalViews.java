@@ -46,7 +46,10 @@ public class ClinicalViews {
         return d==null ? null : new DiagnosisSummary(d.getId(),d.getVersion(),d.getDiagnosisDate(),label(labels.anatomy(),d.getAnatomicalSiteCode()),label(labels.diagnosis(),d.getDiagnosisTypeCode()));
     }
     public DiagnosisView diagnosis(Diagnosis d) {
-        Labels labels=labels(); return new DiagnosisView(d.getId(),d.getVersion(),d.getRegistration().getId(),d.getRegistration().getVersion(),d.getDiagnosisDate(),label(labels.anatomy(),d.getAnatomicalSiteCode()),
+        return diagnosis(d,labels());
+    }
+    public DiagnosisView diagnosis(Diagnosis d,Labels labels) {
+        return new DiagnosisView(d.getId(),d.getVersion(),d.getRegistration().getId(),d.getRegistration().getVersion(),d.getDiagnosisDate(),label(labels.anatomy(),d.getAnatomicalSiteCode()),
                 label(labels.diagnosis(),d.getDiagnosisTypeCode()),d.getDiagnosisResult(),d.getChestXrayResult(),d.getChestXrayDate(),d.getChestXraySerial(),d.getChestXrayImpression(),d.getIcd10Code(),d.getTreatmentDisposition(),facility(d.getReferredToFacility()),d.getNotes());
     }
     public CaseSummary caseSummary(TBCase c,Labels labels) {

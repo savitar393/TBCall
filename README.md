@@ -19,6 +19,8 @@ F1 implements only `/login`, `/`, `/forbidden` and an Indonesian responsive iden
 
 ## Identity configuration and browser use
 
+Backend v1.5A.1 adds [F2A read contracts](docs/FRONTEND_BACKEND_READ_CONTRACTS.md): scoped diagnosis list/detail with ETag, active clinical reference catalogs and a safe active-facility directory. The [checkpoint report](docs/PHASE5A_1_REPORT.md) records verification. This addition preserves clinical writes, frontend F1 and V1–V17; it adds no migration or F2A UI.
+
 Production defaults: `TBCALL_PRODUCTION=true`, secure cookies and verification-secret exposure disabled. Registration requires an email/SMS `VerificationDeliveryPort` adapter; the default port returns 503 and rolls back registration when delivery is unavailable. No outbound adapter or fake SITB service is provided.
 
 - Bootstrap: set `TBCALL_BOOTSTRAP_EMAIL` and/or `TBCALL_BOOTSTRAP_PHONE`, plus `TBCALL_BOOTSTRAP_PASSWORD` (12–128 characters). The first `SYSTEM_ADMIN` is ACTIVE with verified configured identities. Once any SYSTEM_ADMIN assignment exists, bootstrap is a no-op. Remove bootstrap credentials from deployment configuration after initial use. Existing ordinary accounts are never automatically promoted.

@@ -57,6 +57,12 @@ public class ClinicalIntakeController {
             @Valid @RequestBody DiagnosisInput input,@RequestHeader(value="If-Match",required=false) String match) {
         var response=diagnoses.create(actor,registrationId,input,match); return ResponseEntity.status(201).eTag(IfMatch.etag(response.version())).body(response);
     }
+    @GetMapping("/registrations/{registrationId}/diagnoses") List<DiagnosisView> diagnoses(@AuthenticationPrincipal CurrentActor actor,@PathVariable UUID registrationId) {
+        return queries.diagnoses(actor,registrationId);
+    }
+    @GetMapping("/diagnoses/{diagnosisId}") ResponseEntity<DiagnosisView> diagnosis(@AuthenticationPrincipal CurrentActor actor,@PathVariable UUID diagnosisId) {
+        var response=queries.diagnosis(actor,diagnosisId); return ResponseEntity.ok().eTag(IfMatch.etag(response.version())).body(response);
+    }
     @PatchMapping("/diagnoses/{diagnosisId}") ResponseEntity<DiagnosisView> updateDiagnosis(@AuthenticationPrincipal CurrentActor actor,@PathVariable UUID diagnosisId,
             @Valid @RequestBody DiagnosisInput input,@RequestHeader(value="If-Match",required=false) String match) {
         var response=diagnoses.update(actor,diagnosisId,input,match); return ResponseEntity.ok().eTag(IfMatch.etag(response.version())).body(response);
