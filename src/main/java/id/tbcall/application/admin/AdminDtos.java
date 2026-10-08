@@ -43,6 +43,11 @@ public final class AdminDtos {
     public record FacilityResponse(UUID id, long version, String name, String facilityTypeCode, UUID parentFacilityId,
             String address, String provinceCode, String regencyCode, String districtCode, String villageCode,
             String postalCode, BigDecimal latitude, BigDecimal longitude, boolean active) {}
+    public record FacilitySummary(UUID id, String name, String facilityTypeCode, UUID parentFacilityId,
+            String provinceCode, String regencyCode, boolean active) {}
+    public record FacilityPage(List<FacilitySummary> content, int page, int size, long totalElements) {}
+    public record ReferenceOption(String code, String name) {}
+    public record ReferenceData(List<ReferenceOption> facilityTypes, List<ReferenceOption> adminManagedRoles) {}
     public record MembershipInput(Boolean primary) { public boolean primaryRequested() { return Boolean.TRUE.equals(primary); } }
     public record MembershipResponse(UUID userId, UUID facilityId, boolean active, boolean primary) {}
     public record AdminFacilitySummary(UUID id, String name, boolean primary) {}

@@ -19,6 +19,13 @@ public class FacilityAdministrationService {
     public FacilityAdministrationService(EntityManager em, AdministrativePolicies policies, AuditService audit) {
         this.em=em; this.policies=policies; this.audit=audit;
     }
+    @Transactional(readOnly=true)
+    public FacilityResponse detail(CurrentActor actor, UUID id) {
+        policies.requireSystem(actor,"FACILITY_MANAGE");
+        Facility facility=em.find(Facility.class,id);
+        if(facility==null) throw ApplicationFailure.missing();
+        return response(facility);
+    }
     public FacilityResponse create(CurrentActor actor, FacilityInput input) {
         policies.requireSystem(actor,"FACILITY_MANAGE");
         if(input.getName()==null || input.getName().isBlank()) throw ApplicationFailure.invalid("Nama fasyankes wajib diisi.");

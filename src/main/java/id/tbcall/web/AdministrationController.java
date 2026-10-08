@@ -16,10 +16,24 @@ public class AdministrationController {
     private final UserLookupService lookup;
     private final FacilityMembershipService memberships;
     private final UserAdministrationService users;
+    private final AdministrationReadService reads;
     public AdministrationController(FacilityAdministrationService facilities, UserLookupService lookup,
-            FacilityMembershipService memberships, UserAdministrationService users) {
+            FacilityMembershipService memberships, UserAdministrationService users, AdministrationReadService reads) {
         this.facilities=facilities; this.lookup=lookup; this.memberships=memberships; this.users=users;
+        this.reads=reads;
     }
+    @GetMapping("/facilities")
+    FacilityPage facilities(@AuthenticationPrincipal CurrentActor actor,
+            @RequestParam(defaultValue="0") int page,@RequestParam(defaultValue="20") int size,
+            @RequestParam(required=false) String query,@RequestParam(required=false) Boolean active) {
+        return reads.facilities(actor,page,size,query,active);
+    }
+    @GetMapping("/facilities/{facilityId}")
+    ResponseEntity<FacilityResponse> detail(@AuthenticationPrincipal CurrentActor actor,@PathVariable UUID facilityId) {
+        return facilityResponse(facilities.detail(actor,facilityId));
+    }
+    @GetMapping("/reference-data")
+    ReferenceData references(@AuthenticationPrincipal CurrentActor actor) { return reads.referenceData(actor); }
     @PostMapping("/facilities")
     ResponseEntity<FacilityResponse> create(@AuthenticationPrincipal CurrentActor actor,@Valid @RequestBody FacilityInput input) {
         FacilityResponse response=facilities.create(actor,input); return ResponseEntity.status(201).eTag(IfMatch.etag(response.version())).body(response);

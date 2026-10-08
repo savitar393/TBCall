@@ -236,7 +236,8 @@ class MonitoringIntegrationTest {
     @Test void planHistoryAndEventCountAreScopedAndBounded() throws Exception {
         var p=create(true,"due"); assertThat(call(get(createPath(true)),null,200).path("totalElements").asLong()).isEqualTo(1);
         assertThat(p.path("eventCounts").path("DUE").asLong()).isEqualTo(1); call(get(planPath(p)+"/events").param("size","51"),null,400);
-        call(patch(planPath(p)).header("If-Match",version(p)),Map.of("endDate",today().minusDays(1).toString()),400);
+        // After plan start but before the event, even when two hours ago crosses UTC midnight.
+        call(patch(planPath(p)).header("If-Match",version(p)),Map.of("endDate",today().minusDays(3).toString()),400);
     }
     @Test void eventRescheduleRacesSweepUsingFreshState() throws Exception {
         var e=events(create(false,"due")).path("content").get(0); jdbc.update("update monitoring_events set due_at=?",now().minusMinutes(1));
