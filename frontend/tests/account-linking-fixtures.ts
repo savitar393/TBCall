@@ -1,0 +1,14 @@
+import { officer, ids } from "./clinical-fixtures";
+export { ids };
+export const actor = { ...officer, permissions: [...officer.permissions, "PATIENT_LINK_VERIFY", "SUPPORTER_LINK_MANAGE"] };
+export const userId = "77777777-7777-4777-8777-777777777777", linkId = "88888888-8888-4888-8888-888888888888", supporterId = "99999999-9999-4999-8999-999999999999";
+export const candidate = { userId, matchedLogin: { kind: "EMAIL", maskedValue: "a***@example.test" } };
+export const maskedAccount = { maskedEmail: "a***@example.test", maskedPhone: "***7890" };
+export const link = { id: linkId, patientId: ids.patient, userId, relationshipType: "SELF", verificationStatus: "VERIFIED", maskedAccount };
+export const patientState = { link };
+export const pairState = { patientId: ids.patient, userId, pair: { id: linkId, verificationStatus: "REVOKED" } };
+export const summary = { id: supporterId, supporterType: "PMO", fullName: "Pendamping Contoh", active: true, maskedPhone: "***4567", linked: false };
+export const page = { content: [summary], page: 0, size: 20, totalElements: 1 };
+export const detail = { id: supporterId, caseId: ids.tbCase, supporterType: "PMO", fullName: summary.fullName, active: true, maskedPhone: summary.maskedPhone, linkedUser: null, version: 91 };
+export const patientResponse = { id: linkId, patientId: ids.patient, userId, relationshipType: "SELF", verificationStatus: "VERIFIED", version: 71 };
+export const supporterResponse = { id: supporterId, caseId: ids.tbCase, linkedUserId: userId, version: 91 };

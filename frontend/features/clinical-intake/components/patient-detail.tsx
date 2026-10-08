@@ -13,6 +13,8 @@ import { PatientFields } from "../forms/patient-fields";
 import { RecordForm } from "./record-form";
 import { DisplayFields, WorklistLink } from "./record-display";
 import { QueryState } from "./query-state";
+import { PatientAccountLinkSection } from "@/features/account-linking/patient-section";
+import { canLink } from "@/features/account-linking/permissions";
 export function PatientDetail({ id }: { id: string }) {
   const { user } = useSession(); const [editing, setEditing] = useState(false);
   const query = useQuery(clinicalQueries.patient(user!.id, id));
@@ -26,5 +28,6 @@ export function PatientDetail({ id }: { id: string }) {
     {editing && canClinical(user, "PATIENT_UPDATE") && (!references.data ? <QueryState query={references} /> : <RecordForm initial={initial} schema={patientFormSchema} etag={query.data.etag} fetching={query.isFetching} unavailable={query.isError || references.isError} save={(values, dirty, signal) => clinicalApi.patchPatient(id, patientPatch(values, dirty), query.data!.etag!, signal)}><PatientFields references={references.data!.data} /></RecordForm>)}
     <section className="space-y-3"><h2 className="font-semibold">Registrasi saat ini</h2>{!query.data.data.registrations.length && <p>Belum ada registrasi dalam cakupan Anda.</p>}<ul className="space-y-2">{query.data.data.registrations.map(r => <li key={r.id} className="rounded-xl border bg-white p-4 text-sm">{r.registrationDate} · {r.facility.name} · {references.data?.data.registrationStatusFilters.find(o => o.code === r.status)?.name ?? r.status} {canClinical(user, "REGISTRATION_READ") && <Link className="text-primary underline" href={`/registrations/${r.id}`}>Buka registrasi</Link>}</li>)}</ul></section>
     <section className="space-y-3"><h2 className="font-semibold">Kasus saat ini</h2>{!query.data.data.cases.length && <p>Belum ada kasus dalam cakupan Anda.</p>}<ul className="space-y-2">{query.data.data.cases.map(({ summary: c }) => <li key={c.id} className="rounded-xl border bg-white p-4 text-sm">{c.caseCategory?.name ?? "Kasus TBC"} · {c.currentFacility.name} · {references.data?.data.caseStatusFilters.find(o => o.code === c.status)?.name ?? c.status} {canClinical(user, "CASE_READ") && <Link className="text-primary underline" href={`/cases/${c.id}`}>Buka kasus</Link>}</li>)}</ul></section>
+    {canLink(user, "PATIENT_LINK_VERIFY") && <PatientAccountLinkSection patientId={id} />}
   </>;
 }

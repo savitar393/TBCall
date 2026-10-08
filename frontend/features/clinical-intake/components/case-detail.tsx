@@ -15,6 +15,8 @@ import { CaseFields } from "../forms/case-fields";
 import { RecordForm } from "./record-form";
 import { DisplayFields, PatientHeading, WorklistLink } from "./record-display";
 import { QueryState } from "./query-state";
+import { CaseSupporterSection } from "@/features/account-linking/supporter-section";
+import { canLink } from "@/features/account-linking/permissions";
 export function CaseDetail({ id }: { id: string }) {
   const { user } = useSession(); const [editing, setEditing] = useState(false);
   const query = useQuery(clinicalQueries.tbCase(user!.id, id));
@@ -32,5 +34,6 @@ export function CaseDetail({ id }: { id: string }) {
     <section className="space-y-2 rounded-xl border bg-white p-5"><h2 className="font-semibold">Registrasi dan diagnosis konfirmasi</h2><p className="text-sm">{c.registration.registrationDate} · {c.registration.facility.name} · {c.registration.status}</p>{canClinical(user, "REGISTRATION_READ") && <Link className="text-sm text-primary underline" href={`/registrations/${c.registration.id}`}>Buka registrasi</Link>}{c.confirmingDiagnosis && <><p className="text-sm">{c.confirmingDiagnosis.diagnosisDate} · {c.confirmingDiagnosis.anatomicalSite?.name} · {c.confirmingDiagnosis.diagnosisType?.name}</p>{canClinical(user, "DIAGNOSIS_READ") && <Link className="inline-block text-sm text-primary underline" href={`/diagnoses/${c.confirmingDiagnosis.id}`}>Buka diagnosis</Link>}</>}</section>
     {canClinical(user, "CASE_WRITE") && <Button variant="outline" aria-expanded={editing} onClick={() => setEditing(!editing)}>{editing ? "Tutup editor kasus" : "Ubah kasus"}</Button>}
     {editing && canClinical(user, "CASE_WRITE") && (!canClinical(user, "PATIENT_READ") ? <p>Izin membaca referensi klinis diperlukan untuk mengedit.</p> : !references.data ? <QueryState query={references} /> : <RecordForm initial={initial} schema={caseFormSchema} etag={query.data.etag} fetching={query.isFetching} unavailable={query.isError || references.isError} save={(values, dirty, signal) => clinicalApi.patchCase(id, casePatch(values, dirty), query.data!.etag!, signal)}><CaseFields references={ref!} /></RecordForm>)}
+    {canLink(user, "SUPPORTER_LINK_MANAGE") && <CaseSupporterSection caseId={id} caseStatus={c.status} />}
   </>;
 }
