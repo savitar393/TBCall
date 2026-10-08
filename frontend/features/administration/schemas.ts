@@ -1,0 +1,15 @@
+import { z } from "@/lib/validation";
+const text = z.string(), nullable = text.nullable(), uuid = z.uuid(), version = z.number().int().nonnegative().max(Number.MAX_SAFE_INTEGER);
+export const optionSchema = z.object({ code: text, name: text }).strict();
+export const managedRoleCode = z.enum(["SYSTEM_ADMIN", "PROGRAM_MONITOR", "TB_OFFICER", "LAB_STAFF", "FACILITY_ADMIN"]);
+export const managedRoleSchema = z.object({ code: managedRoleCode, name: text }).strict();
+export const facilitySummarySchema = z.object({ id: uuid, name: text, facilityTypeCode: nullable, parentFacilityId: uuid.nullable(), provinceCode: nullable, regencyCode: nullable, active: z.boolean() }).strict();
+export const pageSchema = <T extends z.ZodType>(item: T) => z.object({ content: z.array(item), page: z.number().int().nonnegative(), size: z.number().int().positive().max(50), totalElements: z.number().int().nonnegative() }).strict();
+export const facilityPageSchema = pageSchema(facilitySummarySchema);
+export const facilitySchema = facilitySummarySchema.extend({ version, address: nullable, districtCode: nullable, villageCode: nullable, postalCode: nullable, latitude: z.number().nullable(), longitude: z.number().nullable() }).strict();
+export const referencesSchema = z.object({ facilityTypes: z.array(optionSchema), adminManagedRoles: z.array(managedRoleSchema) }).strict();
+export const lookupFacilitySchema = z.object({ id: uuid, name: text, primary: z.boolean() }).strict();
+export const userLookupSchema = z.object({ userId: uuid, version, email: nullable, phone: nullable, status: text, emailVerified: z.boolean(), phoneVerified: z.boolean(), roles: z.array(managedRoleSchema), activeFacilities: z.array(lookupFacilitySchema), hasOtherFacilityAssignments: z.boolean() }).strict();
+export const membershipSchema = z.object({ userId: uuid, facilityId: uuid, active: z.boolean(), primary: z.boolean() }).strict();
+export const roleSchema = z.object({ userId: uuid, roleCode: managedRoleCode, assigned: z.boolean() }).strict();
+export const statusSchema = z.object({ id: uuid, status: text, version }).strict();

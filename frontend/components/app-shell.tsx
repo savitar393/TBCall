@@ -10,6 +10,8 @@ import { laboratoryNavigation } from "@/features/laboratory/permissions";
 import { continuityNavigation } from "@/features/continuity/permissions";
 import { monitoringNavigation } from "@/features/monitoring/permissions";
 import { portalNavigation } from "@/features/portal/permissions";
+import { administrationNavigation } from "@/features/administration/permissions";
+import { integrationNavigation } from "@/features/integration/permissions";
 import { cn } from "@/lib/utils";
 import { Brand } from "./brand";
 import { ApiFeedback } from "./api-feedback";
@@ -23,7 +25,7 @@ export function AppShell({ children }: { children: ReactNode }) {
   const [drawer, setDrawer] = useState(false);
   if (!session.user) return null;
   const user = session.user;
-  const items = [...filterNavigation(foundationNavigation, user.permissions), ...clinicalNavigation(user), ...laboratoryNavigation(user), ...continuityNavigation(user), ...monitoringNavigation(user), ...portalNavigation(user)];
+  const items = [...filterNavigation(foundationNavigation, user.permissions), ...clinicalNavigation(user), ...laboratoryNavigation(user), ...continuityNavigation(user), ...monitoringNavigation(user), ...portalNavigation(user), ...administrationNavigation(user), ...integrationNavigation(user)];
   const identity = user.email ?? user.phone ?? "Pengguna TBCall";
   const navigation = (mobile = false) => <nav id={mobile ? "mobile-nav" : "desktop-nav"} aria-label={`Navigasi utama ${mobile ? "seluler" : "desktop"}`} className="space-y-2">
     {items.map((item) => {

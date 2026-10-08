@@ -1,4 +1,4 @@
-# TBCall frontend - foundation, staff workflows and F3 portals
+# TBCall frontend - foundation, staff workflows, portals and F4 administration
 
 Next.js App Router frontend for the existing Spring Boot backend. F1 routes: `/login`, `/`, `/forbidden`. The dashboard shows the signed-in account's identity and access context from `/me`. F2A adds officer patient → registration → diagnosis → case intake using backend read contracts at commit `863ca8c23b15dd57f3fc85db9618a75537212609`.
 
@@ -24,17 +24,17 @@ See [F2C guide](../docs/FRONTEND_F2C_TREATMENT.md), [architecture](../docs/archi
 
 Routes: `/referrals`, `/referrals/[referralId]`, `/cases/[caseId]/referrals/new`, `/cases/[caseId]/contacts`, `/contacts/[contactId]`, `/contact-investigations`, `/contact-investigations/[investigationId]`, `/preventive-treatments/[tptId]`. Explicit TB_OFFICER and independent referral/contact/TPT permissions protect live preparation, fixed pre-treatment destination, exact ACTIVE episode transfer, contact snapshots/exact identity linking, explicit investigation completion and clinician-controlled TPT start/edit/closure. Actual GET ETags, session-scoped abortable queries and guarded commands preserve concurrency/privacy; no clinical inference or automatic write replay.
 
-See [F2D guide](../docs/FRONTEND_F2D_CONTINUITY.md), [architecture](../docs/architecture/TBCall_Frontend_v1.4_F2D_Continuity.md) and [report](../docs/FRONTEND_F2D_REPORT.md). Approved backend base: `584fdea9bbe420c771593d52e2028407c6738c9c`. Backend/tests/V1-V17 remain unchanged. F2E/F3 are documented below; administration and SITB networking remain deferred.
+See [F2D guide](../docs/FRONTEND_F2D_CONTINUITY.md), [architecture](../docs/architecture/TBCall_Frontend_v1.4_F2D_Continuity.md) and [report](../docs/FRONTEND_F2D_REPORT.md). Approved backend base: `584fdea9bbe420c771593d52e2028407c6738c9c`. Backend/tests/V1-V17 remain unchanged. F2E/F3/F4 are documented below; SITB networking remains deferred.
 
 ## F2E staff monitoring, alerts and notifications
 
 Routes: `/treatments/[treatmentId]/monitoring`, `/preventive-treatments/[tptId]/monitoring`, `/monitoring-plans/[planId]`, `/alerts`, `/alerts/[alertId]`, `/notifications`. Explicit TB_OFFICER and independent read/manage/acknowledge/resolve permissions protect manually entered plans/events, staff alerts and current-user IN_APP notifications. Live references, actual detail GET ETags, awaited refetches and manual conflict review preserve backend state and source authority. No schedule, due date or clinical decision is inferred. Queries and commands are isolated by account/context and stay in memory; notification refresh is explicit.
 
-See [F2E guide](../docs/FRONTEND_F2E_MONITORING.md), [architecture](../docs/architecture/TBCall_Frontend_v1.5_F2E_Monitoring.md) and [report](../docs/FRONTEND_F2E_REPORT.md). Approved backend base: `24a922a067191f0788de444a054b2334355aac5e`. Backend/tests/V1–V17, scheduler/fanout and source-authority rules remain unchanged. F3 is documented below; F4 and SITB networking remain deferred.
+See [F2E guide](../docs/FRONTEND_F2E_MONITORING.md), [architecture](../docs/architecture/TBCall_Frontend_v1.5_F2E_Monitoring.md) and [report](../docs/FRONTEND_F2E_REPORT.md). Approved backend base: `24a922a067191f0788de444a054b2334355aac5e`. Backend/tests/V1–V17, scheduler/fanout and source-authority rules remain unchanged. F3/F4 are documented below; SITB networking remains deferred.
 
 ## F3 patient/supporter portals
 
-Routes: `/portal`, `/portal/treatment`, `/portal/tpt`, `/portal/monitoring`, `/portal/alerts`, `/portal/notifications`, `/supporting-cases`, `/supporting-cases/[caseId]`. Safe self/supporter APIs at base `f1023b4c459983c8f1edbd01bcc6fca55b1138ef`, actual grants/current links, live actor dose choices, personal alert receipts and authoritative notification detail ETags protect each flow. See [guide](../docs/FRONTEND_F3_PORTAL.md), [architecture](../docs/architecture/TBCall_Frontend_v1.6_F3_Portal.md) and [report](../docs/FRONTEND_F3_REPORT.md). Backend, authentication and staff behavior remain unchanged; F4/SITB networking require separate approval.
+Routes: `/portal`, `/portal/treatment`, `/portal/tpt`, `/portal/monitoring`, `/portal/alerts`, `/portal/notifications`, `/supporting-cases`, `/supporting-cases/[caseId]`. Safe self/supporter APIs at base `f1023b4c459983c8f1edbd01bcc6fca55b1138ef`, actual grants/current links, live actor dose choices, personal alert receipts and authoritative notification detail ETags protect each flow. See [guide](../docs/FRONTEND_F3_PORTAL.md), [architecture](../docs/architecture/TBCall_Frontend_v1.6_F3_Portal.md) and [report](../docs/FRONTEND_F3_REPORT.md). Backend, authentication and staff behavior remain unchanged; F4 is documented below; SITB networking remains deferred.
 
 ## Requirements and commands
 
@@ -100,7 +100,7 @@ Navigation consumes the exact permission codes supplied by `/me`, with no role-n
 
 The Indonesian shell has a collapsible desktop sidebar, modal mobile drawer, identity/role/facility summaries and logout. Associated labels, visible focus, skip link, announced errors, reduced motion and 44px button/input touch targets are included. Only SELF link state and the supporter-case **count** are displayed; linked patient/case IDs are not rendered.
 
-There is no browser persistence, offline cache or service worker. F1 itself has no clinical workflows; F2A-F2E add their approved staff workflows and F3 adds safe patient/supporter portals. KPIs, administration and SITB networking are deferred.
+There is no browser persistence, offline cache or service worker. F1 itself has no clinical workflows; F2A-F2E add their approved staff workflows, F3 adds safe patient/supporter portals, and F4 adds approved administration and read-only integration metadata. KPIs and SITB networking are deferred.
 
 Each page response receives a fresh CSP nonce and `no-store`. Next applies the nonce to its scripts; dynamic rendering supports this [documented Next.js CSP approach](https://nextjs.org/docs/app/guides/content-security-policy). The initial document nonce also configures `get-nonce` for Radix's injected scroll-lock stylesheet and is retained across client navigation. Zod uses interpreted (`jitless`) validation so it never attempts a Function/eval capability probe. Production scripts have no unsafe-inline/unsafe-eval permission or broad wildcard. Same-origin connections, frame denial, nosniff, no-referrer and restrictive Permissions-Policy apply. API responses have a separate `default-src 'none'` sandbox CSP so an upstream HTML error cannot run scripts.
 
@@ -112,4 +112,10 @@ Development alone permits script `unsafe-eval`, inline style elements and WebSoc
 
 Vitest + React Testing Library/user-event cover the native client, real HTTP proxy boundary, session lifecycle/cache clearing, forms, permission filtering, safe errors and drawer focus. Fixtures model existing backend responses; they are not a SITB service/database. See [the implementation guide](../docs/FRONTEND_FOUNDATION.md) and [checkpoint report](../docs/FRONTEND_F1_REPORT.md).
 
-Later UI need separately approved workflows, projections and permission/scope/ETag integration. Account registration/recovery, patient/supporter workflows, administration and real SITB networking remain later scopes.
+Later UI need separately approved workflows, projections and permission/scope/ETag integration. Account registration/recovery and real SITB networking remain later frontend scopes.
+
+## F4 administration and integration metadata
+
+Routes: `/admin/facilities`, `/admin/facilities/new`, `/admin/facilities/[facilityId]`, `/admin/users`, `/integrations`, `/integrations/[code]`, `/integrations/[code]/sync-runs/[runId]`. Independent role/grant/scope gates control each workspace. Facilities use live types, dirty-only PATCH/null clears, actual detail GET ETags, explicit stale review and confirmed deactivation. User lookup is submit-only, masked and transient; memberships preserve scope, roles use live managed catalogs, and status uses the explicitly approved quoted lookup version. Self commands refresh `/me` immediately before any relookup. Integration is read-only local metadata with independent memory-only section pages, no connector controls or external calls.
+
+See [F4 guide](../docs/FRONTEND_F4_ADMIN_INTEGRATION.md), [architecture](../docs/architecture/TBCall_Frontend_v1.7_F4_Admin_Integration.md) and [report](../docs/FRONTEND_F4_REPORT.md). Base: `48536ab6b26815fb2708b8f4d06eff9791335da6`. F4 query keys contain actor ID and full session context; all requests are abortable, guarded and memory-only. Java/backend tests/V1–V17, authentication, staff/portal semantics and Phase 5A behavior remain unchanged. Facility reactivation, broad user discovery, generic permissions and TB Officer account-link provisioning remain deferred.

@@ -1,0 +1,10 @@
+import { z } from "@/lib/validation";
+const text = z.string(), nullable = text.nullable(), uuid = z.uuid(), time = z.iso.datetime({ offset: true }), optionalTime = time.nullable(), count = z.number().int().nonnegative();
+export const pageSchema = <T extends z.ZodType>(item: T) => z.object({ content: z.array(item), page: count, size: count.min(1).max(50), totalElements: count }).strict();
+export const runSummarySchema = z.object({ id: uuid, direction: text, status: text, startedAt: time, finishedAt: optionalTime, recordsReceived: count, recordsCreated: count, recordsUpdated: count, recordsFailed: count, cursorValue: nullable, errorSummary: nullable }).strict();
+export const integrationSchema = z.object({ code: text, name: text, active: z.boolean(), configurationStatus: text, description: nullable, identifierCount: count, activeAuthorityCount: count, latestSyncRun: runSummarySchema.nullable() }).strict();
+export const identifierSchema = z.object({ id: uuid, entityType: text, entityId: uuid, externalId: text, externalVersion: nullable, firstSeenAt: time, lastSeenAt: time }).strict();
+export const authoritySchema = z.object({ entityType: text, entityId: uuid, authorityScope: text, externalId: nullable, sourceVersion: nullable, effectiveAt: time, releasedAt: optionalTime }).strict();
+export const itemSchema = z.object({ entityType: text, externalId: nullable, resolvedEntityId: uuid.nullable(), operation: text, status: text, sourceUpdatedAt: optionalTime, contentHash: nullable, localContentHash: nullable, conflictId: uuid.nullable(), processedAt: optionalTime, errorSummary: nullable }).strict();
+export const conflictSchema = z.object({ id: uuid, entityType: text, entityId: uuid.nullable(), externalId: nullable, authorityScope: text, sourceVersion: nullable, status: text, firstSeenAt: time, lastSeenAt: time, resolvedAt: optionalTime }).strict();
+export const runDetailSchema = z.object({ run: runSummarySchema, items: pageSchema(itemSchema) }).strict();
