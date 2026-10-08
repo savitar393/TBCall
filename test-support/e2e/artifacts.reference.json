@@ -1,0 +1,7 @@
+{
+  "baseline": "ce7c5f353dd4593c86775f957a2f7d826f9e7337",
+  "backend": "sha256:11d73ce8868bddfc52402b802369686daaf089119c637f969636312f11c4485b",
+  "frontend": "sha256:c7a5aec111dbae6dafc1761203cf60e2b9b6e25d2ab82e94d4c680f31be65a63",
+  "browser": "sha256:acd6069812d4d323d2386aacabc2bcf2ade7790afbd5ce6ae4d55c3a0a13f467",
+  "backendJarSha256": "d76c76debae5f0e14d382580d1eb7a4996d3a80292a3c0d560fbbf1f3d9f9263"
+}

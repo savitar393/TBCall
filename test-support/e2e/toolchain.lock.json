@@ -1,0 +1,103 @@
+{
+  "baseline": "ce7c5f353dd4593c86775f957a2f7d826f9e7337",
+  "sourceDateEpoch": 1791434417,
+  "platform": "linux/amd64",
+  "java": "21.0.12.1+1",
+  "maven": "3.9.16",
+  "node": "24.15.0",
+  "pnpm": "11.19.0",
+  "playwright": "1.62.1",
+  "chromiumRevision": "1234",
+  "chromiumVersion": "151.0.7922.34",
+  "postgres": "16.15",
+  "images": {
+    "node": "docker.io/library/node@sha256:152aceace5c03e2597988763165ee33e3fd3633636db0fc983cd2e126b02cfde",
+    "playwright": "mcr.microsoft.com/playwright@sha256:c091b21d9fae78c76e85cd4356431e9b018402f172a214fc7d7a5e9a7e29d8ac",
+    "postgres": "postgres@sha256:1a6ab3f5345eb6dbe04a1349529caabdb0ab09293a09590fad07b2246bfa4b54"
+  },
+  "sha256": {
+    "jdkArchive": "ce79869e1307ed8ee1e2baa86a412b1eb5b75d10a01006d788a6f968bcfaee94",
+    "mavenArchive": "5af3b743dd8b876b5c45da33b676251e5f1687712644abb4ee519ca56e1d89ce",
+    "linuxFrontendDependencies": "32bba601289d3aec6ccddf80af71ff44e0fa6f28ce77c07530adc202f76932e8",
+    "frontendLockfile": "735632ef5c2d9c6800a28d25a36ddd635f197ea6d951ebf128560c511ad34c93"
+  },
+  "packages": [
+    {
+      "name": "pnpm",
+      "version": "11.19.0",
+      "source": "https://registry.npmjs.org/pnpm/-/pnpm-11.19.0.tgz",
+      "bytes": 8776044,
+      "sha256": "B9E49603540D04107B98E93917A30E6114970D403C23E40309A44EA9C2BCA7FD"
+    },
+    {
+      "name": "playwright",
+      "version": "1.62.1",
+      "source": "https://registry.npmjs.org/playwright/-/playwright-1.62.1.tgz",
+      "bytes": 895775,
+      "sha256": "1982556A882B246CCB7C16337FAB5E4E790292B69F835A2DB1011DDDC440ED98"
+    },
+    {
+      "name": "playwright-core",
+      "version": "1.62.1",
+      "source": "https://registry.npmjs.org/playwright-core/-/playwright-core-1.62.1.tgz",
+      "bytes": 3070300,
+      "sha256": "954BE1E183D0DDB9748FE0D2D08B0B66A9210C74DD75C397AEB70303B9F08A00"
+    },
+    {
+      "name": "org.apache.maven.shared:file-management:3.2.0",
+      "version": null,
+      "source": "https://repo.maven.apache.org/maven2/org/apache/maven/shared/file-management/3.2.0/file-management-3.2.0.jar",
+      "bytes": 25912,
+      "sha256": "32AC469785DD1547AC71437E4C3916C4A56A3D69303CB08D789ECDD0BFD1D6DE"
+    },
+    {
+      "name": "org.codehaus.plexus:plexus-utils:4.0.3",
+      "version": null,
+      "source": "https://repo.maven.apache.org/maven2/org/codehaus/plexus/plexus-utils/4.0.3/plexus-utils-4.0.3.jar",
+      "bytes": 193088,
+      "sha256": "421FF6ED146C53A9D4EAADE8F629B52B12AF7187101F1BD06C2C64E904019F3C"
+    },
+    {
+      "name": "org.apache.maven:maven-archiver:3.6.6",
+      "version": null,
+      "source": "https://repo.maven.apache.org/maven2/org/apache/maven/maven-archiver/3.6.6/maven-archiver-3.6.6.jar",
+      "bytes": 28352,
+      "sha256": "9037DEE318A68D7EE5DD2E20F2E657A39597ED2622B52E325AB9BECDDFBC4D38"
+    },
+    {
+      "name": "org.codehaus.plexus:plexus-archiver:4.12.0",
+      "version": null,
+      "source": "https://repo.maven.apache.org/maven2/org/codehaus/plexus/plexus-archiver/4.12.0/plexus-archiver-4.12.0.jar",
+      "bytes": 227439,
+      "sha256": "B1E9798A6D711D1E7760D50C78BE8BE746BB546B87DF0A2D7EF67DB5EDA5431E"
+    },
+    {
+      "name": "org.codehaus.plexus:plexus-io:3.6.0",
+      "version": null,
+      "source": "https://repo.maven.apache.org/maven2/org/codehaus/plexus/plexus-io/3.6.0/plexus-io-3.6.0.jar",
+      "bytes": 80290,
+      "sha256": "FC0F3EFFEA7514E4F214DF1AFB672F54C982E78E5CA3B32B34196C7D056A1AA4"
+    },
+    {
+      "name": "org.tukaani:xz:1.12",
+      "version": null,
+      "source": "https://repo.maven.apache.org/maven2/org/tukaani/xz/1.12/xz-1.12.jar",
+      "bytes": 168792,
+      "sha256": "3E158A87BD73D8AFB4B6E8239C013B7D049C48563F45860CE99CD2E448CF4A6B"
+    },
+    {
+      "name": "com.github.luben:zstd-jni:1.5.7-9",
+      "version": null,
+      "source": "https://repo.maven.apache.org/maven2/com/github/luben/zstd-jni/1.5.7-9/zstd-jni-1.5.7-9.jar",
+      "bytes": 7569779,
+      "sha256": "087D02F39A46AB79B18F883AC7C3A3D6C2DF1FD3BF7EAAFEADE699E0743D0DBE"
+    },
+    {
+      "name": "commons-io:commons-io:2.22.0",
+      "version": null,
+      "source": "https://repo.maven.apache.org/maven2/commons-io/commons-io/2.22.0/commons-io-2.22.0.jar",
+      "bytes": 609182,
+      "sha256": "2B9A7B1F726FB86216DBD2C8321EABE0221DBD5B1BE81C18E1CB53811B104758"
+    }
+  ]
+}

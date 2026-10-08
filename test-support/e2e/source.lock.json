@@ -1,0 +1,120 @@
+{
+  "files": [
+    {
+      "sha256": "bcad7433c44a04a28849bb9606ea48a6c982e75ee9f1be32f77c2398c0de455a",
+      "path": "artifacts.reference.json"
+    },
+    {
+      "sha256": "9fa2e96eb0d3585d981a5c5b9de2630f254743e7568986de725d242106a59c07",
+      "path": "build/Backend.Dockerfile"
+    },
+    {
+      "sha256": "b16dc0f46d0effa79aa30efa1d877494c745521fefd2c745e07e98b4241974af",
+      "path": "build/Browser.Dockerfile"
+    },
+    {
+      "sha256": "b9c5f34d6df2e8014a3dfe2abe302b7fdc06372e39ab708599c8f4dde81c7394",
+      "path": "build/Frontend.Dockerfile"
+    },
+    {
+      "sha256": "6d68b15541e4d279d1c00eac09916e63e5765a0854003a345c52b1272b51a3d8",
+      "path": "Common.ps1"
+    },
+    {
+      "sha256": "68e139bbb41e26bcf1316a5c450a0055505d190c172071065276d87e152e1dc9",
+      "path": "coverage.json"
+    },
+    {
+      "sha256": "65f95286b81fe769361787d7e4c90e0b7781ea64505ce39f32f6f006da213b54",
+      "path": "harness/BrowserNetworkProbe.mjs"
+    },
+    {
+      "sha256": "edc423bdbd0e3163a8a532062fc19cf1dd0afc776755405cb472022fef0550f5",
+      "path": "harness/extended.mjs"
+    },
+    {
+      "sha256": "a709b07648071474a77b273c44a629fa9186d23340fb979fff87af1f7e18e372",
+      "path": "harness/generate-tls.sh"
+    },
+    {
+      "sha256": "dbf0f7b5615e1a30a4834756226b0e0b9b55de958dde4249cbbd9a8f8a0e5308",
+      "path": "harness/https-gateway.mjs"
+    },
+    {
+      "sha256": "259427109e5b8887177ab34c10cc78fdbf74074b58152ce5bb84df0791b8b66e",
+      "path": "harness/import-ca.py"
+    },
+    {
+      "sha256": "82f10cccb54276ec79872bf1b15230257fbb4207292ab9bdff8121d43b7f1828",
+      "path": "harness/NetworkProbe.java"
+    },
+    {
+      "sha256": "ad86a7dc31703b48d99a8bbc0de0fa85be93d5c3f270b6f9a6a3c85bdee48be5",
+      "path": "harness/NodeNetworkProbe.mjs"
+    },
+    {
+      "sha256": "cacb01a2d853111dfd5ff48ac6ced15cd392f16d4f05914d32e27528fad3a795",
+      "path": "harness/OwnedSink.mjs"
+    },
+    {
+      "sha256": "5409237cd3deac880fd82905de5a31ddef7ba1fcb0ef9b7c4f8169b302cb2d38",
+      "path": "harness/pg-network-probe.sh"
+    },
+    {
+      "sha256": "3d28d3a0eee214393350299a982a5b168c412ac1674a3f3ee7a7f7295a287a68",
+      "path": "harness/restart-backend.sh"
+    },
+    {
+      "sha256": "88ac849b7c020a3213f44ae1d741194c7d0d8a4a8073013f4778221a5a8dace9",
+      "path": "harness/run-smoke.mjs"
+    },
+    {
+      "sha256": "2e129c08433efe0a6e5da7deefbc7d9359a0ade719d2088ffc44593ece995402",
+      "path": "harness/tls-probe.mjs"
+    },
+    {
+      "sha256": "b4aabd14938cebd63e6198ecf2db11396e831da4ed2f1f42e7e03d19ab7be19c",
+      "path": "Prepare-Runtime.ps1"
+    },
+    {
+      "sha256": "ee302ea2e6d4fa609d964e9ad85ed0979334165541c637cb183c9aa11045d0d5",
+      "path": "Remove-OwnedResources.ps1"
+    },
+    {
+      "sha256": "920c94987c47561cf3d1b31d6712db28f0b9beb0f1105e5ccedc3db8d9552bcf",
+      "path": "Run-E2E.ps1"
+    },
+    {
+      "sha256": "688e4282e75b43d8f7483c69f47178cbe106e297969c7da8c64e3f5b9f2854b8",
+      "path": "security/browser-seccomp.json"
+    },
+    {
+      "sha256": "6416b47770785a41ac59073cdc77d9fe98517df2799dc83ef207e622de3053f6",
+      "path": "security/moby-default.json"
+    },
+    {
+      "sha256": "698f9e47fe760c0d85530a012c8a87e2770febf37589125eb36125fe9f73207e",
+      "path": "Test-E2E.ps1"
+    },
+    {
+      "sha256": "6babdb1051ae40957082ae51e541e541122d93e7e6d12b4f1c03a04eb885f2fb",
+      "path": "tests/Safety.Tests.ps1"
+    },
+    {
+      "sha256": "ce943e964630bf3e75827720b079b1a1883200dada807405ea0117e73fc5bb47",
+      "path": "tests/Static.mjs"
+    },
+    {
+      "sha256": "b0e0489c3e4c20fec911de0ed4b53380aae5e6381369b1fb31739a76486b2ef4",
+      "path": "toolchain.lock.json"
+    },
+    {
+      "sha256": "f936f112840faf3e1492d693259427672f8223bf83fe4fc4c0f8e73c51a87435",
+      "path": "Update-Manifests.ps1"
+    },
+    {
+      "sha256": "6a02bbfaa07778a113575c2eb7bc235716f8facf38e6cb34fdcb96e844a0859b",
+      "path": "Verify-Cleanup.ps1"
+    }
+  ]
+}

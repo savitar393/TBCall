@@ -1,0 +1,746 @@
+{
+  "baseline": "ce7c5f353dd4593c86775f957a2f7d826f9e7337",
+  "scenarioCount": 56,
+  "databaseAssertionCount": 58,
+  "scenarios": [
+    {
+      "id": "P01",
+      "objective": "Anonymous CSRF initialization and rejection",
+      "actor": "anonymous",
+      "preconditions": "TLS, isolation, migration gates passed",
+      "expected": "Source-derived assertions in run-smoke.mjs"
+    },
+    {
+      "id": "P02",
+      "objective": "Session cookie attributes, CSRF rotation and logout",
+      "actor": "bootstrap administrator",
+      "preconditions": "P01",
+      "expected": "Source-derived assertions in run-smoke.mjs"
+    },
+    {
+      "id": "A01",
+      "objective": "Seven-role synthetic account provisioning and two facilities",
+      "actor": "system administrator",
+      "preconditions": "P02",
+      "expected": "Source-derived assertions in run-smoke.mjs"
+    },
+    {
+      "id": "A02",
+      "objective": "Facility administration scope and role restrictions",
+      "actor": "facility administrator, lab staff",
+      "preconditions": "A01",
+      "expected": "Source-derived assertions in run-smoke.mjs"
+    },
+    {
+      "id": "C01",
+      "objective": "Synthetic registration, diagnosis and confirmed case",
+      "actor": "facility-A TB officer",
+      "preconditions": "A01",
+      "expected": "Source-derived assertions in run-smoke.mjs"
+    },
+    {
+      "id": "C02",
+      "objective": "Cross-facility and wrong-role clinical denials",
+      "actor": "facility-B officer, lab staff, program monitor",
+      "preconditions": "C01",
+      "expected": "Source-derived assertions in run-smoke.mjs"
+    },
+    {
+      "id": "L01",
+      "objective": "Exact verified patient account resolution and safe masking",
+      "actor": "facility-A TB officer",
+      "preconditions": "C01",
+      "expected": "Source-derived assertions in run-smoke.mjs"
+    },
+    {
+      "id": "L02",
+      "objective": "Authoritative patient-link state, role grant and safe self projection",
+      "actor": "officer, patient",
+      "preconditions": "L01",
+      "expected": "Source-derived assertions in run-smoke.mjs"
+    },
+    {
+      "id": "L03",
+      "objective": "Identity-bound patient revocation and immediate role loss",
+      "actor": "officer, patient",
+      "preconditions": "L02",
+      "expected": "Source-derived assertions in run-smoke.mjs"
+    },
+    {
+      "id": "S01",
+      "objective": "Supporter record list/detail, exact resolution and linking",
+      "actor": "officer, supporter",
+      "preconditions": "C01",
+      "expected": "Source-derived assertions in run-smoke.mjs"
+    },
+    {
+      "id": "S02",
+      "objective": "Supporter safe portal API and authoritative unlink",
+      "actor": "officer, supporter",
+      "preconditions": "S01",
+      "expected": "Source-derived assertions in run-smoke.mjs"
+    },
+    {
+      "id": "E01",
+      "objective": "Authoritative GET ETag and stale update rejection",
+      "actor": "facility-A TB officer",
+      "preconditions": "C01",
+      "expected": "Source-derived assertions in run-smoke.mjs"
+    },
+    {
+      "id": "B01",
+      "objective": "Rendered login/logout, CSP and runtime errors",
+      "actor": "facility-A TB officer",
+      "preconditions": "C01",
+      "expected": "Source-derived assertions in run-smoke.mjs"
+    },
+    {
+      "id": "B02",
+      "objective": "Patient linking UI explicit acknowledgement and confirmation",
+      "actor": "facility-A TB officer",
+      "preconditions": "B01,L03",
+      "expected": "Source-derived assertions in run-smoke.mjs"
+    },
+    {
+      "id": "B03",
+      "objective": "Patient portal rendering, revocation and protected-state clearing",
+      "actor": "patient, officer",
+      "preconditions": "B02",
+      "expected": "Source-derived assertions in run-smoke.mjs"
+    },
+    {
+      "id": "B04",
+      "objective": "Supporter record and linking UI explicit confirmation",
+      "actor": "facility-A TB officer",
+      "preconditions": "B01,S02",
+      "expected": "Source-derived assertions in run-smoke.mjs"
+    },
+    {
+      "id": "B05",
+      "objective": "Supporter portal rendering and unlink access loss",
+      "actor": "supporter, officer",
+      "preconditions": "B04",
+      "expected": "Source-derived assertions in run-smoke.mjs"
+    },
+    {
+      "id": "B06",
+      "objective": "Stale UI mutation rejected once without automatic replay",
+      "actor": "facility-A TB officer",
+      "preconditions": "B01,E01",
+      "expected": "Source-derived assertions in run-smoke.mjs"
+    },
+    {
+      "id": "B07",
+      "objective": "Logout/account switch clears protected information",
+      "actor": "TB officer, lab staff",
+      "preconditions": "B01",
+      "expected": "Source-derived assertions in run-smoke.mjs"
+    },
+    {
+      "id": "B08",
+      "objective": "Live membership loss hides protected officer information",
+      "actor": "facility-A TB officer, system administrator",
+      "preconditions": "B07",
+      "expected": "Source-derived assertions in run-smoke.mjs"
+    },
+    {
+      "id": "D01",
+      "objective": "Restore fixture assignment; separate sessions and live catalogs",
+      "actor": "admin, officers, laboratory staff",
+      "preconditions": "B08",
+      "expected": "Supported assignment restored; independent sessions; active catalog options available"
+    },
+    {
+      "id": "D02",
+      "objective": "Request, specimen and testing-facility permission boundaries",
+      "actor": "officer A, laboratories A/B",
+      "preconditions": "D01",
+      "expected": "Request/specimen 201; source laboratory and officer result roles denied; destination receipt 200 once"
+    },
+    {
+      "id": "D03",
+      "objective": "Append-only result and correction lineage",
+      "actor": "laboratory B",
+      "preconditions": "D02",
+      "expected": "Initial FINAL sequence 1; CORRECTED sequence 2; stale/older lineage rejected; original retained"
+    },
+    {
+      "id": "D04",
+      "objective": "Same-test initial-result race",
+      "actor": "two laboratory A sessions",
+      "preconditions": "D01",
+      "expected": "201/409; exactly one result and success audit"
+    },
+    {
+      "id": "D05",
+      "objective": "Same-latest-result correction race",
+      "actor": "two laboratory A sessions",
+      "preconditions": "D04",
+      "expected": "201/409; exactly one successor and correction audit"
+    },
+    {
+      "id": "D06",
+      "objective": "Different-test parallel results",
+      "actor": "two laboratory A sessions",
+      "preconditions": "D01",
+      "expected": "201/201; two final results and audits; request COMPLETED"
+    },
+    {
+      "id": "D07",
+      "objective": "Cancellation versus result race",
+      "actor": "officer A, laboratory A",
+      "preconditions": "D01",
+      "expected": "One 200/409 or 409/201 legal outcome; no result under cancelled request"
+    },
+    {
+      "id": "D08",
+      "objective": "Treatment initiation race and explicit drug lines",
+      "actor": "two officer A sessions",
+      "preconditions": "D01",
+      "expected": "201/409; one ACTIVE treatment, one supplied drug line and start audit"
+    },
+    {
+      "id": "D09",
+      "objective": "Treatment ETags, role and facility denials",
+      "actor": "officers A/B, laboratory",
+      "preconditions": "D08",
+      "expected": "428/400/stale409; fresh PATCH200; wrong-role403 and foreign404"
+    },
+    {
+      "id": "D10",
+      "objective": "Same actor/day adherence evidence race",
+      "actor": "two officer A sessions",
+      "preconditions": "D08",
+      "expected": "201/409; one HEALTH_WORKER evidence row and audit"
+    },
+    {
+      "id": "D11",
+      "objective": "Follow-up schedule and completion with structured weight",
+      "actor": "officer A",
+      "preconditions": "D08",
+      "expected": "Schedule201; complete200; repeated completion409; no inferred medical assessment"
+    },
+    {
+      "id": "D12",
+      "objective": "Adverse-event create/update and stale precondition",
+      "actor": "officer A",
+      "preconditions": "D08",
+      "expected": "Create201, PATCH200 and stale409; safe projections omit narratives"
+    },
+    {
+      "id": "D13",
+      "objective": "Explicit treatment outcome concurrency",
+      "actor": "two officer A sessions",
+      "preconditions": "D01",
+      "expected": "201/409; one outcome; treatment and case COMPLETED; no duplicate success audit"
+    },
+    {
+      "id": "D14",
+      "objective": "Terminal treatment boundaries and late laboratory evidence",
+      "actor": "officer/laboratory A",
+      "preconditions": "D13",
+      "expected": "Closed new writes409; adverse PATCH200; correction409; late initial result201"
+    },
+    {
+      "id": "D15",
+      "objective": "Linked portals with real treatment and actor-specific doses",
+      "actor": "patient, supporter, officer",
+      "preconditions": "D08,D11,D12",
+      "expected": "Relink approved identities; safe treatment/follow-ups; distinct actors same day201/201"
+    },
+    {
+      "id": "D16",
+      "objective": "Investigation eligibility gating",
+      "actor": "officer A",
+      "preconditions": "D01",
+      "expected": "TPT before completion409; incompatible flags400; ineligible completion200 then TPT409"
+    },
+    {
+      "id": "D17",
+      "objective": "Eligible internal investigation and TPT-start race",
+      "actor": "two officer A sessions",
+      "preconditions": "D01",
+      "expected": "COMPLETED with explicit true flags; TPT201/409; exactly one open episode/audit"
+    },
+    {
+      "id": "D18",
+      "objective": "TPT metadata preconditions and permission isolation",
+      "actor": "officers A/B, patient",
+      "preconditions": "D17",
+      "expected": "Fresh PATCH200; stale409; immutable status400; foreign404 and patient403"
+    },
+    {
+      "id": "D19",
+      "objective": "Outgoing investigation destination workflow",
+      "actor": "officers A/B",
+      "preconditions": "D01",
+      "expected": "Destination receive/start/complete; source complete404; TPT belongs to destination"
+    },
+    {
+      "id": "D20",
+      "objective": "Exact contact-to-patient confirmation and safe TPT portal",
+      "actor": "officer, new verified patient",
+      "preconditions": "D17",
+      "expected": "Exact synthetic identity link200; independent SELF account link; safe /me/tpt projection"
+    },
+    {
+      "id": "D21",
+      "objective": "Treatment and TPT monitoring plans and active-plan uniqueness",
+      "actor": "officer A",
+      "preconditions": "D08,D17,D20",
+      "expected": "Create201; duplicate409; explicit live event types; authoritative GET ETags"
+    },
+    {
+      "id": "D22",
+      "objective": "Monitoring event reschedule/cancel race",
+      "actor": "two officer A sessions",
+      "preconditions": "D21",
+      "expected": "Missing428; same GET ETag race200/409; one terminal or rescheduled state"
+    },
+    {
+      "id": "D23",
+      "objective": "Actual controlled scheduler DUE/OVERDUE and fanout",
+      "actor": "scheduler, linked recipients",
+      "preconditions": "D21,D15",
+      "expected": "SCHEDULED\u2192DUE\u2192OVERDUE; one alert/event; deduplicated IN_APP delivery; scheduler actor null"
+    },
+    {
+      "id": "D24",
+      "objective": "Safe portal monitoring/alert privacy and receipt semantics",
+      "actor": "patient, supporter, TPT patient",
+      "preconditions": "D23",
+      "expected": "Safe projections; receipts idempotent; staff alert remains OPEN/version unchanged; foreign receipt404"
+    },
+    {
+      "id": "D25",
+      "objective": "Staff alert acknowledgement race and explicit resolution",
+      "actor": "two officer A sessions",
+      "preconditions": "D23",
+      "expected": "Ack200/409; idempotent fresh ack200; resolve200; no event completion/reopening"
+    },
+    {
+      "id": "D26",
+      "objective": "Notification owner scope and read race",
+      "actor": "two patient sessions, officer",
+      "preconditions": "D23",
+      "expected": "Owner GET ETag; foreign404; read200/409; fresh repeat idempotent; one read audit"
+    },
+    {
+      "id": "D27",
+      "objective": "Monitoring completion/cancellation and alert auto-resolution",
+      "actor": "officer A",
+      "preconditions": "D23",
+      "expected": "Complete overdue event200 resolves its alert; cancel remaining events/plan; no duplicates"
+    },
+    {
+      "id": "D28",
+      "objective": "Rendered patient/supporter portals with real clinical records",
+      "actor": "patient, supporter",
+      "preconditions": "D15,D23",
+      "expected": "Actual portal pages render linked records without identity/narrative leakage or runtime errors"
+    },
+    {
+      "id": "D29",
+      "objective": "Transfer send/receive preserves source ownership until report",
+      "actor": "officers A/B",
+      "preconditions": "D08,D17,D19",
+      "expected": "SENT\u2192RECEIVED; case REFERRED at source; treatment still source; wrong-side transition404"
+    },
+    {
+      "id": "D30",
+      "objective": "Arrival report versus source outcome race",
+      "actor": "officers A/B",
+      "preconditions": "D29",
+      "expected": "Report200; source outcome404/409; destination owns ACTIVE case/treatment; no outcome"
+    },
+    {
+      "id": "D31",
+      "objective": "New owner writes; retained referral and contact/TPT history",
+      "actor": "officers A/B, patient, supporter",
+      "preconditions": "D30,D17,D19",
+      "expected": "Source case/treatment404; referral history200; source historical IK/TPT200; destination historical IK/TPT404; portals persist"
+    },
+    {
+      "id": "D32",
+      "objective": "Transfer send versus outcome race",
+      "actor": "two officer A sessions",
+      "preconditions": "D01",
+      "expected": "201/409; exactly one referral or outcome; final serial state and success audits agree"
+    },
+    {
+      "id": "D33",
+      "objective": "Referral receive versus source cancellation race",
+      "actor": "officers A/B",
+      "preconditions": "D01",
+      "expected": "200/409; one transition; ownership remains source; no duplicate transition audit"
+    },
+    {
+      "id": "D34",
+      "objective": "Context and actor identity-resolution throttle with durable audits",
+      "actor": "fresh officer A",
+      "preconditions": "D01",
+      "expected": "Context sixth429; actor eleventh429; all unavailable/throttled outcomes committed"
+    },
+    {
+      "id": "D35",
+      "objective": "Concurrent identity-resolution budget serialization",
+      "actor": "two fresh officer sessions",
+      "preconditions": "D01",
+      "expected": "Eight bounded requests yield five404 and three429; exactly eight durable lookup audits"
+    },
+    {
+      "id": "D36",
+      "objective": "Revocation and independent role/permission/facility denials",
+      "actor": "officer, patient, supporter, roleless, lab",
+      "preconditions": "D24,D28,D31",
+      "expected": "Identity-bound revoke/unlink200; existing sessions immediately403; missing permission403; lab role403; foreign404"
+    }
+  ],
+  "database": [
+    {
+      "scenario": "D02",
+      "key": "SPECIMEN_RECEIVED_ONCE",
+      "expected": "1"
+    },
+    {
+      "scenario": "D03",
+      "key": "ORIGINAL_FINAL_PRESERVED",
+      "expected": "1"
+    },
+    {
+      "scenario": "D04",
+      "key": "SAME_TEST_ONE_INITIAL_RESULT",
+      "expected": "1"
+    },
+    {
+      "scenario": "D04",
+      "key": "ONE_INITIAL_RESULT_AUDIT",
+      "expected": "1"
+    },
+    {
+      "scenario": "D05",
+      "key": "ONE_CORRECTION_SUCCESSOR",
+      "expected": "2"
+    },
+    {
+      "scenario": "D05",
+      "key": "ONE_CORRECTION_AUDIT",
+      "expected": "1"
+    },
+    {
+      "scenario": "D06",
+      "key": "INDEPENDENT_RESULT_AUDIT",
+      "expected": "1"
+    },
+    {
+      "scenario": "D06",
+      "key": "INDEPENDENT_RESULT_AUDIT",
+      "expected": "1"
+    },
+    {
+      "scenario": "D06",
+      "key": "TWO_INDEPENDENT_FINAL_RESULTS",
+      "expected": "2"
+    },
+    {
+      "scenario": "D07",
+      "key": "CANCEL_RESULT_ROWS",
+      "expected": "1",
+      "allowedExpected": [
+        "0",
+        "1"
+      ]
+    },
+    {
+      "scenario": "D07",
+      "key": "CANCEL_SUCCESS_AUDIT",
+      "expected": "0",
+      "allowedExpected": [
+        "0",
+        "1"
+      ]
+    },
+    {
+      "scenario": "D07",
+      "key": "CANCEL_RESULT_SUCCESS_AUDIT",
+      "expected": "1",
+      "allowedExpected": [
+        "0",
+        "1"
+      ]
+    },
+    {
+      "scenario": "D08",
+      "key": "ONE_MAIN_TREATMENT",
+      "expected": "1"
+    },
+    {
+      "scenario": "D08",
+      "key": "ONE_EXPLICIT_DRUG",
+      "expected": "1"
+    },
+    {
+      "scenario": "D08",
+      "key": "ONE_START_AUDIT",
+      "expected": "1"
+    },
+    {
+      "scenario": "D10",
+      "key": "SAME_ACTOR_DAY_ONE_EVIDENCE",
+      "expected": "1"
+    },
+    {
+      "scenario": "D10",
+      "key": "HEALTH_WORKER_SOURCE",
+      "expected": "1"
+    },
+    {
+      "scenario": "D10",
+      "key": "ONE_STAFF_DOSE_AUDIT",
+      "expected": "1"
+    },
+    {
+      "scenario": "D11",
+      "key": "FOLLOW_UP_COMPLETED_ONCE",
+      "expected": "1"
+    },
+    {
+      "scenario": "D13",
+      "key": "ONE_CLOSED_OUTCOME",
+      "expected": "1"
+    },
+    {
+      "scenario": "D13",
+      "key": "ONE_OUTCOME_AUDIT",
+      "expected": "1"
+    },
+    {
+      "scenario": "D15",
+      "key": "INDEPENDENT_ACTOR_DAY_EVIDENCE",
+      "expected": "3"
+    },
+    {
+      "scenario": "D15",
+      "key": "PORTAL_DERIVED_SOURCES",
+      "expected": "3"
+    },
+    {
+      "scenario": "D15",
+      "key": "THREE_ACTOR_DOSE_AUDITS",
+      "expected": "3"
+    },
+    {
+      "scenario": "D16",
+      "key": "INELIGIBLE_NO_TPT",
+      "expected": "0"
+    },
+    {
+      "scenario": "D17",
+      "key": "ONE_CREATED_TPT",
+      "expected": "1"
+    },
+    {
+      "scenario": "D17",
+      "key": "ONE_TPT_START_AUDIT",
+      "expected": "1"
+    },
+    {
+      "scenario": "D22",
+      "key": "ONE_RESCHEDULE_OR_CANCEL_AUDIT",
+      "expected": "1"
+    },
+    {
+      "scenario": "D23",
+      "key": "ONE_TREATMENT_ALERT",
+      "expected": "1"
+    },
+    {
+      "scenario": "D23",
+      "key": "ONE_TPT_ALERT",
+      "expected": "1"
+    },
+    {
+      "scenario": "D23",
+      "key": "NO_DUPLICATE_FANOUT",
+      "expected": "0"
+    },
+    {
+      "scenario": "D23",
+      "key": "NULL_ACTOR_MONITORING_EVENT_DUE",
+      "expected": "1"
+    },
+    {
+      "scenario": "D23",
+      "key": "NULL_ACTOR_MONITORING_EVENT_OVERDUE",
+      "expected": "1"
+    },
+    {
+      "scenario": "D23",
+      "key": "NULL_ACTOR_MONITORING_EVENT_DUE",
+      "expected": "1"
+    },
+    {
+      "scenario": "D23",
+      "key": "NULL_ACTOR_MONITORING_EVENT_OVERDUE",
+      "expected": "1"
+    },
+    {
+      "scenario": "D24",
+      "key": "TWO_UNIQUE_SELF_RECEIPTS",
+      "expected": "2"
+    },
+    {
+      "scenario": "D24",
+      "key": "TWO_SELF_RECEIPT_AUDITS",
+      "expected": "2"
+    },
+    {
+      "scenario": "D25",
+      "key": "ONE_STAFF_ACK_AUDIT",
+      "expected": "1"
+    },
+    {
+      "scenario": "D25",
+      "key": "ONE_RESOLVE_AUDIT",
+      "expected": "1"
+    },
+    {
+      "scenario": "D26",
+      "key": "ONE_NOTIFICATION_READ_AUDIT",
+      "expected": "1"
+    },
+    {
+      "scenario": "D27",
+      "key": "NO_DUPLICATE_MONITORING_ALERT",
+      "expected": "1"
+    },
+    {
+      "scenario": "D30",
+      "key": "TRANSFER_NO_OUTCOME",
+      "expected": "0"
+    },
+    {
+      "scenario": "D30",
+      "key": "ONE_REPORT_AUDIT",
+      "expected": "1"
+    },
+    {
+      "scenario": "D30",
+      "key": "TRANSFER_NO_OUTCOME_AUDIT",
+      "expected": "0"
+    },
+    {
+      "scenario": "D31",
+      "key": "TRANSFER_PRESERVES_DRUG_ROWS",
+      "expected": "1"
+    },
+    {
+      "scenario": "D31",
+      "key": "TRANSFER_PRESERVES_EVIDENCE_ROWS",
+      "expected": "3"
+    },
+    {
+      "scenario": "D32",
+      "key": "SEND_OUTCOME_REFERRAL_ROWS",
+      "expected": "1",
+      "allowedExpected": [
+        "0",
+        "1"
+      ]
+    },
+    {
+      "scenario": "D32",
+      "key": "SEND_OUTCOME_OUTCOME_ROWS",
+      "expected": "0",
+      "allowedExpected": [
+        "0",
+        "1"
+      ]
+    },
+    {
+      "scenario": "D32",
+      "key": "SEND_OUTCOME_SUCCESS_AUDIT",
+      "expected": "0",
+      "allowedExpected": [
+        "0",
+        "1"
+      ]
+    },
+    {
+      "scenario": "D32",
+      "key": "SEND_REFERRAL_SUCCESS_AUDIT",
+      "expected": "1",
+      "allowedExpected": [
+        "0",
+        "1"
+      ]
+    },
+    {
+      "scenario": "D33",
+      "key": "ONE_RECEIVE_OR_CANCEL_AUDIT",
+      "expected": "1"
+    },
+    {
+      "scenario": "D34",
+      "key": "LOOKUP_UNAVAILABLE_DURABLE",
+      "expected": "9"
+    },
+    {
+      "scenario": "D34",
+      "key": "LOOKUP_THROTTLED_DURABLE",
+      "expected": "2"
+    },
+    {
+      "scenario": "D35",
+      "key": "EIGHT_DURABLE_LOOKUP_OUTCOMES",
+      "expected": "8"
+    },
+    {
+      "scenario": "D35",
+      "key": "FIVE_PARALLEL_UNAVAILABLE_AUDITS",
+      "expected": "5"
+    },
+    {
+      "scenario": "D35",
+      "key": "THREE_PARALLEL_THROTTLED_AUDITS",
+      "expected": "3"
+    },
+    {
+      "scenario": "D36",
+      "key": "TPT_EXPLICIT_COMPLETED",
+      "expected": "1"
+    },
+    {
+      "scenario": "D36",
+      "key": "CLINICAL_LOOKUP_AUDIT_METADATA_ALLOWLIST",
+      "expected": "0"
+    }
+  ],
+  "raceGroups": [
+    {
+      "scenario": "D07",
+      "keys": [
+        "CANCEL_RESULT_ROWS",
+        "CANCEL_SUCCESS_AUDIT",
+        "CANCEL_RESULT_SUCCESS_AUDIT"
+      ],
+      "allowed": [
+        "0|1|0",
+        "1|0|1"
+      ]
+    },
+    {
+      "scenario": "D32",
+      "keys": [
+        "SEND_OUTCOME_REFERRAL_ROWS",
+        "SEND_OUTCOME_OUTCOME_ROWS",
+        "SEND_OUTCOME_SUCCESS_AUDIT",
+        "SEND_REFERRAL_SUCCESS_AUDIT"
+      ],
+      "allowed": [
+        "0|1|1|0",
+        "1|0|0|1"
+      ]
+    }
+  ]
+}
