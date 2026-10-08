@@ -57,7 +57,7 @@ public class SecurityConfiguration {
         validate(properties, environment);
         CorsConfiguration cors=new CorsConfiguration(); cors.setAllowedOrigins(properties.getAllowedOrigins());
         cors.setAllowedMethods(List.of("GET", "POST", "PATCH", "DELETE", "OPTIONS"));
-        cors.setAllowedHeaders(List.of("Content-Type", "X-XSRF-TOKEN", "If-Match", "X-Request-ID"));
+        cors.setAllowedHeaders(List.of("Content-Type", "X-XSRF-TOKEN", "If-Match", "X-Request-ID", "X-Expected-Link-Id"));
         cors.setExposedHeaders(List.of("ETag", "X-Request-ID")); cors.setAllowCredentials(true);
         UrlBasedCorsConfigurationSource source=new UrlBasedCorsConfigurationSource(); source.registerCorsConfiguration("/api/**", cors);
         org.springframework.web.filter.CorsFilter corsFilter=new org.springframework.web.filter.CorsFilter(source);

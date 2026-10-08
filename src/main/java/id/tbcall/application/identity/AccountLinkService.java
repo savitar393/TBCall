@@ -25,8 +25,9 @@ public class AccountLinkService {
     private final RoleAssignments roles;
     private final AuditService audit;
     private final Clock clock;
-    public AccountLinkService(EntityManager em, ScopePolicies scopes, RoleAssignments roles, AuditService audit, Clock clock) {
-        this.em=em; this.scopes=scopes; this.roles=roles; this.audit=audit; this.clock=clock;
+    private final OnboardingAccess onboarding;
+    public AccountLinkService(EntityManager em, ScopePolicies scopes, RoleAssignments roles, AuditService audit, Clock clock, OnboardingAccess onboarding) {
+        this.em=em; this.scopes=scopes; this.roles=roles; this.audit=audit; this.clock=clock;this.onboarding=onboarding;
     }
     public PatientLinkResult verifyPatient(CurrentActor actor, UUID patientId, UUID userId, String match) {
         scopes.requireOfficerPatientLinkScope(actor, "PATIENT_LINK_VERIFY", patientId);
@@ -51,13 +52,13 @@ public class AccountLinkService {
         roles.assign(user, "PATIENT", actor.userId()); audit.record(actor.userId(), "PATIENT_LINK_VERIFIED", "PATIENT_USER_LINK", link.getId());
         em.flush(); return new PatientLinkResult(patientResponse(link), created);
     }
-    public PatientLinkResponse revokePatient(CurrentActor actor, UUID patientId, String match) {
+    public PatientLinkResponse revokePatient(CurrentActor actor, UUID patientId, UUID expectedLinkId, String match) {
         scopes.requireOfficerPatientLinkScope(actor, "PATIENT_LINK_VERIFY", patientId);
         em.find(Patient.class, patientId, LockModeType.PESSIMISTIC_WRITE);
         List<PatientUserLink> found=em.createQuery("""
                 select l from PatientUserLink l where l.patient.id=:patient and l.relationshipType='SELF' and l.verificationStatus='VERIFIED'
                 """, PatientUserLink.class).setParameter("patient", patientId).getResultList();
-        if (found.isEmpty()) throw ApplicationFailure.missing();
+        if (found.isEmpty() || !found.getFirst().getId().equals(expectedLinkId)) throw ApplicationFailure.optimistic();
         PatientUserLink link=found.getFirst(); IfMatch.require(match, link.getVersion());
         User user=em.find(User.class, link.getUser().getId(), LockModeType.PESSIMISTIC_WRITE);
         link.setVerificationStatus("REVOKED"); roles.remove(user, "PATIENT", actor.userId());
@@ -65,7 +66,7 @@ public class AccountLinkService {
         em.flush(); return patientResponse(link);
     }
     public SupporterLinkResponse linkSupporter(CurrentActor actor, UUID caseId, UUID supporterId, UUID userId, String match) {
-        PatientSupporter supporter=supporter(actor, caseId, supporterId, match);
+        PatientSupporter supporter=supporter(actor, caseId, supporterId, match, true);
         UUID previous=supporter.getLinkedUser()==null ? null : supporter.getLinkedUser().getId();
         lockUsers(previous, userId); User user=target(userId);
         supporter.setLinkedUser(user); roles.assign(user, "TREATMENT_SUPPORTER", actor.userId());
@@ -74,18 +75,16 @@ public class AccountLinkService {
         em.flush(); return supporterResponse(supporter);
     }
     public SupporterLinkResponse unlinkSupporter(CurrentActor actor, UUID caseId, UUID supporterId, String match) {
-        PatientSupporter supporter=supporter(actor, caseId, supporterId, match);
+        PatientSupporter supporter=supporter(actor, caseId, supporterId, match, false);
         if (supporter.getLinkedUser()==null) throw ApplicationFailure.conflict("Pendamping belum memiliki tautan akun.");
         UUID previous=supporter.getLinkedUser().getId(); lockUsers(previous, null);
         supporter.setLinkedUser(null); removeUnsupportedRole(previous, actor.userId());
         audit.record(actor.userId(), "SUPPORTER_UNLINKED", "PATIENT_SUPPORTER", supporter.getId());
         em.flush(); return supporterResponse(supporter);
     }
-    private PatientSupporter supporter(CurrentActor actor, UUID caseId, UUID supporterId, String match) {
-        TBCase tbCase=em.find(TBCase.class, caseId); if (tbCase==null) throw ApplicationFailure.missing();
-        scopes.requireOfficerCase(actor, "SUPPORTER_LINK_MANAGE", tbCase);
-        PatientSupporter supporter=em.find(PatientSupporter.class, supporterId);
-        if (supporter==null || !supporter.getTbCase().getId().equals(caseId)) throw ApplicationFailure.missing();
+    private PatientSupporter supporter(CurrentActor actor, UUID caseId, UUID supporterId, String match, boolean prospective) {
+        onboarding.tbCase(actor,caseId,true,prospective);
+        PatientSupporter supporter=onboarding.supporter(caseId,supporterId,false);
         IfMatch.require(match, supporter.getVersion());
         if (!Boolean.TRUE.equals(supporter.getActive())) throw ApplicationFailure.conflict("Pendamping tidak aktif.");
         return supporter;

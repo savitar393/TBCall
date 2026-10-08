@@ -1,6 +1,7 @@
 package id.tbcall.web;
 
 import id.tbcall.application.identity.AccountLinkService;
+import id.tbcall.application.common.ApplicationFailure;
 import id.tbcall.authorization.CurrentActor;
 import jakarta.validation.Valid;
 import java.util.UUID;
@@ -22,8 +23,17 @@ public class AccountLinkController {
     }
     @DeleteMapping("/patients/{patientId}/account-link")
     ResponseEntity<PatientLinkResponse> revoke(@AuthenticationPrincipal CurrentActor actor, @PathVariable UUID patientId,
-            @RequestHeader(value="If-Match", required=false) String match) {
-        PatientLinkResponse response=links.revokePatient(actor, patientId, match);
+            @RequestHeader(value="If-Match", required=false) String match,
+            @RequestHeader(value="X-Expected-Link-Id",required=false) String expectedId) {
+        if(expectedId==null || expectedId.isBlank()) throw new ApplicationFailure(428,"PRECONDITION_REQUIRED","Prasyarat diperlukan","ID tautan yang diharapkan wajib diisi.");
+        if(!expectedId.matches("(?i)[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}"))
+            throw ApplicationFailure.invalid("ID tautan tidak valid.");
+        return revokeBound(actor,patientId,UUID.fromString(expectedId),match);
+    }
+    @DeleteMapping("/patients/{patientId}/account-links/{linkId}")
+    ResponseEntity<PatientLinkResponse> revokeBound(@AuthenticationPrincipal CurrentActor actor,@PathVariable UUID patientId,
+            @PathVariable UUID linkId,@RequestHeader(value="If-Match",required=false) String match) {
+        PatientLinkResponse response=links.revokePatient(actor, patientId, linkId, match);
         return ResponseEntity.ok().eTag(IfMatch.etag(response.version())).body(response);
     }
     @PostMapping("/cases/{caseId}/supporters/{supporterId}/account-link")

@@ -267,9 +267,9 @@ class IdentityAuthorizationIntegrationTest {
         UUID otherPatient = patient(f.facility);
         call(post(patientPath(otherPatient)).cookie(f.officer), Map.of("userId", one), 409);
         mvc.perform(delete(patientPath(f.patient)).cookie(f.officer).with(csrf())).andExpect(status().is(428));
-        mvc.perform(delete(patientPath(f.patient)).cookie(f.officer).with(csrf()).header("If-Match", "\"9\""))
+        mvc.perform(delete(patientPath(f.patient)).cookie(f.officer).with(csrf()).header("X-Expected-Link-Id", jdbc.queryForObject("select id from patient_user_links where patient_id=? and verification_status='VERIFIED'", UUID.class, f.patient)).header("If-Match", "\"9\""))
                 .andExpect(status().isConflict());
-        mvc.perform(delete(patientPath(f.patient)).cookie(f.officer).with(csrf()).header("If-Match", "\"0\""))
+        mvc.perform(delete(patientPath(f.patient)).cookie(f.officer).with(csrf()).header("X-Expected-Link-Id", jdbc.queryForObject("select id from patient_user_links where patient_id=? and verification_status='VERIFIED'", UUID.class, f.patient)).header("If-Match", "\"0\""))
                 .andExpect(status().isOk());
         call(post(patientPath(f.patient)).cookie(f.officer), Map.of("userId", two), 201);
         assertThat(roles(one)).doesNotContain("PATIENT");
@@ -279,7 +279,7 @@ class IdentityAuthorizationIntegrationTest {
     @Test void relinkingRevokedExistingRecordRequiresVersion() throws Exception {
         Fixture f = fixture(); UUID target = active("target@example.org");
         call(post(patientPath(f.patient)).cookie(f.officer), Map.of("userId", target), 201);
-        mvc.perform(delete(patientPath(f.patient)).cookie(f.officer).with(csrf()).header("If-Match", "\"0\""))
+        mvc.perform(delete(patientPath(f.patient)).cookie(f.officer).with(csrf()).header("X-Expected-Link-Id", jdbc.queryForObject("select id from patient_user_links where patient_id=? and verification_status='VERIFIED'", UUID.class, f.patient)).header("If-Match", "\"0\""))
                 .andExpect(status().isOk());
         call(post(patientPath(f.patient)).cookie(f.officer), Map.of("userId", target), 428);
         JsonNode link = call(post(patientPath(f.patient)).cookie(f.officer).header("If-Match", "\"1\""), Map.of("userId", target), 200);
@@ -341,7 +341,7 @@ class IdentityAuthorizationIntegrationTest {
     @Test void auditContainsRequiredActionsAndNoRawSecrets() throws Exception {
         Fixture f = fixture(); UUID target = active("patient@example.org"); Cookie cookie = session("patient@example.org");
         call(post(patientPath(f.patient)).cookie(f.officer), Map.of("userId", target), 201);
-        mvc.perform(delete(patientPath(f.patient)).cookie(f.officer).with(csrf()).header("If-Match", "\"0\""))
+        mvc.perform(delete(patientPath(f.patient)).cookie(f.officer).with(csrf()).header("X-Expected-Link-Id", jdbc.queryForObject("select id from patient_user_links where patient_id=? and verification_status='VERIFIED'", UUID.class, f.patient)).header("If-Match", "\"0\""))
                 .andExpect(status().isOk());
         call(post(supporterPath(f)).cookie(f.officer).header("If-Match", "\"0\""), Map.of("userId", target), 200);
         mvc.perform(delete(supporterPath(f)).cookie(f.officer).with(csrf()).header("If-Match", "\"1\""))

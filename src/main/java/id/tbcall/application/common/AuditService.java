@@ -19,10 +19,14 @@ public class AuditService {
     public AuditService(EntityManager em, Clock clock) { this.em = em; this.clock = clock; }
     @Transactional(propagation = Propagation.MANDATORY)
     public void record(UUID actor, String action, String entityType, UUID entityId) {
+        recordAt(actor,action,entityType,entityId,OffsetDateTime.now(clock));
+    }
+    @Transactional(propagation = Propagation.MANDATORY)
+    public void recordAt(UUID actor, String action, String entityType, UUID entityId, OffsetDateTime occurredAt) {
         AuditLog log = new AuditLog();
         if (actor != null) log.setActorUser(em.getReference(User.class, actor));
         log.setAction(action); log.setEntityType(entityType); log.setEntityId(entityId);
-        log.setOccurredAt(OffsetDateTime.now(clock));
+        log.setOccurredAt(occurredAt);
         log.setRequestId(MDC.get("traceId") == null ? UUID.randomUUID().toString() : MDC.get("traceId"));
         // An allowlisted correlation value only: no request bodies, credentials or clinical fields.
         log.setMetadata(Map.of("traceId", log.getRequestId()));
