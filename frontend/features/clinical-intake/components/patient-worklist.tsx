@@ -23,7 +23,7 @@ export function PatientWorklist() {
   const references = useQuery(clinicalQueries.references(user!.id));
   const patients = useQuery(clinicalQueries.patients(user!.id, filters));
   return <>
-    <header className="flex flex-wrap items-center justify-between gap-4"><div><h1 className="text-2xl font-semibold">Daftar pasien</h1><p className="mt-2 text-sm text-muted-foreground">Pasien dalam cakupan fasilitas Anda.</p></div>{canClinical(user, "PATIENT_CREATE", "REGISTRATION_WRITE") && <Button asChild><Link href="/intake/new">Registrasi baru</Link></Button>}</header>
+    <header className="flex flex-wrap items-center justify-between gap-4"><div><h1 className="text-2xl font-semibold">Daftar pasien</h1><p className="mt-2 text-sm text-muted-foreground">Registrasi terbuka dan kasus aktif atau dirujuk dalam cakupan fasilitas Anda.</p></div><div className="flex flex-wrap gap-3">{canClinical(user, "CASE_READ") && <Button asChild variant="outline"><Link href="/cases/history">Riwayat kasus selesai</Link></Button>}{canClinical(user, "PATIENT_CREATE", "REGISTRATION_WRITE") && <Button asChild><Link href="/intake/new">Registrasi baru</Link></Button>}</div></header>
     {references.isPending || references.isError ? <QueryState query={references} /> : <FormProvider {...form}><form noValidate autoComplete="off" className="space-y-4 rounded-xl border bg-white p-5" onSubmit={form.handleSubmit(values => setFilters({ ...values, name: values.name.trim(), bpjs: values.bpjs.trim(), page: 0, size: Number(values.size) }))}>
       <h2 className="font-semibold">Filter pasien</h2><div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
         <Field name="name" label="Cari nama" /><Field name="nik" label="Cari NIK" /><Field name="bpjs" label="Cari BPJS" />

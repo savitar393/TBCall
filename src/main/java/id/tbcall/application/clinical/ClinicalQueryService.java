@@ -18,6 +18,38 @@ public class ClinicalQueryService {
     public ClinicalQueryService(EntityManager em,ClinicalAccess access,ClinicalViews views) { this.em=em; this.access=access; this.views=views; }
     public RegistrationView registration(CurrentActor actor,UUID id) { return views.registration(access.registration(actor,"REGISTRATION_READ",id,false)); }
     public CaseView tbCase(CurrentActor actor,UUID id) { return views.tbCase(access.tbCase(actor,"CASE_READ",id)); }
+    public CaseHistoryPage caseHistory(CurrentActor actor,int page,int size,String name,UUID facilityId) {
+        access.officer(actor,"CASE_READ");
+        if(page<0 || size<1 || size>50 || (long)page*size>Integer.MAX_VALUE)
+            throw ApplicationFailure.invalid("Halaman harus non-negatif dan ukuran halaman 1–50.");
+        String search=ClinicalValidation.text(name);
+        if(search!=null && (search.length()<3 || search.length()>255))
+            throw ApplicationFailure.invalid("Pencarian nama harus berisi 3–255 karakter.");
+        Set<UUID> facilities=actor.facilityIds();
+        if(facilityId!=null) {
+            if(!facilities.contains(facilityId)) throw ApplicationFailure.missing();
+            facilities=Set.of(facilityId);
+        }
+        // Same current-facility CASE_READ boundary as the authoritative case detail.
+        // A former referral facility's referral access does not grant full-case access.
+        String where=" where c.status='COMPLETED' and c.currentFacility.id in :facilities and c.currentFacility.active=true";
+        if(search!=null) where+=" and lower(c.registration.patient.fullName) like :name escape '!'";
+        var count=em.createQuery("select count(c) from TBCase c"+where,Long.class);
+        var query=em.createQuery("select c from TBCase c join fetch c.currentFacility join fetch c.registration r join fetch r.patient"+where+
+                " order by c.confirmedAt desc nulls last,c.id",TBCase.class);
+        count.setParameter("facilities",facilities); query.setParameter("facilities",facilities);
+        if(search!=null) {
+            String pattern="%"+search.toLowerCase(Locale.ROOT).replace("!","!!").replace("%","!%").replace("_","!_")+"%";
+            count.setParameter("name",pattern); query.setParameter("name",pattern);
+        }
+        long total=count.getSingleResult();
+        var cases=query.setFirstResult(page*size).setMaxResults(size).getResultList();
+        if(cases.isEmpty()) return new CaseHistoryPage(List.of(),page,size,total);
+        var labels=views.labels();
+        var content=cases.stream().map(c -> new CaseHistoryItem(c.getRegistration().getPatient().getId(),
+                c.getRegistration().getPatient().getFullName(),c.getConfirmedAt(),views.caseListSummary(c,labels))).toList();
+        return new CaseHistoryPage(content,page,size,total);
+    }
     public DiagnosisView diagnosis(CurrentActor actor,UUID id) { return views.diagnosis(access.diagnosis(actor,id)); }
     public List<DiagnosisView> diagnoses(CurrentActor actor,UUID registrationId) {
         access.registration(actor,"DIAGNOSIS_READ",registrationId,false);

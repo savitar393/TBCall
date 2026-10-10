@@ -71,6 +71,14 @@ public class ClinicalIntakeController {
             @Valid @RequestBody CaseConfirm input,@RequestHeader(value="If-Match",required=false) String match) {
         var response=cases.confirm(actor,registrationId,input,match); return ResponseEntity.status(201).eTag(IfMatch.etag(response.version())).body(response);
     }
+    @GetMapping("/cases/history") CaseHistoryPage caseHistory(@AuthenticationPrincipal CurrentActor actor,
+            @RequestParam(defaultValue="0") int page,@RequestParam(defaultValue="20") int size,
+            @RequestParam(required=false) String name,@RequestParam(required=false) UUID facilityId,
+            @RequestParam Map<String,String> parameters) {
+        if(!Set.of("page","size","name","facilityId","_csrf").containsAll(parameters.keySet()))
+            throw ApplicationFailure.invalid("Filter riwayat kasus tidak dikenal.");
+        return queries.caseHistory(actor,page,size,name,facilityId);
+    }
     @GetMapping("/cases/{caseId}") ResponseEntity<CaseView> tbCase(@AuthenticationPrincipal CurrentActor actor,@PathVariable UUID caseId) {
         var response=queries.tbCase(actor,caseId); return ResponseEntity.ok().eTag(IfMatch.etag(response.version())).body(response);
     }

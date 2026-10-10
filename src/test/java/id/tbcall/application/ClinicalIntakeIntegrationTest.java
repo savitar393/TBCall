@@ -436,6 +436,55 @@ class ClinicalIntakeIntegrationTest {
     void historicalPatientListFiltersAreValidationErrors(String filter,String value) throws Exception {
         assertThat(call(get("/api/v1/patients").param(filter,value),null,400).path("code").asText()).isEqualTo("VALIDATION_ERROR");
     }
+    @Test void completedOnlyCaseIsDiscoverableWithoutChangingTheCurrentWorklistOrTerminalWriteRules() throws Exception {
+        JsonNode reg=create(),d=recordDiagnosis(reg),c=confirm(reg.path("id").asText(),d.path("id").asText(),"TB_SO",null,201);
+        UUID id=UUID.fromString(c.path("id").asText());
+        jdbc.update("update tb_cases set status='COMPLETED',version=4 where id=?",id);
+        assertThat(call(get("/api/v1/patients"),null,200).path("totalElements").asLong()).isZero();
+        JsonNode history=call(get("/api/v1/cases/history"),null,200);
+        assertThat(history.path("totalElements").asLong()).isEqualTo(1);
+        assertThat(history.path("content").get(0).path("tbCase").path("id").asText()).isEqualTo(id.toString());
+        assertThat(history.path("content").get(0).path("tbCase").path("status").asText()).isEqualTo("COMPLETED");
+        assertThat(history.toString()).doesNotContain(NIK,"BPJS-123","081234567890","hivStatusCode","dmStatusCode");
+        assertThat(call(get("/api/v1/cases/"+id),null,200).path("version").asLong()).isEqualTo(4);
+        call(patch("/api/v1/cases/"+id).header("If-Match","\"4\""),Map.of("weightKg",61),409);
+        assertThat(jdbc.queryForObject("select version from tb_cases where id=?",Long.class,id)).isEqualTo(4);
+        assertThat(jdbc.queryForObject("select count(*) from audit_logs where action='TB_CASE_UPDATED'",Integer.class)).isZero();
+    }
+    @Test void historyCountsSeparateCompletedEpisodesAndExcludesActiveReferredForeignAndInactiveFacilities() throws Exception {
+        UUID p=patient("9999999999999999","Synthetic history");
+        UUID first=historyCase(p,facility,"COMPLETED"),second=historyCase(p,facility,"COMPLETED");
+        historyCase(p,facility,"ACTIVE"); historyCase(p,facility,"REFERRED"); historyCase(p,otherFacility,"COMPLETED");
+        JsonNode history=call(get("/api/v1/cases/history").param("size","1"),null,200);
+        assertThat(history.path("totalElements").asLong()).isEqualTo(2); assertThat(history.path("content").size()).isEqualTo(1);
+        Set<String> found=new HashSet<>(); found.add(history.path("content").get(0).path("tbCase").path("id").asText());
+        found.add(call(get("/api/v1/cases/history").param("size","1").param("page","1"),null,200).path("content").get(0).path("tbCase").path("id").asText());
+        assertThat(found).containsExactlyInAnyOrder(first.toString(),second.toString());
+        jdbc.update("update facilities set active=false where id=?",facility);
+        // Session resolution removes inactive facilities; the caller consequently fails the officer-scope gate.
+        call(get("/api/v1/cases/history"),null,403);
+    }
+    @Test void formerRegistrationFacilityDoesNotGrantCompletedFullCaseDiscoveryAfterResponsibilityMoves() throws Exception {
+        UUID p=patient("9999999999999999","Synthetic transfer history"),id=historyCase(p,facility,"COMPLETED");
+        jdbc.update("update tb_cases set current_facility_id=? where id=?",otherFacility,id);
+        assertThat(call(get("/api/v1/cases/history"),null,200).path("totalElements").asLong()).isZero();
+        call(get("/api/v1/cases/"+id),null,404);
+        call(get("/api/v1/cases/history").param("facilityId",otherFacility.toString()),null,404);
+    }
+    @ParameterizedTest @ValueSource(strings={"PATIENT","TREATMENT_SUPPORTER","SYSTEM_ADMIN","FACILITY_ADMIN","PROGRAM_MONITOR","LAB_STAFF"})
+    void historyPreservesOfficerRoleDenial(String role) throws Exception {
+        user("history-other@example.invalid",role,facility); caller=login("history-other@example.invalid");
+        call(get("/api/v1/cases/history"),null,403); audited("AUTHORIZATION_DENIED");
+    }
+    @Test void historyRequiresCaseReadIndependentlyOfOtherOfficerPermissions() throws Exception {
+        jdbc.update("delete from role_permissions where role_id=(select id from roles where code='TB_OFFICER') and permission_id=(select id from permissions where code='CASE_READ')");
+        try { call(get("/api/v1/cases/history"),null,403); audited("AUTHORIZATION_DENIED"); }
+        finally { jdbc.update("insert into role_permissions(role_id,permission_id) select r.id,p.id from roles r,permissions p where r.code='TB_OFFICER' and p.code='CASE_READ' on conflict do nothing"); }
+    }
+    private UUID historyCase(UUID patient,UUID currentFacility,String status) {
+        UUID reg=registration(patient,facility,"CONVERTED_TO_CASE");
+        return jdbc.queryForObject("insert into tb_cases(registration_id,current_facility_id,case_category_code,status,confirmed_at) values (?,?,'TB_SO',?,now()) returning id",UUID.class,reg,currentFacility,status);
+    }
     private JsonNode create() throws Exception { return call(post("/api/v1/registrations"),newRegistration(),201); }
     private JsonNode recordDiagnosis(JsonNode reg) throws Exception {
         String path="/api/v1/registrations/"+reg.path("id").asText(); return call(post(path+"/diagnoses").header("If-Match",version(path)),diagnosis(),201);
