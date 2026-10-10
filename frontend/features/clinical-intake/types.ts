@@ -10,5 +10,6 @@ export type ReferenceData = z.infer<typeof schemas.referenceDataSchema>;
 export type FacilityPage = z.infer<typeof schemas.facilityPageSchema>;
 export type Label = z.infer<typeof schemas.labelSchema>;
 export type PatientFilters = { page: number; size: number; name: string; nik: string; bpjs: string; registrationStatus: string; caseStatus: string; facilityId: string };
+export type CaseHistoryFilters = Pick<PatientFilters, "page" | "size" | "name" | "facilityId">;
 export type ClinicalInput = Record<string, string | number | boolean | null>;
 export type IdentityInput = { citizenship: string; nik: string; otherIdentityNumber: string; fullName: string; birthDate: string; bpjsNumber: string };

@@ -13,6 +13,10 @@ const registrationSummary = z.strictObject({ id, version, status: z.string(), re
 const diagnosisSummary = z.strictObject({ id, version, diagnosisDate: date, anatomicalSite: labelSchema.nullable(), diagnosisType: labelSchema.nullable() });
 const caseListSummary = z.strictObject({ id, version, status: z.string(), caseCategory: labelSchema.nullable(), currentFacility: facility });
 const caseSummary = caseListSummary.extend({ diagnosis: diagnosisSummary.nullable() });
+export const caseHistoryPageSchema = z.strictObject({
+  content: z.array(z.strictObject({ patientId: id, fullName: z.string(), confirmedAt: z.iso.datetime({ offset: true }).nullable(), tbCase: caseListSummary.extend({ status: z.literal("COMPLETED") }) })),
+  page: z.number().int().nonnegative(), size: z.number().int().min(1).max(50), totalElements: z.number().int().nonnegative(),
+});
 export const registrationSchema = z.strictObject({
   id, version, status: z.string(), patient: patientSummary, facility, registrationDate: date,
   facilityRegistrationNumber: text, medicalRecordNumber: text, specimenIdentityNumber: text, suspectTypeCode: text,

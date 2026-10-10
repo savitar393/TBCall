@@ -164,6 +164,8 @@ public final class ClinicalDtos {
     public record PatientListItem(UUID patientId,long version,String fullName,Label sex,LocalDate birthDate,boolean birthDateUnknown,
             String nik,String bpjsNumber,List<RegistrationSummary> registrations,List<CaseListSummary> cases) {}
     public record PatientPage(List<PatientListItem> content,int page,int size,long totalElements) {}
+    public record CaseHistoryItem(UUID patientId,String fullName,OffsetDateTime confirmedAt,CaseListSummary tbCase) {}
+    public record CaseHistoryPage(List<CaseHistoryItem> content,int page,int size,long totalElements) {}
     public record PatientDetail(UUID patientId,long version,Demographics demographics,List<RegistrationView> registrations,List<PatientCaseSummary> cases) {}
     public record RegistrationView(UUID id,long version,String status,PatientSummary patient,FacilityDisplay facility,
             LocalDate registrationDate,String facilityRegistrationNumber,String medicalRecordNumber,String specimenIdentityNumber,

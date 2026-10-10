@@ -3,7 +3,7 @@ import { z as validation } from "@/lib/validation";
 import { apiRequest, type ApiOptions, type Versioned } from "@/lib/api/client";
 import { ApiError } from "@/lib/api/problem";
 import * as schemas from "./schemas";
-import type { ClinicalInput, PatientFilters } from "./types";
+import type { ClinicalInput, PatientFilters, CaseHistoryFilters } from "./types";
 
 async function request<S extends z.ZodType>(path: string, schema: S, options: ApiOptions = {}): Promise<Versioned<z.infer<S>>> {
   const result = await apiRequest<unknown>(path, options);
@@ -13,6 +13,11 @@ async function request<S extends z.ZodType>(path: string, schema: S, options: Ap
 }
 const segment = (id: string) => encodeURIComponent(id);
 export const clinicalApi = {
+  caseHistory: (filters: CaseHistoryFilters, signal?: AbortSignal) => {
+    const params = new URLSearchParams({ page: String(filters.page), size: String(filters.size) });
+    for (const key of ["name", "facilityId"] as const) if (filters[key]) params.set(key, filters[key]);
+    return request(`/v1/cases/history?${params}`, schemas.caseHistoryPageSchema, { signal });
+  },
   patients: (filters: PatientFilters, signal?: AbortSignal) => {
     const params = new URLSearchParams({ page: String(filters.page), size: String(filters.size) });
     for (const key of ["name", "nik", "bpjs", "registrationStatus", "caseStatus", "facilityId"] as const) if (filters[key]) params.set(key, filters[key]);

@@ -1,8 +1,9 @@
 import { queryOptions } from "@tanstack/react-query";
 import { clinicalApi } from "./api";
-import type { PatientFilters } from "./types";
+import type { PatientFilters, CaseHistoryFilters } from "./types";
 export const clinicalKeys = (userId: string) => ["clinical", userId] as const;
 export const clinicalQueries = {
+  caseHistory: (userId: string, filters: CaseHistoryFilters) => queryOptions({ queryKey: [...clinicalKeys(userId), "case-history", filters], queryFn: ({ signal }) => clinicalApi.caseHistory(filters, signal) }),
   patients: (userId: string, filters: PatientFilters) => queryOptions({ queryKey: [...clinicalKeys(userId), "patients", filters], queryFn: ({ signal }) => clinicalApi.patients(filters, signal) }),
   patient: (userId: string, id: string) => queryOptions({ queryKey: [...clinicalKeys(userId), "patient", id], queryFn: ({ signal }) => clinicalApi.patient(id, signal) }),
   registration: (userId: string, id: string) => queryOptions({ queryKey: [...clinicalKeys(userId), "registration", id], queryFn: ({ signal }) => clinicalApi.registration(id, signal) }),

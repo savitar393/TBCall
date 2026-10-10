@@ -1,0 +1,19 @@
+{
+  "id": "MVP01",
+  "entry": "journey.mjs:runMvpJourney(h)",
+  "executionStatus": "NOT RUN",
+  "workers": 1,
+  "mutationRetries": 0,
+  "files": ["README.md", "contract.mjs", "journey.mjs", "registration.json", "tests.test.mjs"],
+  "steps": ["LOGIN", "INTAKE", "DIAGNOSTIC_REQUEST", "SPECIMEN", "RECEIPT", "RESULT", "DIAGNOSIS", "CASE", "TREATMENT", "DOSE", "FOLLOW_UP_SCHEDULE", "FOLLOW_UP_COMPLETE", "OUTCOME"],
+  "databaseKeys": [
+    "single_identity_chain", "one_registration", "one_diagnosis", "one_case", "one_treatment",
+    "diagnostic_lab_lineage", "one_lab_request", "one_test", "one_result", "drug_snapshot_count",
+    "drug_snapshot_mismatch", "one_dose", "dose_actor_evidence", "follow_up_completed", "one_follow_up",
+    "explicit_outcome", "one_outcome", "terminal_versions",
+    "audit_patient_created", "audit_tb_registration_created", "audit_lab_request_created",
+    "audit_lab_specimen_recorded", "audit_lab_specimen_received", "audit_lab_result_recorded",
+    "audit_diagnosis_recorded", "audit_tb_case_confirmed", "audit_treatment_started", "audit_dose_event_recorded",
+    "audit_follow_up_scheduled", "audit_follow_up_completed", "audit_treatment_outcome_recorded", "denied_updates_no_success_audit"
+  ]
+}
