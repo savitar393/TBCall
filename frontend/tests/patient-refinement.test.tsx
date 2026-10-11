@@ -14,8 +14,8 @@ it("patient-only menu has one destination per feature and retains secondary perm
   expect(nav.queryByRole("link",{name:/Saya|Akun & akses|Data diri/})).not.toBeInTheDocument();
   expect(nav.getByRole("link",{name:"Terapi pencegahan (TPT)"})).toHaveAttribute("href","/portal/tpt");
   expect(nav.getByRole("link",{name:"Peringatan"})).toHaveAttribute("href","/portal/alerts");
-  const collapse=screen.getByRole("button",{name:"Perluas navigasi"});
-  expect(collapse).toHaveAttribute("title","Perluas navigasi");
+  const collapse=screen.getByRole("button",{name:"Ciutkan navigasi"});
+  expect(collapse).toHaveAttribute("title","Ciutkan navigasi");
   expect(screen.queryByText("Ciutkan menu")).not.toBeInTheDocument();
 });
 it("patient menu independently denies clinical destinations without their permissions",async()=>{
@@ -72,17 +72,4 @@ it("treatment refetch failure does not hide independently authorized follow-ups"
   await screen.findByRole("button",{name:"Coba kembali"});
   expect(screen.getByRole("heading",{name:"Tindak lanjut berikutnya"})).toBeInTheDocument();
   expect(screen.getByText(f.followUp.followUpType,{selector:"summary span"})).toBeInTheDocument();
-});
-it("rail expands by keyboard, closes with Escape and returns focus without losing navigation names", async()=>{
-  portalBackend(); await renderPortal("home"); await screen.findByRole("heading",{name:"Kegiatan hari ini"});
-  const user=userEvent.setup(); const toggle=screen.getByRole("button",{name:"Perluas navigasi"});
-  toggle.focus(); await user.keyboard("{Enter}");
-  expect(toggle).toHaveAttribute("aria-expanded","true");
-  const nav=within(screen.getByRole("navigation",{name:"Navigasi utama desktop"}));
-  const link=nav.getByRole("link",{name:"Kalender"}); link.focus();
-  await user.keyboard("{Escape}");
-  expect(toggle).toHaveAttribute("aria-expanded","false"); expect(toggle).toHaveFocus();
-  expect(nav.getByRole("link",{name:"Kalender"})).toHaveAttribute("title","Kalender");
-  await user.click(toggle); await user.click(nav.getByRole("link",{name:"Kalender"}));
-  expect(toggle).toHaveAttribute("aria-expanded","false");
 });

@@ -49,6 +49,11 @@ describe("Indonesian login", () => {
     for(const logo of logos) expect(logo.getAttribute("src")).toContain("logo.png");
     expect(container.querySelector('img[src*="long-logo"]')).toBeNull();
   });
+  it("login back link uses the approved wording and retains the public home route",async()=>{
+    anonymous(); renderPage(<LoginPage />);
+    expect(await screen.findByRole("link",{name:"Kembali ke Beranda"})).toHaveAttribute("href","/");
+    expect(screen.queryByRole("link",{name:"Kembali ke beranda publik"})).not.toBeInTheDocument();
+  });
   it("associates labels and validates locally without posting empty credentials", async () => {
     anonymous(); renderPage(<LoginPage />);
     const button = await screen.findByRole("button", { name: "Masuk" });
@@ -148,7 +153,6 @@ describe("authenticated responsive identity shell", () => {
   it("collapses and expands desktop navigation while keeping accessible labels", async () => {
     transport.mockResolvedValue(Response.json(fixtureUser)); renderPage(<HomePage />);
     await screen.findByRole("heading", { name: "Selamat datang" });
-    await userEvent.click(screen.getByRole("button", { name: "Perluas navigasi" }));
     await userEvent.click(screen.getByRole("button", { name: "Ciutkan navigasi" }));
     expect(screen.getByRole("button", { name: "Perluas navigasi" })).toHaveAttribute("aria-expanded", "false");
     expect(within(screen.getByRole("navigation", { name: "Navigasi utama desktop" })).getByRole("link", { name: "Beranda" })).toBeInTheDocument();
