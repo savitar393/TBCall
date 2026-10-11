@@ -61,7 +61,7 @@ it("continuity drafts/errors never enter storage, logs, history, metadata, chrom
  function Probe(){client=useQueryClient();return null;}
  continuityBackend(c=>c.options.method==="PATCH"?failure(409,"SOURCE_AUTHORITY_CONFLICT"):undefined);
  await renderContinuity("tpt",f.tpt.id,<Probe/>);await userEvent.click(await screen.findByRole("button",{name:"Ubah TPT"}));await userEvent.type(screen.getByLabelText("Catatan TPT"),"Sensitive text");await userEvent.click(screen.getByRole("button",{name:"Simpan perubahan TPT"}));await screen.findByText("Data dikendalikan sumber eksternal");
- expect(storage).not.toHaveBeenCalled();expect(indexed).not.toHaveBeenCalled();expect(push).not.toHaveBeenCalled();expect(replace).not.toHaveBeenCalled();for(const log of logs)expect(log).not.toHaveBeenCalled();expect(document.title).toBe(title);expect(client.getMutationCache().getAll()).toHaveLength(0);expect(screen.getByRole("navigation")).not.toHaveTextContent(f.tpt.regimenDescription!);
+ expect(storage).not.toHaveBeenCalled();expect(indexed).not.toHaveBeenCalled();expect(push).not.toHaveBeenCalled();expect(replace).not.toHaveBeenCalled();for(const log of logs)expect(log).not.toHaveBeenCalled();expect(document.title).toBe(title);expect(client.getMutationCache().getAll()).toHaveLength(0);for(const nav of screen.getAllByRole("navigation")) expect(nav).not.toHaveTextContent(f.tpt.regimenDescription!);
 });
 it.each(["referral","tpt"] as const)("$name creation late after account change cannot navigate",async name=>{
  let changed=false,resolve!:(r:Response)=>void,signal:AbortSignal|undefined;

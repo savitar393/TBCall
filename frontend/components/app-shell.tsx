@@ -2,16 +2,10 @@
 import { useState, type ReactNode } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { Building2, ChevronLeft, ChevronRight, CalendarDays, Bell, Pill, FlaskConical, Home, LogOut, Menu, UserRound, Activity, HeartHandshake, ShieldCheck, ShieldAlert } from "lucide-react";
+import { Building2, ChevronLeft, ChevronRight, CalendarDays, Bell, Pill, FlaskConical, Home, LogOut, Menu, UserRound, Activity, HeartHandshake, ShieldCheck, ShieldAlert, UsersRound, LayoutDashboard, ClipboardPlus, History, ArrowLeftRight, Search, Settings2, Network } from "lucide-react";
 import { useSession } from "@/lib/auth/session";
-import { filterNavigation, foundationNavigation } from "@/lib/navigation";
-import { clinicalNavigation } from "@/features/clinical-intake/permissions";
-import { laboratoryNavigation } from "@/features/laboratory/permissions";
-import { continuityNavigation } from "@/features/continuity/permissions";
-import { monitoringNavigation } from "@/features/monitoring/permissions";
-import { patientNavigation, portalNavigation } from "@/features/portal/permissions";
-import { administrationNavigation } from "@/features/administration/permissions";
-import { integrationNavigation } from "@/features/integration/permissions";
+import { applicationNavigation, applicationBreadcrumbs, navigationActive, patientOnly } from "@/lib/application-navigation";
+import { AppBreadcrumbs } from "./application-patterns";
 import { cn } from "@/lib/utils";
 import { useSidebar } from "./sidebar-preference";
 import { Brand } from "./brand";
@@ -26,10 +20,9 @@ export function AppShell({ children }: { children: ReactNode }) {
   const [drawer, setDrawer] = useState(false);
   if (!session.user) return null;
   const user = session.user;
-  const patientHome = user.roles.length > 0 && user.roles.every(role => role.code === "PATIENT");
-  const foundation = foundationNavigation.map(item => patientHome && item.href === "/#akun" ? { ...item, href: "/portal/profile#akun" } : item);
-  const staffItems = [...filterNavigation(foundation, user.permissions), ...clinicalNavigation(user), ...laboratoryNavigation(user), ...continuityNavigation(user), ...monitoringNavigation(user), ...portalNavigation(user), ...administrationNavigation(user), ...integrationNavigation(user)];
-  const items = patientHome ? patientNavigation(user) : staffItems;
+  const patientHome = patientOnly(user);
+  const groups = applicationNavigation(user);
+  const crumbs = applicationBreadcrumbs(pathname,user);
   const patient = user.roles.some(role => role.code === "PATIENT");
   const patientLinks = patient ? [{ href: "/portal", label: "Beranda", icon: Home }, { href: "/portal/calendar", label: "Kalender", icon: CalendarDays }, ...(user.permissions.includes("TREATMENT_READ") ? [{ href: "/portal/treatment", label: "Pengobatan", icon: Pill }] : []), ...(user.permissions.includes("NOTIFICATION_READ_SELF") ? [{ href: "/portal/notifications", label: "Notifikasi", icon: Bell }] : []), { href: "/portal/profile", label: "Profil", icon: UserRound }] : [];
   const identity = user.email ?? user.phone ?? "Pengguna TBCall";
@@ -37,20 +30,19 @@ export function AppShell({ children }: { children: ReactNode }) {
     "/": Home, "/portal": Home, "/portal/calendar": CalendarDays, "/portal/treatment": Pill,
     "/portal/monitoring": Activity, "/portal/notifications": Bell, "/portal/profile": UserRound,
     "/portal/support": HeartHandshake, "/portal/tpt": ShieldCheck, "/portal/alerts": ShieldAlert,
-    "/laboratory": FlaskConical,
+    "/laboratory": FlaskConical, "/dashboard": LayoutDashboard, "/patients": UsersRound,
+    "/intake/new": ClipboardPlus, "/cases/history": History, "/referrals": ArrowLeftRight,
+    "/contact-investigations": Search, "/alerts": ShieldAlert, "/notifications": Bell,
+    "/supporting-cases": HeartHandshake, "/admin/users": UsersRound, "/admin/facilities": Building2,
+    "/integrations": Network, "/#akun": Settings2,
   };
-  const secondary = new Set(["/portal/tpt", "/portal/alerts"]);
   const navigation = (mobile = false) => {
-    const groups = patientHome ? [
-      { title: "Kegiatan Anda", links: items.filter(item => !secondary.has(item.href)) },
-      { title: "Catatan lainnya", links: items.filter(item => secondary.has(item.href)) },
-    ] : [{ title: "", links: items }];
     return <nav id={mobile ? "mobile-nav" : "desktop-nav"} aria-label={`Navigasi utama ${mobile ? "seluler" : "desktop"}`} className="space-y-6">
-      {groups.filter(group => group.links.length).map(group => <div key={group.title} className="space-y-1">
-        {group.title && <p aria-hidden={!mobile && collapsed} className={cn("mb-3 px-4 text-xs font-medium text-muted-foreground", !mobile && "sidebar-label")}>{group.title}</p>}
+      {groups.filter(group => group.links.length).map(group => <div key={group.title} role="group" aria-label={group.title} className="space-y-1">
+        {group.title && <p aria-hidden="true" className={cn("mb-3 px-4 text-[10px] font-semibold uppercase tracking-widest text-muted-foreground", !mobile && "sidebar-label")}>{group.title}</p>}
         {group.links.map(item => {
           const Icon = icons[item.href] ?? UserRound;
-          const current = item.href === pathname || (patientHome && pathname === "/" && item.href === "/portal");
+          const current = navigationActive(pathname,item.href,user);
           return <Link key={item.href} href={item.href} onClick={() => { if (mobile) setDrawer(false); }} aria-current={current ? "page" : undefined} title={collapsed && !mobile ? item.label : undefined}
             className={cn("sidebar-link relative flex min-h-12 items-center gap-3 rounded-xl px-4 text-sm font-medium transition-colors", current ? "bg-primary/10 text-primary" : "text-muted-foreground hover:bg-accent hover:text-foreground", collapsed && !mobile && "px-4")}>
             <Icon aria-hidden="true" className="size-5 shrink-0"/><span className={!mobile ? "sidebar-label" : undefined}>{item.label}</span>
@@ -59,7 +51,7 @@ export function AppShell({ children }: { children: ReactNode }) {
       </div>)}
     </nav>;
   };
-  return <div className="flex min-h-dvh">
+  return <div className="authenticated-app flex min-h-dvh">
     <a href="#main-content" className="skip-link">Lewati ke konten utama</a>
     <aside aria-label="Bar samping" data-expanded={!collapsed} className="sidebar-slot sticky top-0 z-40 hidden h-dvh shrink-0 lg:block">
       <div className={cn("sidebar-panel flex h-full flex-col border-r bg-white", !collapsed && "sidebar-panel-expanded")}>
@@ -79,27 +71,27 @@ export function AppShell({ children }: { children: ReactNode }) {
       </Button>
     </aside>
     <div className="min-w-0 flex-1">
-      <header className="sticky top-0 z-30 flex min-h-20 items-center justify-between gap-4 border-b bg-white px-4 sm:px-8">
+      <header className="app-topbar sticky top-0 z-30 flex min-h-18 items-center justify-between gap-3 border-b bg-white px-4 sm:px-8">
         <div className="flex items-center gap-3">
           <Sheet open={drawer} onOpenChange={setDrawer}>
             <SheetTrigger asChild><Button variant="ghost" size="icon" className="lg:hidden" aria-label="Buka navigasi"><Menu aria-hidden="true" /></Button></SheetTrigger>
-            <SheetContent side="left" className="w-80 max-w-[90vw]">
+            <SheetContent side="left" className="w-80 max-w-[90vw] overflow-y-auto">
               <SheetHeader><SheetTitle>Menu TBCall</SheetTitle><SheetDescription>Pilih halaman untuk melihat akun dan konteks akses Anda.</SheetDescription></SheetHeader>
               <div className="mt-8">{navigation(true)}</div>
             </SheetContent>
           </Sheet>
-          <div><p className="text-xs font-medium uppercase tracking-wider text-muted-foreground">{user.roles.some(role => role.code === "PATIENT") ? "Ruang Anda" : "Ruang kerja"}</p><p className="mt-1 text-sm font-semibold">TBCall</p></div>
+          <div className="min-w-0"><p className="text-[10px] font-semibold uppercase tracking-widest text-muted-foreground">{patientHome ? "Ruang Anda" : "Ruang kerja"}</p><p className="mt-1 max-w-48 truncate text-sm font-semibold sm:max-w-none">{crumbs.at(-1)?.label ?? "TBCall"}</p></div>
         </div>
         <div className="flex min-w-0 items-center gap-3 sm:gap-5">
           <div className="hidden min-w-0 text-right sm:block"><p className="max-w-64 truncate text-sm font-medium">{identity}</p><p className="mt-1 text-xs text-muted-foreground">{user.roles.map(role => role.name).join(" · ") || "Akun aktif"}</p></div>
           <Button variant="outline" disabled={session.isPending} onClick={() => void session.logout().catch(() => {})}><LogOut aria-hidden="true" /><span>Keluar</span></Button>
         </div>
       </header>
-      <main id="main-content" tabIndex={-1} className={cn("mx-auto max-w-6xl space-y-7 p-4 sm:p-8 lg:p-10", patient && "pb-28 sm:pb-28 lg:pb-10")}>
-        <ApiFeedback error={session.error} />{children}
+      <main id="main-content" tabIndex={-1} className={cn("app-workspace mx-auto max-w-7xl space-y-6 p-4 sm:p-7 lg:p-9", patient && "pb-28 sm:pb-28 lg:pb-10")}>
+        <AppBreadcrumbs items={crumbs}/><ApiFeedback error={session.error} />{children}
       </main>
       {patient && <nav aria-label="Akses cepat pasien" className="fixed inset-x-0 bottom-0 z-40 flex justify-around border-t bg-white px-1 pb-[env(safe-area-inset-bottom)] lg:hidden">{patientLinks.map(({ href, label, icon: Icon }) => {
-        const current = pathname === href || (patientHome && pathname === "/" && href === "/portal");
+        const current = navigationActive(pathname,href,user);
         return <Link href={href} key={href} aria-current={current ? "page" : undefined} className={cn("flex min-h-18 min-w-0 flex-1 flex-col items-center justify-center gap-1 rounded-lg px-1 text-[11px]", current ? "font-semibold text-primary" : "text-muted-foreground")}><Icon aria-hidden="true" className="size-5"/>{label}</Link>; })}</nav>}
       <footer className="mx-auto max-w-6xl px-5 pb-6 text-xs text-muted-foreground sm:px-8 lg:px-10">TBCall · Tuberculosis Monitoring System</footer>
     </div>
