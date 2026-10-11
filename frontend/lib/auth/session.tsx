@@ -1,7 +1,7 @@
 "use client";
 import { createContext, useCallback, useContext, useEffect, useRef, useState, type ReactNode } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
-import { useRouter } from "next/navigation";
+import { usePathname, useRouter } from "next/navigation";
 import { meSchema, type Me, type LoginInput } from "./types";
 import { ApiError } from "@/lib/api/problem";
 import { apiRequest } from "@/lib/api/client";
@@ -20,7 +20,13 @@ const isSessionQuery = (key: readonly unknown[]) => key[0] === "session" && key[
 export function SessionProvider({ children }: { children: ReactNode }) {
   const client = useQueryClient();
   const router = useRouter();
+  const pathname = usePathname();
+  const readFailures = useRef(new Map<string, ApiError>());
   const [failure, setFailure] = useState<ApiError | null>(null);
+  // Adjust presentation on navigation before children render; protected caches are unaffected.
+  const [failurePath, setFailurePath] = useState(pathname);
+  if (failurePath !== pathname) { setFailurePath(pathname); setFailure(null); }
+  useEffect(() => { readFailures.current.clear(); }, [pathname]);
   const [isPending, setPending] = useState(false);
   const busy = useRef(false);
 
@@ -79,8 +85,15 @@ export function SessionProvider({ children }: { children: ReactNode }) {
 
   useEffect(() => {
     const queries = client.getQueryCache().subscribe((event) => {
-      if (event.type === "updated" && event.action.type === "error" && !isSessionQuery(event.query.queryKey))
+      if (event.type !== "updated" || isSessionQuery(event.query.queryKey)) return;
+      if (event.action.type === "error") {
+        if (event.action.error instanceof ApiError) readFailures.current.set(event.query.queryHash, event.action.error);
         void handleFailure(event.action.error, false);
+      } else if (event.action.type === "success") {
+        const previous = readFailures.current.get(event.query.queryHash);
+        readFailures.current.delete(event.query.queryHash);
+        if (previous) setFailure(current => current === previous ? null : current);
+      }
     });
     const mutations = client.getMutationCache().subscribe((event) => {
       if (event.type === "updated" && event.action.type === "error") void handleFailure(event.mutation.state.error);

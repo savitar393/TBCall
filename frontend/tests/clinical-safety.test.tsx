@@ -67,7 +67,7 @@ it("retains view access without PATIENT_READ but never bypasses reference-direct
 });
 it("read-only case view never acquires treatment or laboratory endpoints", async () => {
   const calls = backend(); renderClinical(<ClinicalBoundary permissions={["CASE_READ"]}><CaseDetail id={ids.tbCase} /></ClinicalBoundary>);
-  await screen.findByRole("heading", { name: "Detail kasus" }); expect(screen.getByText("2026-09-03T10:00:00+07:00")).toBeInTheDocument();
+  await screen.findByRole("heading", { name: "Detail kasus" }); expect(screen.getByText(/3 Sep 2026/)).toBeInTheDocument();
   expect(calls.every(c => c.url.endsWith("/me") || c.url.includes("/clinical-reference-data") || c.url.endsWith(`/cases/${ids.tbCase}`))).toBe(true);
 });
 it("worklist loading, network error and explicit retry remain safe", async () => {

@@ -17,11 +17,11 @@ it("removed live administration mode cannot be submitted from a retained dose dr
 it("mixed-role navigation independently retains portal and staff authorization", () => {
     const user = { ...f.patient, roles: [...f.patient.roles, { code: "TB_OFFICER", name: "Petugas" }] };
     expect(portalNavigation(user).map(n => n.href)).toContain("/portal/treatment");
-    expect(portalNavigation({ ...user, permissions: ["PATIENT_READ"] }).map(n => n.href)).toEqual(["/portal"]);
+    expect(portalNavigation({ ...user, permissions: ["PATIENT_READ"] }).map(n => n.href)).toEqual(["/portal", "/portal/calendar", "/portal/profile", "/portal/support"]);
     expect(portalNavigation({ ...f.supporter, permissions: [] }).map(n => n.href)).toEqual([]);
 });
 it("mixed patient/officer shell retains authorized staff links and portal links",async()=>{
-  portalBackend({...f.patient,roles:[...f.patient.roles,{code:"TB_OFFICER",name:"Petugas"}],activeFacilities:[f.facility]});await renderPortal("home");await screen.findByText("Nama pasien privat");expect(screen.getByRole("link",{name:"Daftar pasien"})).toHaveAttribute("href","/patients");expect(screen.getByRole("link",{name:"Portal Saya"})).toHaveAttribute("href","/portal");expect(screen.getByText("Fasilitas aktif")).toBeInTheDocument();
+  portalBackend({...f.patient,roles:[...f.patient.roles,{code:"TB_OFFICER",name:"Petugas"}],activeFacilities:[f.facility]});await renderPortal("profile");await screen.findByText("Nama pasien privat");expect(screen.getByRole("link",{name:"Daftar pasien"})).toHaveAttribute("href","/patients");expect(screen.getByRole("link",{name:"Portal Saya"})).toHaveAttribute("href","/portal");expect(screen.getByText("Fasilitas aktif")).toBeInTheDocument();
 });
 it("empty supplied supporter route ID is denied before resource calls", async () => {
     const calls = portalBackend(f.supporter);
@@ -42,7 +42,7 @@ it.each(["referencesSchema", "dosePageSchema", "eventPageSchema", "alertPageSche
 it("nested treatment staff fields fail safe parsing", () => { expect(schemas.patientTreatmentSchema.safeParse({ ...f.treatment, regimen: { ...f.treatment.regimen, composition: "private" } }).success).toBe(false); });
 it("patient missing PATIENT_READ leaves independent cards available without profile fetch", async () => {
     const calls = portalBackend({ ...f.patient, permissions: ["TREATMENT_READ"] });
-    await renderPortal("home");
+    await renderPortal("profile");
     await screen.findByText("Izin baca profil belum tersedia.");
     expect(screen.getAllByRole("link", { name: "Pengobatan Saya" })).toHaveLength(2);
     expect(calls.some(c => c.url.endsWith("/me/patient"))).toBe(false);
@@ -80,4 +80,4 @@ it("pagination changes only API request memory and no clinical storage, logs, hi
 });
 it("supporter private patient name appears only in case content, never global chrome", async () => { portalBackend(f.supporter); await renderPortal("case"); await screen.findByText("Nama pasien privat"); for (const selector of ["header", "aside", "nav", "footer", "title"])
     document.querySelectorAll(selector).forEach(el => expect(el.textContent).not.toContain("Nama pasien privat")); });
-it("403 and 401 use existing safe session handling rather than raw backend prose", async () => { portalBackend(f.patient, c => c.url.endsWith("/me/patient") ? failure(403, "AUTHORIZATION_DENIED") : undefined); await renderPortal("home"); await waitFor(() => expect(routing.replace).toHaveBeenCalledWith("/forbidden")); expect(screen.queryByText(/private clinical detail/)).not.toBeInTheDocument(); });
+it("403 and 401 use existing safe session handling rather than raw backend prose", async () => { portalBackend(f.patient, c => c.url.endsWith("/me/patient") ? failure(403, "AUTHORIZATION_DENIED") : undefined); await renderPortal("profile"); await waitFor(() => expect(routing.replace).toHaveBeenCalledWith("/forbidden")); expect(screen.queryByText(/private clinical detail/)).not.toBeInTheDocument(); });

@@ -1,0 +1,31 @@
+import { render, screen, within } from "@testing-library/react";
+import userEvent from "@testing-library/user-event";
+import { expect, it } from "vitest";
+import { CalendarView } from "@/features/portal/patient/calendar-view";
+import { patientEvents } from "@/features/portal/patient/events";
+import { civilDate, dateKey, formatDate, formatDateTime, monthDates, shiftDate, shiftMonth, weekDates } from "@/lib/date-format";
+import { references } from "./portal-reference-fixture";
+import * as f from "./portal-fixtures";
+it.each(['2026-01-01','2024-02-29','2026-12-31'])('preserves civil date %s without UTC conversion', key => { expect(dateKey(civilDate(key)!)).toBe(key); expect(formatDate(key)).not.toMatch(/\d+\/\d+\//); });
+it.each(['2026-02-29','2026-13-01','2026-00-01','bad'])('rejects invalid date %s', key => expect(civilDate(key)).toBeNull());
+it('uses Indonesian month labels and 24-hour time with an explicit zone', () => { expect(formatDate('2026-10-07')).toBe('7 Oktober 2026'); expect(formatDateTime(f.time)).toMatch(/7 Okt 2026/); expect(formatDateTime(f.time)).not.toMatch(/AM|PM/); });
+it('clamps month navigation at leap and year boundaries', () => { expect(shiftMonth('2024-01-31',1)).toBe('2024-02-29'); expect(shiftMonth('2026-12-31',1)).toBe('2027-01-31'); expect(shiftDate('2026-12-31',1)).toBe('2027-01-01'); });
+it('starts weeks on Monday and includes adjacent month dates', () => { expect(weekDates('2026-10-11')[0]).toBe('2026-10-05'); expect(monthDates('2026-10-07')).toHaveLength(42); expect(monthDates('2026-10-07')).toContain('2026-09-28'); });
+it('does not infer medication times from dose reports and uses live read labels', () => { const events = patientEvents([f.dose], [f.followUp], [], references); expect(events).toHaveLength(2); expect(events.find(e=>e.kind==='dose')?.time).toBeUndefined(); expect(events.find(e=>e.kind==='dose')?.status).toBe(references.patientDoseStatuses.find(o=>o.code===f.dose.status)?.name); });
+it('distinguishes recorded, scheduled, completed, cancelled and unknown evidence', () => { const events = patientEvents([{...f.dose,status:'UNREVIEWED'}],[f.followUp,{...f.followUp,id:'done',status:'COMPLETED'},{...f.followUp,id:'cancelled',status:'CANCELLED'}],[],references); expect(events.map(e=>e.state).sort()).toEqual(['completed','other','recorded','scheduled']); expect(events.find(e=>e.kind==='dose')?.status).toBe('Label belum tersedia'); });
+it('renders empty dates without implying missed medication or a fabricated schedule', () => { render(<CalendarView events={[]} today={f.date}/>); expect(screen.getByText(/Ini tidak menunjukkan apakah obat/)).toBeInTheDocument(); expect(screen.queryByText(/08:00/)).not.toBeInTheDocument(); });
+it('supports day/week/month selection, navigation, keyboard selection and today', async () => {
+  const events = patientEvents([f.dose],[],[],references); render(<CalendarView events={events} today={f.date}/>);
+  const region = screen.getByRole('region',{name:'Kalender catatan pengobatan'});
+  const selected = within(region).getByRole('button',{name:/7 Oktober 2026, 1 catatan/}); expect(selected).toHaveAttribute('aria-current','date');
+  await userEvent.click(selected); await userEvent.keyboard('{ArrowRight}'); expect(within(region).getByRole('button',{name:'8 Oktober 2026, tanpa catatan'})).toHaveAttribute('aria-pressed','true');
+  await userEvent.click(within(region).getByRole('button',{name:'Hari ini'})); expect(selected).toHaveAttribute('aria-pressed','true');
+  await userEvent.click(within(region).getByRole('button',{name:'Minggu'})); expect(screen.getByText('Laporan dosis')).toBeInTheDocument();
+  await userEvent.click(within(region).getByRole('button',{name:'Hari'})); expect(within(region).queryByRole('button',{name:/7 Oktober 2026, 1 catatan/})).not.toBeInTheDocument();
+  await userEvent.click(within(region).getByRole('button',{name:'Periode berikutnya'})); expect(screen.queryByText('Laporan dosis')).not.toBeInTheDocument();
+});
+it('does not link dose details without independent treatment read permission', () => { render(<CalendarView events={patientEvents([f.dose],[],[],references)} today={f.date}/>); expect(screen.queryByRole('link',{name:'Buka catatan'})).not.toBeInTheDocument(); });
+it('orders timestamped events by instant rather than lexical timezone offset', () => {
+  const early={...f.followUp,id:'early',scheduledAt:'2030-01-01T10:00:00+07:00'}, late={...f.followUp,id:'late',scheduledAt:'2030-01-01T08:00:00Z'};
+  expect(patientEvents([], [late,early], [], references).map(e=>e.key)).toEqual(['follow-early','follow-late']);
+});

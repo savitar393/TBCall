@@ -2,7 +2,7 @@
 import { useState, type ReactNode } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { Building2, ChevronLeft, ChevronRight, FlaskConical, Home, LogOut, Menu, UserRound } from "lucide-react";
+import { Building2, ChevronLeft, ChevronRight, CalendarDays, Bell, Pill, FlaskConical, Home, LogOut, Menu, UserRound } from "lucide-react";
 import { useSession } from "@/lib/auth/session";
 import { filterNavigation, foundationNavigation } from "@/lib/navigation";
 import { clinicalNavigation } from "@/features/clinical-intake/permissions";
@@ -25,7 +25,11 @@ export function AppShell({ children }: { children: ReactNode }) {
   const [drawer, setDrawer] = useState(false);
   if (!session.user) return null;
   const user = session.user;
-  const items = [...filterNavigation(foundationNavigation, user.permissions), ...clinicalNavigation(user), ...laboratoryNavigation(user), ...continuityNavigation(user), ...monitoringNavigation(user), ...portalNavigation(user), ...administrationNavigation(user), ...integrationNavigation(user)];
+  const patientHome = user.roles.length > 0 && user.roles.every(role => role.code === "PATIENT");
+  const foundation = foundationNavigation.map(item => patientHome && item.href === "/#akun" ? { ...item, href: "/portal/profile#akun" } : item);
+  const items = [...filterNavigation(foundation, user.permissions), ...clinicalNavigation(user), ...laboratoryNavigation(user), ...continuityNavigation(user), ...monitoringNavigation(user), ...portalNavigation(user), ...administrationNavigation(user), ...integrationNavigation(user)];
+  const patient = user.roles.some(role => role.code === "PATIENT");
+  const patientLinks = patient ? [{ href: "/portal", label: "Beranda pasien", icon: Home }, { href: "/portal/calendar", label: "Kalender", icon: CalendarDays }, ...(user.permissions.includes("TREATMENT_READ") ? [{ href: "/portal/treatment", label: "Pengobatan", icon: Pill }] : []), ...(user.permissions.includes("NOTIFICATION_READ_SELF") ? [{ href: "/portal/notifications", label: "Pesan saya", icon: Bell }] : []), { href: "/portal/profile", label: "Profil", icon: UserRound }] : [];
   const identity = user.email ?? user.phone ?? "Pengguna TBCall";
   const navigation = (mobile = false) => <nav id={mobile ? "mobile-nav" : "desktop-nav"} aria-label={`Navigasi utama ${mobile ? "seluler" : "desktop"}`} className="space-y-2">
     {items.map((item) => {
@@ -38,9 +42,9 @@ export function AppShell({ children }: { children: ReactNode }) {
   </nav>;
   return <div className="flex min-h-dvh">
     <a href="#main-content" className="skip-link">Lewati ke konten utama</a>
-    <aside className={cn("sticky top-0 hidden h-dvh shrink-0 flex-col border-r bg-white p-5 lg:flex", collapsed ? "w-24" : "w-72")}>
+    <aside className={cn("sticky top-0 hidden h-dvh shrink-0 flex-col overflow-y-auto border-r bg-white p-5 lg:flex", collapsed ? "w-24" : "w-72")}>
       <Brand compact={collapsed} />
-      <div className="mt-10">{navigation()}</div>
+      <div className="mt-8">{navigation()}</div>
       <div className="mt-auto space-y-5 pt-8">
         {!collapsed && user.activeFacilities.length > 0 && <div className="rounded-xl bg-background p-4"><p className="text-xs font-medium uppercase tracking-wider text-muted-foreground">Fasilitas aktif</p><p className="mt-2 flex items-start gap-2 text-sm"><Building2 aria-hidden="true" className="mt-0.5 size-4 shrink-0" />{user.activeFacilities[0]?.name}</p>{user.activeFacilities.length > 1 && <p className="mt-1 text-xs text-muted-foreground">dan {user.activeFacilities.length - 1} fasilitas lainnya</p>}</div>}
         <Button variant="ghost" className="w-full" aria-controls="desktop-nav" aria-expanded={!collapsed} aria-label={collapsed ? "Perluas navigasi" : "Ciutkan navigasi"} onClick={() => setCollapsed(!collapsed)}>
@@ -58,16 +62,19 @@ export function AppShell({ children }: { children: ReactNode }) {
               <div className="mt-8">{navigation(true)}</div>
             </SheetContent>
           </Sheet>
-          <div><p className="text-xs font-medium uppercase tracking-wider text-muted-foreground">Ruang kerja</p><p className="mt-1 text-sm font-semibold">TBCall</p></div>
+          <div><p className="text-xs font-medium uppercase tracking-wider text-muted-foreground">{user.roles.some(role => role.code === "PATIENT") ? "Ruang Anda" : "Ruang kerja"}</p><p className="mt-1 text-sm font-semibold">TBCall</p></div>
         </div>
         <div className="flex min-w-0 items-center gap-3 sm:gap-5">
           <div className="hidden min-w-0 text-right sm:block"><p className="max-w-64 truncate text-sm font-medium">{identity}</p><p className="mt-1 text-xs text-muted-foreground">{user.roles.map(role => role.name).join(" · ") || "Akun aktif"}</p></div>
           <Button variant="outline" disabled={session.isPending} onClick={() => void session.logout().catch(() => {})}><LogOut aria-hidden="true" /><span>Keluar</span></Button>
         </div>
       </header>
-      <main id="main-content" tabIndex={-1} className="mx-auto max-w-6xl space-y-7 p-5 sm:p-8 lg:p-10">
+      <main id="main-content" tabIndex={-1} className={cn("mx-auto max-w-6xl space-y-7 p-4 sm:p-8 lg:p-10", patient && "pb-28 sm:pb-28 lg:pb-10")}>
         <ApiFeedback error={session.error} />{children}
       </main>
+      {patient && <nav aria-label="Akses cepat pasien" className="fixed inset-x-0 bottom-0 z-40 flex justify-around border-t bg-white px-1 pb-[env(safe-area-inset-bottom)] lg:hidden">{patientLinks.map(({ href, label, icon: Icon }) => {
+        const current = pathname === href || (patientHome && pathname === "/" && href === "/portal");
+        return <Link href={href} key={href} aria-current={current ? "page" : undefined} className={cn("flex min-h-18 min-w-0 flex-1 flex-col items-center justify-center gap-1 rounded-lg px-1 text-[11px]", current ? "font-semibold text-primary" : "text-muted-foreground")}><Icon aria-hidden="true" className="size-5"/>{label}</Link>; })}</nav>}
       <footer className="mx-auto max-w-6xl px-5 pb-6 text-xs text-muted-foreground sm:px-8 lg:px-10">TBCall · Tuberculosis Monitoring System</footer>
     </div>
   </div>;

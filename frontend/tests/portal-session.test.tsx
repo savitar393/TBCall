@@ -22,7 +22,7 @@ it.each([false, true])("old-account patient query (error=%s) is aborted and cann
     let changed = false, resolve!: (r: Response) => void, signal: AbortSignal | undefined, client!: QueryClient;
     portalBackend(f.patient, c => c.url.endsWith("/me") ? Response.json(changed ? { ...f.patient, id: "new-account" } : f.patient) : c.url.endsWith("/me/patient") ? changed ? Response.json({ ...f.selfPatient, fullName: "Nama akun baru" }) : (signal = c.options.signal as AbortSignal, new Promise<Response>(r => resolve = r)) : undefined);
     function Switch() { const session = useSession(); client = useQueryClient(); return <button onClick={() => { changed = true; void session.refresh(); }}>Ganti konteks</button>; }
-    await renderPortal("home", <Switch />);
+    await renderPortal("profile", <Switch />);
     await waitFor(() => expect(resolve).toBeDefined());
     await userEvent.click(screen.getByText("Ganti konteks"));
     await screen.findByText("Nama akun baru");
@@ -81,7 +81,7 @@ it.each([false, true])("same-user patient link replacement aborts old query (err
     let changed = false, resolve!: (r: Response) => void, signal: AbortSignal | undefined;
     portalBackend(f.patient, c => c.url.endsWith("/me") ? Response.json({ ...f.patient, patientLink: changed ? { ...f.patient.patientLink!, patientId: f.caseId } : f.patient.patientLink }) : c.url.endsWith("/me/patient") ? changed ? Response.json({ ...f.selfPatient, patientId: f.caseId, fullName: "Profil tautan baru" }) : (signal = c.options.signal as AbortSignal, new Promise<Response>(r => resolve = r)) : undefined);
     function Switch() { const session = useSession(); return <button onClick={() => { changed = true; void session.refresh(); }}>Ganti konteks</button>; }
-    await renderPortal("home", <Switch />);
+    await renderPortal("profile", <Switch />);
     await waitFor(() => expect(resolve).toBeDefined());
     await userEvent.click(screen.getByText("Ganti konteks"));
     await screen.findByText("Profil tautan baru");

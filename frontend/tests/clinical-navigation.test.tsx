@@ -15,7 +15,7 @@ it("offers officer worklist and registration only when each explicit permission 
 it.each(["PATIENT", "TREATMENT_SUPPORTER", "LAB_STAFF", "SYSTEM_ADMIN", "FACILITY_ADMIN", "PROGRAM_MONITOR"])("hides officer intake from %s even with all clinical permissions", async role => {
   vi.stubGlobal("fetch", vi.fn().mockResolvedValue(Response.json({ ...officer, roles: [{ code: role, name: role }] })));
   render(<AppProviders><HomePage /></AppProviders>);
-  await screen.findByRole("heading", { name: "Selamat datang" });
+  await screen.findByRole("heading", { name: role === "PATIENT" ? "Kegiatan hari ini" : "Selamat datang" });
   expect(screen.queryByRole("link", { name: "Daftar pasien" })).not.toBeInTheDocument();
   expect(screen.queryByRole("link", { name: "Registrasi baru" })).not.toBeInTheDocument();
 });

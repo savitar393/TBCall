@@ -32,7 +32,7 @@ describe("permission-driven foundation navigation", () => {
     expect(filterNavigation(guarded, ["PATIENT_READ", "CASE_READ"])).toHaveLength(1);
   });
   it("exposes only the two implemented authenticated context links without inventing /me permissions", () => {
-    expect(filterNavigation(foundationNavigation, []).map(({ label, href }) => [label, href])).toEqual([["Beranda", "/"], ["Akun/context", "/#akun"]]);
+    expect(filterNavigation(foundationNavigation, []).map(({ label, href }) => [label, href])).toEqual([["Beranda", "/"], ["Akun & akses", "/#akun"]]);
   });
 });
 
@@ -128,11 +128,12 @@ describe("authenticated responsive identity shell", () => {
     expect(screen.getByText("Belum tertaut")).toBeInTheDocument();
     const nav = screen.getByRole("navigation", { name: "Navigasi utama desktop" });
     expect(within(nav).getByRole("link", { name: "Beranda" })).toHaveAttribute("href", "/");
-    expect(within(nav).getByRole("link", { name: "Akun/context" })).toHaveAttribute("href", "/#akun");
+    expect(within(nav).getByRole("link", { name: "Akun & akses" })).toHaveAttribute("href", "/#akun");
   });
-  it("routes an anonymous home to login without displaying protected context", async () => {
+  it("renders a public home without displaying protected context", async () => {
     transport.mockResolvedValue(authenticationRequired()); renderPage(<HomePage />);
-    await waitFor(() => expect(replace).toHaveBeenCalledWith("/login"));
+    await screen.findByRole("heading", { name: /Perawatan yang terhubung/ });
+    expect(replace).not.toHaveBeenCalledWith("/login");
     expect(screen.queryByRole("heading", { name: "Selamat datang" })).not.toBeInTheDocument();
     expect(screen.queryByText("petugas@example.test")).not.toBeInTheDocument();
   });

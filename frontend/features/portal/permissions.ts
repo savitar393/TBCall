@@ -20,7 +20,7 @@ export function canReference(user: Me | null): boolean {
 export function portalNavigation(user: Me): NavigationItem[] {
     const links: NavigationItem[] = [];
     if (canPortal(user, "patient")) {
-        links.push({ label: "Portal Saya", href: "/portal" });
+        links.push({ label: "Portal Saya", href: "/portal" }, { label: "Kalender Saya", href: "/portal/calendar" }, { label: "Data diri", href: "/portal/profile" }, { label: "Bantuan & dukungan", href: "/portal/support" });
         for (const [permission, label, href] of [
             ["TREATMENT_READ", "Pengobatan Saya", "/portal/treatment"],
             ["TPT_READ", "TPT Saya", "/portal/tpt"],
