@@ -5,12 +5,12 @@ import { useEffect, useState, type RefObject } from "react";
 export function usePublicInteractions(root: RefObject<HTMLElement | null>) {
   const [scrolled, setScrolled] = useState(false);
   useEffect(() => {
-    let compact = false;
+    let glass = false;
     let frame: number | null = null;
     const update = () => {
       frame = null;
-      const next = compact ? window.scrollY > 16 : window.scrollY >= 40;
-      if (next !== compact) { compact = next; setScrolled(next); }
+      const next = glass ? window.scrollY > 16 : window.scrollY >= 40;
+      if (next !== glass) { glass = next; setScrolled(next); }
     };
     const schedule = () => { if (frame === null) frame = requestAnimationFrame(update); };
     window.addEventListener("scroll", schedule, { passive: true });
@@ -33,7 +33,12 @@ export function usePublicInteractions(root: RefObject<HTMLElement | null>) {
           observer?.unobserve(element);
         });
       }, { threshold: 0.08 });
-      targets.forEach(target => observer?.observe(target));
+      targets.forEach(target => {
+        // Content already on screen stays fully visible during hydration.
+        const bounds = target.getBoundingClientRect();
+        if (bounds.height > 0 && bounds.top < window.innerHeight && bounds.bottom > 0) target.dataset.revealed = "static";
+        else if (!target.dataset.revealed) observer?.observe(target);
+      });
     } catch { showImmediately(); }
     const change = (event: MediaQueryListEvent) => { if (event.matches) showImmediately(); };
     media?.addEventListener?.("change", change);

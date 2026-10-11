@@ -57,3 +57,16 @@ it("chart shares a numeric zero baseline and offers the same exact facts in an a
   expect(table.getAllByRole("row")).toHaveLength(36);
   expect(table.getByRole("cell",{name:"662"})).toBeInTheDocument();
 });
+it("chart entrance preserves real widths and existing bars when expanding and collapsing", async () => {
+  render(<TbPublicStatistics/>);
+  const figure = screen.getByRole('figure', {name:'Jumlah penemuan kasus TBC per kabupaten atau kota tahun 2024'});
+  expect(figure).toHaveAttribute('data-chart-reveal');
+  const firstSix = Array.from(figure.querySelectorAll('rect.chart-bar-enter'));
+  expect(firstSix).toHaveLength(6);
+  expect(firstSix[0]).toHaveAttribute('width', String(6992/8000*800));
+  await userEvent.click(screen.getByRole('button',{name:'Lihat seluruh 35 wilayah'}));
+  expect(figure.querySelectorAll('rect')).toHaveLength(35);
+  expect(Array.from(figure.querySelectorAll('rect.chart-bar-enter'))).toEqual(firstSix);
+  await userEvent.click(screen.getByRole('button',{name:'Tampilkan enam wilayah'}));
+  expect(Array.from(figure.querySelectorAll('rect'))).toEqual(firstSix);
+});

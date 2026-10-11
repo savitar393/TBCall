@@ -25,7 +25,7 @@ beforeEach(() => {
 afterEach(() => { vi.restoreAllMocks(); vi.unstubAllGlobals(); preferenceChange = undefined; });
 function scrollTo(y: number) { act(() => { scroll = y; fireEvent.scroll(window); const queued = frames.splice(0); queued.forEach(callback => callback(0)); }); }
 function intersect(element: Element, visible = true) { act(() => { observations[0].callback([{ target: element, isIntersecting: visible } as IntersectionObserverEntry], {} as IntersectionObserver); }); }
-it("keeps the header at top and uses hysteresis before compacting or returning", () => {
+it("keeps the header at top and uses hysteresis before changing its glass appearance", () => {
   render(<LandingPage/>); const header = screen.getByRole("banner");
   expect(header).toHaveAttribute("data-scrolled", "false");
   scrollTo(48); expect(header).toHaveAttribute("data-scrolled", "true");
@@ -82,4 +82,17 @@ it("keeps content readable if the observer constructor is unsupported at runtime
   const { container } = render(<LandingPage/>);
   const targets = container.querySelectorAll('[data-reveal]'); expect(targets.length).toBeGreaterThan(5);
   targets.forEach(target => expect(target).toHaveAttribute("data-revealed", "static"));
+});
+it("keeps navbar geometry out of the scrolled appearance rules", async () => {
+  const { readFileSync } = await import('node:fs');
+  const css = readFileSync('app/globals.css', 'utf8');
+  expect(css).not.toMatch(/\[data-scrolled="true"\]\s+\.public-header-row/);
+  const row = css.match(/\.public-header-row\s*\{([^}]+)\}/)?.[1];
+  expect(row).toContain('height: 5.5rem'); expect(row).not.toContain('transition: height');
+});
+it("keeps initially visible content static instead of flashing after hydration", () => {
+  vi.spyOn(HTMLElement.prototype, 'getBoundingClientRect').mockReturnValue({top:100,bottom:200,height:100,left:0,right:300,width:300,x:0,y:100,toJSON:()=>({})});
+  const { container } = render(<LandingPage/>);
+  container.querySelectorAll('[data-reveal]').forEach(target=>expect(target).toHaveAttribute('data-revealed','static'));
+  expect(observations[0].targets.size).toBe(0);
 });
