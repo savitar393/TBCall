@@ -1,19 +1,23 @@
 "use client";
 import { useRef, useState, type KeyboardEvent } from "react";
 import Link from "next/link";
-import { CalendarDays, ChevronLeft, ChevronRight, Clock3, FileCheck2 } from "lucide-react";
+import { CalendarDays, ChevronLeft, ChevronRight, Clock3, FileCheck2, Pill } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { civilDate, dateKey, formatDate, formatDateTime, monthDates, shiftDate, shiftMonth, weekDates } from "@/lib/date-format";
 import { cn } from "@/lib/utils";
+import { scheduleTimeZoneLabel } from "@/features/medication-schedule/display";
+import type { CalendarMode } from "./schedule-calendar";
 import type { CalendarEvent } from "./events";
 export function EventCard({ event, link = true }: { event: CalendarEvent; link?: boolean }) {
-  const Icon = event.kind === "dose" ? FileCheck2 : Clock3;
-  return <article className={cn("flex items-start gap-3 rounded-xl border p-4", event.state === "recorded" ? "border-sky-200 bg-sky-50/60" : event.state === "completed" ? "border-emerald-200 bg-emerald-50/60" : event.state === "scheduled" ? "border-amber-200 bg-amber-50/60" : "bg-muted/50")}>
-    <Icon className="mt-1 size-5 shrink-0" aria-hidden="true"/><div className="min-w-0 flex-1"><p className="font-semibold">{event.title}</p><span className="mt-2 inline-flex rounded-full border bg-white/75 px-2.5 py-1 text-xs font-medium">{event.status}</span>{event.time && <p className="mt-2 text-sm text-muted-foreground">{formatDateTime(event.time)}</p>}{event.detail && <p className="mt-2 text-sm text-muted-foreground">{event.detail}</p>}{link && <Link className="mt-3 inline-flex items-center text-sm font-semibold text-primary underline underline-offset-4" href={event.href}>Buka catatan</Link>}</div>
+  const Icon = event.kind === "dose" ? FileCheck2 : event.kind === "medication" ? Pill : Clock3;
+  return <article className={cn("flex items-start gap-3 rounded-xl border p-4", event.kind === "medication" ? "border-teal-200 bg-teal-50/70" : event.state === "recorded" ? "border-sky-200 bg-sky-50/60" : event.state === "completed" ? "border-emerald-200 bg-emerald-50/60" : event.state === "scheduled" ? "border-amber-200 bg-amber-50/60" : "bg-muted/50")}>
+    <Icon className="mt-1 size-5 shrink-0" aria-hidden="true"/><div className="min-w-0 flex-1"><p className="font-semibold">{event.title}</p><span className="mt-2 inline-flex rounded-full border bg-white/75 px-2.5 py-1 text-xs font-medium">{event.status}</span>{event.time && <p className="mt-2 text-sm text-muted-foreground">{event.localTime && event.timeZone ? `${formatDate(event.date)} · ${event.localTime} · ${scheduleTimeZoneLabel(event.timeZone)}` : formatDateTime(event.time)}</p>}{event.detail && <p className="mt-2 text-sm text-muted-foreground">{event.detail}</p>}{link && <Link className="mt-3 inline-flex items-center text-sm font-semibold text-primary underline underline-offset-4" href={event.href}>Buka catatan</Link>}</div>
   </article>;
 }
-export function CalendarView({ events, today = dateKey(new Date()), canTreatment = false }: { events: CalendarEvent[]; today?: string; canTreatment?: boolean }) {
-  const [selected, setSelected] = useState(today), [view, setView] = useState<"day" | "week" | "month">("month");
+export function CalendarView({ events, today = dateKey(new Date()), canTreatment = false, selected: controlledSelected, view: controlledView, onSelected, onView }: { events: CalendarEvent[]; today?: string; canTreatment?: boolean; selected?: string; view?: CalendarMode; onSelected?: (date: string) => void; onView?: (view: CalendarMode) => void }) {
+  const [localSelected, setLocalSelected] = useState(today), [localView, setLocalView] = useState<CalendarMode>("month");
+  const selected = controlledSelected ?? localSelected, view = controlledView ?? localView;
+  const setSelected = onSelected ?? setLocalSelected, setView = onView ?? setLocalView;
   const buttons = useRef(new Map<string, HTMLButtonElement>());
   const days = view === "month" ? monthDates(selected) : view === "week" ? weekDates(selected) : [selected];
   const selectedEvents = events.filter(event => view === "week" ? days.includes(event.date) : event.date === selected);

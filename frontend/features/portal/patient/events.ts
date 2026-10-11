@@ -2,7 +2,7 @@ import type { z } from "@/lib/validation";
 import type { safeDoseSchema, safeFollowUpSchema, safeEventSchema } from "../schemas";
 import type { PortalReferenceData } from "../types";
 import { dateKey } from "@/lib/date-format";
-export type CalendarEvent = { key: string; date: string; kind: "dose" | "follow-up" | "monitoring"; title: string; status: string; state: "recorded" | "scheduled" | "completed" | "other"; time?: string; detail?: string; href: string };
+export type CalendarEvent = { key: string; date: string; kind: "dose" | "follow-up" | "monitoring" | "medication"; title: string; status: string; state: "recorded" | "scheduled" | "completed" | "other"; time?: string; localTime?: string; timeZone?: string; detail?: string; href: string };
 const refLabel = (options: {code: string; name: string}[] | undefined, code: string) => options?.find(item => item.code === code)?.name ?? "Label belum tersedia";
 export function patientEvents(doses: z.infer<typeof safeDoseSchema>[], followUps: z.infer<typeof safeFollowUpSchema>[], monitoring: z.infer<typeof safeEventSchema>[], refs?: PortalReferenceData): CalendarEvent[] {
   const events: CalendarEvent[] = [

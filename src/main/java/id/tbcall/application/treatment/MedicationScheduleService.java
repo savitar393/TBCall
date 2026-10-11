@@ -51,11 +51,11 @@ public class MedicationScheduleService {
         audit.record(actor.userId(),"MEDICATION_SCHEDULE_CANCELLED","MEDICATION_SCHEDULE",schedule.getId());return view(schedule);
     }
     @Transactional(readOnly=true,isolation=Isolation.REPEATABLE_READ)
-    public Prescription staff(CurrentActor actor,UUID treatmentId){return view(find(access.staff(actor,"TREATMENT_READ",treatmentId,false)),treatmentId);}
+    public Prescription staff(CurrentActor actor,UUID treatmentId){Treatment t=access.staff(actor,"TREATMENT_READ",treatmentId,false);return view(find(t),t);}
     @Transactional(readOnly=true,isolation=Isolation.REPEATABLE_READ)
-    public Prescription patient(CurrentActor actor){Treatment t=access.self(actor,"TREATMENT_READ",false);return view(find(t),t.getId());}
+    public Prescription patient(CurrentActor actor){Treatment t=access.self(actor,"TREATMENT_READ",false);return view(find(t),t);}
     @Transactional(readOnly=true,isolation=Isolation.REPEATABLE_READ)
-    public Prescription supporter(CurrentActor actor,UUID caseId){Treatment t=access.supporting(actor,"TREATMENT_READ",caseId,false);return view(find(t),t.getId());}
+    public Prescription supporter(CurrentActor actor,UUID caseId){Treatment t=access.supporting(actor,"TREATMENT_READ",caseId,false);return view(find(t),t);}
     @Transactional(readOnly=true,isolation=Isolation.REPEATABLE_READ)
     public RevisionPage history(CurrentActor actor,UUID treatmentId,int page,int size){
         Treatment treatment=access.staff(actor,"TREATMENT_READ",treatmentId,false);page(page,size);MedicationSchedule schedule=find(treatment);
@@ -72,7 +72,8 @@ public class MedicationScheduleService {
     @Transactional(readOnly=true,isolation=Isolation.REPEATABLE_READ)
     public CalendarPage supporterCalendar(CurrentActor actor,UUID caseId,LocalDate from,LocalDate to){return calendar(access.supporting(actor,"TREATMENT_READ",caseId,false),from,to);}
     private CalendarPage calendar(Treatment treatment,LocalDate from,LocalDate to){
-        range(from,to);MedicationSchedule schedule=find(treatment);if(schedule==null)return new CalendarPage(from,to,List.of(),List.of());
+        range(from,to);Lifecycle lifecycle=lifecycle(treatment);Instant queriedAt=clock.instant();
+        MedicationSchedule schedule=find(treatment);if(schedule==null)return new CalendarPage(from,to,List.of(),List.of(),lifecycle);
         // All ZoneOffsets are within 18 hours; exclude retired instant windows before enforcing the bounded candidate limit.
         OffsetDateTime earliest=from.atStartOfDay().atOffset(ZoneOffset.UTC).minusHours(18);
         OffsetDateTime latest=to.plusDays(1).atStartOfDay().atOffset(ZoneOffset.UTC).plusHours(18);
@@ -87,19 +88,20 @@ public class MedicationScheduleService {
         for(var r:revisions){
             ZoneId zone=ZoneId.of(r.getTimeZone());
             for(LocalDate date=from;!date.isAfter(to);date=date.plusDays(1)){
-                if(date.isBefore(r.getStartDate()) || r.getEndDate()!=null && date.isAfter(r.getEndDate()) || (r.getWeekdayMask() & (1 << (date.getDayOfWeek().getValue()-1)))==0)continue;
+                if(lifecycle.actualEndDate()!=null && date.isAfter(lifecycle.actualEndDate()) || date.isBefore(r.getStartDate()) || r.getEndDate()!=null && date.isAfter(r.getEndDate()) || (r.getWeekdayMask() & (1 << (date.getDayOfWeek().getValue()-1)))==0)continue;
                 for(LocalTime time:r.getTimes().stream().sorted().toList()){
                     var local=LocalDateTime.of(date,time);var offsets=zone.getRules().getValidOffsets(local);
                     if(offsets.isEmpty()){
                         // A nonexistent wall time has no expected occurrence; never shift it to a guessed medication time.
                         // Associate a gap with its transition instant; do not report an already elapsed or cancelled gap.
                         Instant transition=zone.getRules().getTransition(local).getInstant();
-                        if(!transition.isBefore(r.getValidFrom().toInstant()) && (r.getValidUntil()==null || transition.isBefore(r.getValidUntil().toInstant())) && (schedule.getCancelledAt()==null || transition.isBefore(schedule.getCancelledAt().toInstant())))
+                        if((lifecycle.futureExpectationsAllowed() || transition.isBefore(queriedAt)) && !transition.isBefore(r.getValidFrom().toInstant()) && (r.getValidUntil()==null || transition.isBefore(r.getValidUntil().toInstant())) && (schedule.getCancelledAt()==null || transition.isBefore(schedule.getCancelledAt().toInstant())))
                             exceptions.add(new TemporalException(r.getId(),date,time.toString(),r.getTimeZone(),"LOCAL_TIME_GAP"));
                         continue;
                     }
                     OffsetDateTime scheduled=local.atOffset(offsets.getFirst());Instant instant=scheduled.toInstant();
-                    if(instant.isBefore(r.getValidFrom().toInstant()) || r.getValidUntil()!=null && !instant.isBefore(r.getValidUntil().toInstant()) || schedule.getCancelledAt()!=null && !instant.isBefore(schedule.getCancelledAt().toInstant()))continue;
+                    // queriedAt suppresses current/future instructions; it is not a historical treatment termination timestamp.
+                    if(!lifecycle.futureExpectationsAllowed() && !instant.isBefore(queriedAt) || instant.isBefore(r.getValidFrom().toInstant()) || r.getValidUntil()!=null && !instant.isBefore(r.getValidUntil().toInstant()) || schedule.getCancelledAt()!=null && !instant.isBefore(schedule.getCancelledAt().toInstant()))continue;
                     if(!instants.add(instant))throw conflict("Definisi jadwal menghasilkan waktu yang berulang.");
                     String id=r.getId()+"/"+date+"/"+time;
                     occurrences.add(new Occurrence("EXPECTED_OCCURRENCE",id,schedule.getId(),r.getId(),treatment.getId(),date,time.toString(),r.getTimeZone(),scheduled,offsets.size()>1?"EARLIER_OFFSET":"UNAMBIGUOUS"));
@@ -108,7 +110,7 @@ public class MedicationScheduleService {
         }
         occurrences.sort(Comparator.comparing(v->v.scheduledAt().toInstant()));
         if(occurrences.size()>512 || exceptions.size()>512)throw conflict("Rentang kalender melebihi batas hasil.");
-        return new CalendarPage(from,to,List.copyOf(occurrences),List.copyOf(exceptions));
+        return new CalendarPage(from,to,List.copyOf(occurrences),List.copyOf(exceptions),lifecycle);
     }
     private Treatment writable(CurrentActor actor,UUID treatmentId){
         Treatment treatment=access.staff(actor,"TREATMENT_WRITE",treatmentId,true);access.requireActive(treatment);
@@ -137,8 +139,9 @@ public class MedicationScheduleService {
     private MedicationSchedule find(Treatment treatment){return em.createQuery("select s from MedicationSchedule s where s.treatment.id=:id",MedicationSchedule.class).setParameter("id",treatment.getId()).getResultList().stream().findFirst().orElse(null);}
     private MedicationSchedule required(Treatment treatment){var s=find(treatment);if(s==null)throw ApplicationFailure.missing();return s;}
     private MedicationScheduleRevision current(MedicationSchedule s){return em.find(MedicationScheduleRevision.class,s.getCurrentRevisionId());}
-    private Prescription view(MedicationSchedule s){return view(s,s.getTreatment().getId());}
-    private Prescription view(MedicationSchedule s,UUID treatmentId){return s==null?new Prescription("PRESCRIBED_SCHEDULE",null,treatmentId,null,"ABSENT",null,null):new Prescription("PRESCRIBED_SCHEDULE",s.getId(),treatmentId,s.getVersion(),s.getStatus(),revisionView(current(s)),s.getCancelledAt());}
+    private Prescription view(MedicationSchedule s){return view(s,s.getTreatment());}
+    private Prescription view(MedicationSchedule s,Treatment treatment){Lifecycle lifecycle=lifecycle(treatment);return s==null?new Prescription("PRESCRIBED_SCHEDULE",null,treatment.getId(),null,"ABSENT",null,null,lifecycle):new Prescription("PRESCRIBED_SCHEDULE",s.getId(),treatment.getId(),s.getVersion(),s.getStatus(),revisionView(current(s)),s.getCancelledAt(),lifecycle);}
+    private Lifecycle lifecycle(Treatment treatment){return new Lifecycle(treatment.getStatus(),"ACTIVE".equals(treatment.getStatus()),treatment.getActualEndDate(),treatment.getActualEndDate()!=null);}
     private Revision revisionView(MedicationScheduleRevision r){List<Integer> weekdays=new ArrayList<>();for(int d=1;d<=7;d++)if((r.getWeekdayMask() & (1 << (d-1)))!=0)weekdays.add(d);
         return new Revision(r.getId(),r.getRevisionNumber(),r.getStatus(),r.getTimeZone(),r.getStartDate(),r.getEndDate(),r.getWeekdayMask()==127?"DAILY":"SELECTED_WEEKDAYS",List.copyOf(weekdays),r.getTimes().stream().sorted().map(LocalTime::toString).toList(),r.getValidFrom(),r.getValidUntil(),r.getCreatedAt());}
     private User user(CurrentActor actor){return em.getReference(User.class,actor.userId());}

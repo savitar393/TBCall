@@ -1,0 +1,20 @@
+import { describe, expect, it } from "vitest";
+import { scheduleRanges, prescribedToday, medicationEvents, completeSchedulePages, consistentSchedulePages } from "@/features/portal/patient/schedule-calendar";
+const lifecycle={treatmentStatus:"ACTIVE",futureExpectationsAllowed:true,actualEndDate:null,historyBoundaryKnown:false};
+const occurrence={kind:"EXPECTED_OCCURRENCE" as const,id:"r/2026-10-07/08:00",scheduleId:"s",revisionId:"r",treatmentId:"t",localDate:"2026-10-07",localTime:"08:00",timeZone:"Asia/Jayapura",scheduledAt:"2026-10-06T23:00:00Z",offsetResolution:"UNAMBIGUOUS" as const};
+describe("complete prescribed medication calendar",()=>{
+ it("covers all 42 monthly cells exactly once in bounded inclusive requests",()=>{expect(scheduleRanges("2026-10-31","month")).toEqual([{from:"2026-09-28",to:"2026-10-28"},{from:"2026-10-29",to:"2026-11-08"}]);});
+ it("bounds week and day queries across year boundaries",()=>{expect(scheduleRanges("2027-01-01","week")).toEqual([{from:"2026-12-28",to:"2027-01-03"}]);expect(scheduleRanges("2027-01-01","day")).toEqual([{from:"2027-01-01",to:"2027-01-01"}]);});
+ it("uses the prescription zone for today, never the device zone",()=>{expect(prescribedToday("Asia/Jayapura",new Date("2026-10-06T23:00:00Z"))).toBe("2026-10-07");});
+ it("keeps prescribed times separate from dose evidence without inferred completion",()=>{expect(medicationEvents([occurrence])[0]).toMatchObject({kind:"medication",date:"2026-10-07",localTime:"08:00",timeZone:"Asia/Jayapura",state:"scheduled",status:"Terjadwal"});});
+ it("rejects partial, failed, stale or mismatched calendar pages",()=>{const ranges=scheduleRanges("2026-10-07","month"), first={data:{...ranges[0],content:[occurrence],exceptions:[],lifecycle}};expect(completeSchedulePages(ranges,[{data:first,isPending:false,isFetching:false,error:null},{isPending:true,isFetching:true,error:null}])).toBeNull();expect(completeSchedulePages(ranges,[{data:first,isPending:false,isFetching:false,error:null},{error:new Error("failed"),isPending:false,isFetching:false}])).toBeNull();expect(completeSchedulePages(ranges,[{data:first,isPending:false,isFetching:true,error:null},{data:{data:{...ranges[1],content:[],exceptions:[],lifecycle}},error:null,isPending:false,isFetching:false}])).toBeNull();expect(completeSchedulePages(ranges,[{data:first,isPending:false,isFetching:false,error:null},{data:{data:{...ranges[0],content:[],exceptions:[],lifecycle}},error:null,isPending:false,isFetching:false}])).toBeNull();});
+ it("returns empty loaded data only after every requested page completes",()=>{const ranges=scheduleRanges("2026-10-07","month");expect(completeSchedulePages(ranges,ranges.map(range=>({data:{data:{...range,content:[],exceptions:[],lifecycle}},isPending:false,isFetching:false,error:null})))).toEqual({content:[],exceptions:[],lifecycle});});
+});
+
+it("rejects inactive, cancelled, or superseded prescription races before exposing occurrences",()=>{
+ const prescription={kind:"PRESCRIBED_SCHEDULE" as const,id:"s",treatmentId:"t",version:1,status:"ACTIVE" as const,currentRevision:{id:"r",revisionNumber:1,status:"ACTIVE" as const,timeZone:"Asia/Jayapura",startDate:"2026-10-01",endDate:null,recurrence:"DAILY" as const,weekdays:[1,2,3,4,5,6,7],times:["08:00"],validFrom:"2026-10-01T00:00:00Z",validUntil:null,createdAt:"2026-10-01T00:00:00Z"},cancelledAt:null,lifecycle};
+ const page={content:[occurrence],exceptions:[],lifecycle};expect(consistentSchedulePages(prescription,page)).toEqual(page);
+ expect(consistentSchedulePages({...prescription,lifecycle:{...lifecycle,treatmentStatus:"COMPLETED",futureExpectationsAllowed:false}},page)).toBeNull();
+ expect(consistentSchedulePages({...prescription,status:"CANCELLED",cancelledAt:"2026-10-06T22:00:00Z"},page)).toBeNull();
+ expect(consistentSchedulePages({...prescription,currentRevision:{...prescription.currentRevision,id:"new",validFrom:"2026-10-06T22:00:00Z"}},page)).toBeNull();
+});

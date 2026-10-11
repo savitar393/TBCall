@@ -237,6 +237,88 @@ class MedicationScheduleIntegrationTest {
             try(var rows=statement.executeQuery("select version from flyway_schema_history where success order by installed_rank desc limit 1")){assertThat(rows.next()).isTrue();assertThat(rows.getString(1)).isEqualTo("18");}
         }
     }
+    @ParameterizedTest @ValueSource(strings={"COMPLETED","STOPPED","CANCELLED","TRANSFERRED","PAUSED","PLANNED"})
+    void inactiveTreatmentKeepsPastOccurrencesButSuppressesAtAndAfterQueryTimeForAllReaders(String state)throws Exception{
+        var value=input();value.put("startDate","2026-10-11");JsonNode prescribed=create(value);
+        TIME.set(Instant.parse("2026-10-12T01:00:00Z"));
+        jdbc.update("update treatments set status=? where id=?",state,treatment);
+        for(String role:List.of("TB_OFFICER","PATIENT","TREATMENT_SUPPORTER")){
+            String uri=lifecycleReader(role);
+            JsonNode calendar=call(get(uri+"/occurrences").param("from","2026-10-11").param("to","2026-10-13"),null,200);
+            assertThat(calendar.path("content")).hasSize(2);
+            assertThat(calendar.path("content").get(0).path("scheduledAt").asText()).isEqualTo("2026-10-11T08:00:00+07:00");
+            assertThat(calendar.path("content").get(1).path("scheduledAt").asText()).isEqualTo("2026-10-11T20:00:00+07:00");
+            assertLifecycle(calendar,state,false,null,false);
+            JsonNode read=call(get(uri),null,200);assertLifecycle(read,state,false,null,false);
+            assertThat(read.path("status").asText()).isEqualTo("ACTIVE");
+            assertThat(read.path("currentRevision")).isEqualTo(prescribed.path("currentRevision"));
+            JsonNode historical=call(get(uri+"/occurrences").param("from","2026-10-11").param("to","2026-10-11"),null,200);
+            assertThat(historical.path("content")).isEqualTo(calendar.path("content"));
+        }
+        caller=login("officer@example.invalid");
+        assertThat(call(get(path()+"/revisions"),null,200).path("content").get(0)).isEqualTo(prescribed.path("currentRevision"));
+    }
+    @ParameterizedTest @ValueSource(strings={"COMPLETED","STOPPED","CANCELLED","TRANSFERRED","PAUSED","PLANNED"})
+    void actualEndDateBoundsHistoricalLocalDatesForEveryReader(String state)throws Exception{
+        var value=input();value.put("startDate","2026-10-11");create(value);
+        TIME.set(Instant.parse("2026-10-13T00:00:00Z"));
+        jdbc.update("update treatments set status=?,actual_end_date='2026-10-11' where id=?",state,treatment);
+        for(String role:List.of("TB_OFFICER","PATIENT","TREATMENT_SUPPORTER")){
+            String uri=lifecycleReader(role);
+            JsonNode calendar=call(get(uri+"/occurrences").param("from","2026-10-11").param("to","2026-10-13"),null,200);
+            assertThat(calendar.path("content")).hasSize(2);
+            assertThat(calendar.path("content").get(1).path("localDate").asText()).isEqualTo("2026-10-11");
+            assertLifecycle(calendar,state,false,"2026-10-11",true);
+            assertLifecycle(call(get(uri),null,200),state,false,"2026-10-11",true);
+        }
+    }
+    @ParameterizedTest @CsvSource({"2027-03-14T06:59:59Z,0","2027-03-14T07:00:00Z,0","2027-03-14T07:00:01Z,1"})
+    void pausedTreatmentSuppressesDstExceptionsAtAndAfterQueryTime(String instant,int expectedExceptions)throws Exception{
+        var value=input();value.put("timeZone","America/New_York");value.put("startDate","2027-03-14");value.put("endDate","2027-03-15");value.put("times",List.of("02:30"));create(value);
+        TIME.set(Instant.parse(instant));caller=login("officer@example.invalid");jdbc.update("update treatments set status='PAUSED' where id=?",treatment);
+        JsonNode calendar=call(get(path()+"/occurrences").param("from","2027-03-14").param("to","2027-03-15"),null,200);
+        assertThat(calendar.path("content")).isEmpty();assertThat(calendar.path("exceptions")).hasSize(expectedExceptions);
+        jdbc.update("update treatments set actual_end_date='2027-03-13' where id=?",treatment);
+        assertThat(call(get(path()+"/occurrences").param("from","2027-03-14").param("to","2027-03-15"),null,200).path("exceptions")).isEmpty();
+    }
+    @ParameterizedTest @ValueSource(strings={"ACTIVE","PAUSED","COMPLETED"})
+    void absentScheduleStillExposesTreatmentLifecycleForAllReaders(String state)throws Exception{
+        jdbc.update("update treatments set status=? where id=?",state,treatment);
+        for(String role:List.of("TB_OFFICER","PATIENT","TREATMENT_SUPPORTER")){
+            String uri=lifecycleReader(role);JsonNode read=call(get(uri),null,200);
+            assertThat(read.path("status").asText()).isEqualTo("ABSENT");assertLifecycle(read,state,state.equals("ACTIVE"),null,false);
+            JsonNode calendar=call(get(uri+"/occurrences").param("from","2026-10-11").param("to","2026-10-12"),null,200);
+            assertThat(calendar.path("content")).isEmpty();assertLifecycle(calendar,state,state.equals("ACTIVE"),null,false);
+        }
+    }
+    @Test void inactiveScheduleReadsPreserveDoseEvidenceAndExistingCancellationCutoff()throws Exception{
+        caller=selfCookie;call(post("/api/v1/me/treatment/dose-events"),Map.of("scheduledDate","2026-10-11","status","TAKEN_SELF_REPORTED"),201);
+        Map<String,Object> evidence=jdbc.queryForMap("select * from dose_events");caller=staffCookie;
+        var value=input();value.put("startDate","2026-10-11");create(value);
+        TIME.set(Instant.parse("2026-10-11T02:00:00Z"));call(post(path()+"/cancel").header("If-Match","\"0\""),null,200);
+        Map<String,Object> prescription=jdbc.queryForMap("select * from medication_schedules");
+        Map<String,Object> revision=jdbc.queryForMap("select * from medication_schedule_revisions");
+        jdbc.update("update treatments set status='COMPLETED',actual_end_date='2026-10-11' where id=?",treatment);
+        TIME.set(Instant.parse("2026-10-12T00:00:00Z"));
+        for(String role:List.of("TB_OFFICER","PATIENT","TREATMENT_SUPPORTER")){
+            String uri=lifecycleReader(role);assertThat(call(get(uri),null,200).path("status").asText()).isEqualTo("CANCELLED");
+            JsonNode calendar=call(get(uri+"/occurrences").param("from","2026-10-11").param("to","2026-10-12"),null,200);
+            assertThat(calendar.path("content")).hasSize(1);assertThat(calendar.path("content").get(0).path("localTime").asText()).isEqualTo("08:00");
+        }
+        assertThat(jdbc.queryForMap("select * from dose_events")).isEqualTo(evidence);
+        assertThat(jdbc.queryForMap("select * from medication_schedules")).isEqualTo(prescription);
+        assertThat(jdbc.queryForMap("select * from medication_schedule_revisions")).isEqualTo(revision);
+    }
+    private String lifecycleReader(String role)throws Exception{
+        caller=login(role.equals("TB_OFFICER")?"officer@example.invalid":role.equals("PATIENT")?"patient@example.invalid":"support@example.invalid");
+        return role.equals("TB_OFFICER")?path():role.equals("PATIENT")?selfPath():supportPath();
+    }
+    private void assertLifecycle(JsonNode response,String state,boolean futureAllowed,String endDate,boolean boundaryKnown){
+        JsonNode lifecycle=response.path("lifecycle");assertThat(lifecycle.path("treatmentStatus").asText()).isEqualTo(state);
+        assertThat(lifecycle.path("futureExpectationsAllowed").asBoolean()).isEqualTo(futureAllowed);
+        if(endDate==null)assertThat(lifecycle.path("actualEndDate").isNull()).isTrue();else assertThat(lifecycle.path("actualEndDate").asText()).isEqualTo(endDate);
+        assertThat(lifecycle.path("historyBoundaryKnown").asBoolean()).isEqualTo(boundaryKnown);
+    }
     private Map<String,Object> input(){return new HashMap<>(Map.of("timeZone","Asia/Jakarta","startDate","2026-10-12","endDate","2026-11-12","times",List.of("08:00","20:00"),"weekdays",List.of(1,2,3,4,5,6,7)));}
     private String path(){return "/api/v1/treatments/"+treatment+"/medication-schedule";}
     private String selfPath(){return "/api/v1/me/treatment/medication-schedule";}

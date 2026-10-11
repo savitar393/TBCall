@@ -30,6 +30,8 @@ export function portalBackend(user: Me = f.patient, override?: (c: Call) => Resp
             return Response.json(references);
         if (path.endsWith("/me/patient"))
             return Response.json(f.selfPatient);
+        if (path.endsWith("/medication-schedule"))
+            return Response.json({kind:"PRESCRIBED_SCHEDULE",id:null,treatmentId:f.id,version:null,status:"ABSENT",currentRevision:null,cancelledAt:null,lifecycle:{treatmentStatus:"ACTIVE",futureExpectationsAllowed:true,actualEndDate:null,historyBoundaryKnown:false}});
         if (path.endsWith("/treatment"))
             return Response.json(path.includes("/supporting-cases/") ? f.supporterTreatment : f.treatment);
         if (path.endsWith("/dose-events"))
@@ -53,8 +55,8 @@ export function portalBackend(user: Me = f.patient, override?: (c: Call) => Resp
     return calls;
 }
 const modules = import.meta.glob("../features/portal/**/*.tsx");
-export async function renderPortal(screen: "home" | "profile" | "treatment" | "tpt" | "monitoring" | "alerts" | "notifications" | "supporters" | "case", extra?: ReactNode, caseId = f.caseId) {
-    const paths = { home: ["patient/home", "PatientHome"], profile: ["patient/profile", "PatientProfile"], treatment: ["patient/treatment", "PatientTreatment"], tpt: ["patient/tpt", "PatientTpt"], monitoring: ["patient/monitoring", "PatientMonitoring"], alerts: ["patient/alerts", "PatientAlerts"], notifications: ["notifications/list", "PortalNotifications"], supporters: ["supporter/list", "SupportingCases"], case: ["supporter/detail", "SupportingCase"] };
+export async function renderPortal(screen: "calendar" | "home" | "profile" | "treatment" | "tpt" | "monitoring" | "alerts" | "notifications" | "supporters" | "case", extra?: ReactNode, caseId = f.caseId) {
+    const paths = { calendar:["patient/calendar","PatientCalendar"], home: ["patient/home", "PatientHome"], profile: ["patient/profile", "PatientProfile"], treatment: ["patient/treatment", "PatientTreatment"], tpt: ["patient/tpt", "PatientTpt"], monitoring: ["patient/monitoring", "PatientMonitoring"], alerts: ["patient/alerts", "PatientAlerts"], notifications: ["notifications/list", "PortalNotifications"], supporters: ["supporter/list", "SupportingCases"], case: ["supporter/detail", "SupportingCase"] };
     const [path, name] = paths[screen];
     const loader = modules[`../features/portal/${path}.tsx`], guard = modules["../features/portal/boundary.tsx"];
     expect(loader, "F3 screen").toBeDefined();
@@ -70,6 +72,6 @@ export async function renderPortal(screen: "home" | "profile" | "treatment" | "t
         caseId?: string;
         context: string;
     }) => ReactNode>).PortalBoundary;
-    const permissions = { home: undefined, profile: undefined, treatment: "TREATMENT_READ", tpt: "TPT_READ", monitoring: "MONITORING_READ", alerts: "ALERT_READ", notifications: "NOTIFICATION_READ_SELF", supporters: undefined, case: undefined };
+    const permissions = { calendar:undefined, home: undefined, profile: undefined, treatment: "TREATMENT_READ", tpt: "TPT_READ", monitoring: "MONITORING_READ", alerts: "ALERT_READ", notifications: "NOTIFICATION_READ_SELF", supporters: undefined, case: undefined };
     return render(<AppProviders>{extra}<B mode={screen === "notifications" ? "either" : screen === "supporters" || screen === "case" ? "supporter" : "patient"} permission={permissions[screen]} requireLink={["treatment", "tpt", "monitoring", "alerts"].includes(screen)} caseId={screen === "case" ? caseId : undefined} context={screen}><C caseId={caseId}/></B></AppProviders>);
 }

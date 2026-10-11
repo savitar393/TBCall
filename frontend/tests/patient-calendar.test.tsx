@@ -29,3 +29,8 @@ it('orders timestamped events by instant rather than lexical timezone offset', (
   const early={...f.followUp,id:'early',scheduledAt:'2030-01-01T10:00:00+07:00'}, late={...f.followUp,id:'late',scheduledAt:'2030-01-01T08:00:00Z'};
   expect(patientEvents([], [late,early], [], references).map(e=>e.key)).toEqual(['follow-early','follow-late']);
 });
+
+it("weekly medication cards display each prescribed date, including repeated local times",async()=>{
+ const events=[7,8].map(day=>({key:`med-${day}`,date:`2026-10-0${day}`,kind:"medication" as const,title:"Waktu minum obat",status:"Terjadwal",state:"scheduled" as const,time:`2026-10-0${day}T08:00:00+07:00`,localTime:"08:00",timeZone:"Asia/Jakarta",href:"/portal/treatment"}));
+ render(<CalendarView events={events} today="2026-10-07"/>);await userEvent.click(screen.getByRole("button",{name:"Minggu"}));expect(screen.getByText("7 Oktober 2026 · 08:00 · WIB · Waktu Indonesia Barat")).toBeInTheDocument();expect(screen.getByText("8 Oktober 2026 · 08:00 · WIB · Waktu Indonesia Barat")).toBeInTheDocument();
+});
