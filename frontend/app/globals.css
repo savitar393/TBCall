@@ -121,13 +121,44 @@
   @keyframes overlay-out { from { opacity: 1; } to { opacity: 0; } }
   @keyframes sheet-in { from { transform: translate(var(--sheet-x,0),var(--sheet-y,0)); opacity: .85; } to { transform: translate(0,0); opacity: 1; } }
   @keyframes sheet-out { from { transform: translate(0,0); opacity: 1; } to { transform: translate(var(--sheet-x,0),var(--sheet-y,0)); opacity: .85; } }
-  @supports (animation-timeline: view()) {
-    .public-page #fitur, .public-page #edukasi, .public-page #statistik { animation: section-reveal linear both; animation-timeline: view(); animation-range: entry 0% entry 30%; }
-    @keyframes section-reveal { from { opacity: .65; transform: translateY(18px); } to { opacity: 1; transform: translateY(0); } }
-  }
 }
 .public-menu-shell { display: grid; grid-template-rows: 0fr; opacity: 0; transition: grid-template-rows 200ms ease, opacity 180ms ease; }
 .public-menu-shell[data-open="true"] { grid-template-rows: 1fr; opacity: 1; }
 @media (min-width: 768px) { .public-menu-shell { display: none; } }
 
-@media (max-width: 374px) { .public-page > header > div > a[aria-label='TBCall'] { width: 7rem; } }
+@media (max-width: 374px) { .public-header-row > a[aria-label='TBCall'] { width: 7rem; } }
+
+/* The sticky footprint stays fixed while its surface compacts: no content jump. */
+.public-header { position: sticky; top: 0; z-index: 50; height: 5.5rem; }
+.public-header-surface { position: absolute; inset: 0 0 auto; background: #fff; border-bottom: 1px solid var(--border); transition: background-color 220ms ease, box-shadow 220ms ease; }
+.public-header-row { height: 5.5rem; transition: height 220ms ease; }
+.public-header[data-scrolled="true"] .public-header-row { height: 4.75rem; }
+.public-header[data-scrolled="true"] .public-header-surface { background: #fffffff2; box-shadow: 0 4px 18px #16352b0d; }
+@supports (backdrop-filter: blur(12px)) {
+  .public-header[data-scrolled="true"] .public-header-surface { backdrop-filter: blur(12px); }
+}
+.public-header #public-menu { max-height: calc(100dvh - 6rem); overflow-y: auto; }
+.public-page #main-content, .public-page #fitur, .public-page #statistik, .public-page #edukasi { scroll-margin-top: 6.5rem; }
+.public-page .max-w-7xl { max-width: 88rem; }
+.public-page #fitur, .public-page #edukasi { padding-block-start: clamp(3rem, 5vw, 5rem); padding-block-end: clamp(3rem, 5vw, 5rem); }
+.public-hero-title { font-size: clamp(2rem, 4.3vw, 4rem); overflow-wrap: break-word; }
+.public-nav-link { position: relative; }
+.public-nav-link::after { content: ""; position: absolute; inset: auto 0 .45rem; height: 2px; background: var(--primary); transform: scaleX(0); transform-origin: left; }
+.public-nav-link:hover::after, .public-nav-link:focus-visible::after { transform: scaleX(1); }
+.public-page .chart-row { border-radius: .4rem; }
+.public-page .chart-row:hover { background: #176b4808; }
+.public-page #statistik figure:focus-within { outline: 1px solid var(--border); outline-offset: 3px; }
+.public-page #edukasi a:focus-visible h3 { color: var(--primary); }
+/* No opacity/visibility hiding before hydration, observation or animation. */
+.public-page [data-reveal] { opacity: 1; }
+@media (prefers-reduced-motion: no-preference) {
+  .public-nav-link::after { transition: transform 180ms ease; }
+  .public-page [data-revealed="visible"] { animation: public-reveal 560ms cubic-bezier(.2,.7,.2,1) backwards; }
+  .public-page .public-reveal-grid > [data-revealed="visible"]:nth-child(2) { animation-delay: 60ms; }
+  .public-page .public-reveal-grid > [data-revealed="visible"]:nth-child(3) { animation-delay: 120ms; }
+  .public-page .public-reveal-grid > [data-revealed="visible"]:nth-child(4) { animation-delay: 160ms; }
+  .public-page #edukasi a img { transition: filter 220ms ease; }
+  .public-page #edukasi a:hover img, .public-page #edukasi a:focus-visible img { filter: saturate(1.08); }
+  .public-page .chart-row { transition: background-color 180ms ease; }
+  @keyframes public-reveal { from { opacity: .55; transform: translateY(18px); } to { opacity: 1; transform: translateY(0); } }
+}
