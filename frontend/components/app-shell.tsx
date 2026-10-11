@@ -37,15 +37,15 @@ export function AppShell({ children }: { children: ReactNode }) {
     "/integrations": Network, "/#akun": Settings2,
   };
   const navigation = (mobile = false) => {
-    return <nav id={mobile ? "mobile-nav" : "desktop-nav"} aria-label={`Navigasi utama ${mobile ? "seluler" : "desktop"}`} className="space-y-6">
+    return <nav id={mobile ? "mobile-nav" : "desktop-nav"} aria-label={`Navigasi utama ${mobile ? "seluler" : "desktop"}`} className="app-navigation space-y-5">
       {groups.filter(group => group.links.length).map(group => <div key={group.title} role="group" aria-label={group.title} className="space-y-1">
-        {group.title && <p aria-hidden="true" className={cn("mb-3 px-4 text-[10px] font-semibold uppercase tracking-widest text-muted-foreground", !mobile && "sidebar-label")}>{group.title}</p>}
+        {group.title && <p aria-hidden="true" className={cn("app-nav-group mb-2 px-4 text-[11px] font-semibold uppercase tracking-wider text-muted-foreground", !mobile && "sidebar-label")}>{group.title}</p>}
         {group.links.map(item => {
           const Icon = icons[item.href] ?? UserRound;
           const current = navigationActive(pathname,item.href,user);
           return <Link key={item.href} href={item.href} onClick={() => { if (mobile) setDrawer(false); }} aria-current={current ? "page" : undefined} title={collapsed && !mobile ? item.label : undefined}
-            className={cn("sidebar-link relative flex min-h-12 items-center gap-3 rounded-xl px-4 text-sm font-medium transition-colors", current ? "bg-primary/10 text-primary" : "text-muted-foreground hover:bg-accent hover:text-foreground", collapsed && !mobile && "px-4")}>
-            <Icon aria-hidden="true" className="size-5 shrink-0"/><span className={!mobile ? "sidebar-label" : undefined}>{item.label}</span>
+            className={cn("sidebar-link relative flex min-h-11 items-center gap-2.5 rounded-xl px-3 text-sm font-medium transition-colors", current ? "bg-primary/10 text-primary" : "text-muted-foreground hover:bg-accent hover:text-foreground")}>
+            <span className="app-nav-icon"><Icon aria-hidden="true" className="size-[18px] shrink-0"/></span><span className={!mobile ? "sidebar-label" : undefined}>{item.label}</span>
           </Link>;
         })}
       </div>)}
@@ -61,7 +61,7 @@ export function AppShell({ children }: { children: ReactNode }) {
             <div className="sidebar-brand-full" aria-hidden={collapsed} inert={collapsed}><Brand /></div>
             <div className="sidebar-brand-compact" aria-hidden={!collapsed} inert={!collapsed}><Brand compact /></div>
           </div>
-          <div className="mt-8">{navigation()}</div>
+          <div className="mt-7">{navigation()}</div>
           {user.activeFacilities.length > 0 && <div aria-hidden={collapsed} className="sidebar-facility mt-auto pt-8"><div className="rounded-xl bg-background p-4"><p className="text-xs font-medium uppercase tracking-wider text-muted-foreground">Fasilitas aktif</p><p className="mt-2 flex items-start gap-2 text-sm"><Building2 aria-hidden="true" className="mt-0.5 size-4 shrink-0" />{user.activeFacilities[0]?.name}</p>{user.activeFacilities.length > 1 && <p className="mt-1 text-xs text-muted-foreground">dan {user.activeFacilities.length - 1} fasilitas lainnya</p>}</div></div>}
           </div>
         </div>
@@ -80,11 +80,13 @@ export function AppShell({ children }: { children: ReactNode }) {
               <div className="mt-8">{navigation(true)}</div>
             </SheetContent>
           </Sheet>
-          <div className="min-w-0"><p className="text-[10px] font-semibold uppercase tracking-widest text-muted-foreground">{patientHome ? "Ruang Anda" : "Ruang kerja"}</p><p className="mt-1 max-w-48 truncate text-sm font-semibold sm:max-w-none">{crumbs.at(-1)?.label ?? "TBCall"}</p></div>
+          <div className="min-w-0"><p className="text-[11px] font-medium text-muted-foreground">{patientHome ? "Ruang Anda" : "Ruang kerja TBCall"}</p><p className="mt-0.5 max-w-48 truncate text-sm font-semibold sm:max-w-none">{crumbs.at(-1)?.label ?? "TBCall"}</p></div>
+          {user.activeFacilities.length > 0 && <div className="app-topbar-facility hidden xl:flex"><Building2 aria-hidden="true" className="size-4 shrink-0"/><span>{user.activeFacilities[0]?.name}{user.activeFacilities.length > 1 && ` +${user.activeFacilities.length - 1}`}</span></div>}
         </div>
         <div className="flex min-w-0 items-center gap-3 sm:gap-5">
           <div className="hidden min-w-0 text-right sm:block"><p className="max-w-64 truncate text-sm font-medium">{identity}</p><p className="mt-1 text-xs text-muted-foreground">{user.roles.map(role => role.name).join(" · ") || "Akun aktif"}</p></div>
-          <Button variant="outline" disabled={session.isPending} onClick={() => void session.logout().catch(() => {})}><LogOut aria-hidden="true" /><span>Keluar</span></Button>
+          <span aria-hidden="true" className="app-account-avatar hidden sm:flex">{identity.slice(0,1).toUpperCase()}</span>
+          <Button variant="ghost" disabled={session.isPending} onClick={() => void session.logout().catch(() => {})}><LogOut aria-hidden="true" /><span>Keluar</span></Button>
         </div>
       </header>
       <main id="main-content" tabIndex={-1} className={cn("app-workspace mx-auto max-w-7xl space-y-6 p-4 sm:p-7 lg:p-9", patient && "pb-28 sm:pb-28 lg:pb-10")}>

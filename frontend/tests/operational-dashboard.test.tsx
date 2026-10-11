@@ -50,8 +50,26 @@ it.each(["permissions", "facilities"])("rejects missing %s before loading metric
 });
 it("distinguishes empty queues and zeros from restricted sections", async () => {
   serve({ ...fixture, cases: { state: "AVAILABLE", data: { active: 0, completed: 0 } }, followUps: { state: "AVAILABLE", data: { upcoming: page(), overdue: page() } }, laboratory: { state: "PERMISSION_DENIED", data: null } }); start(); await loaded();
-  expect(screen.getAllByText("0")).toHaveLength(2); expect(screen.getAllByText("Tidak ada catatan pada halaman ini.")).toHaveLength(2);
+  expect(within(screen.getByRole("region", { name: "Kasus" })).getAllByText("0")).toHaveLength(2);
+  expect(screen.getByText("Tidak ada tindak lanjut terlambat.")).toBeInTheDocument();
+  expect(screen.getByText("Belum ada jadwal dalam 7 hari ke depan.")).toBeInTheDocument();
+  expect(screen.queryByRole("button", { name: "Sebelumnya" })).not.toBeInTheDocument();
+  expect(screen.queryByRole("button", { name: "Berikutnya" })).not.toBeInTheDocument();
   expect(within(screen.getByRole("region", { name: "Laboratorium" })).getByText("Bagian ini memerlukan izin baca yang sesuai.")).toBeInTheDocument();
+});
+it("keeps single-page queues compact and definitions optional", async () => {
+  serve(); start(); await loaded();
+  expect(screen.queryByRole("button", { name: "Berikutnya" })).not.toBeInTheDocument();
+  expect(screen.getByText("Definisi & lingkup data").closest("details")).not.toHaveAttribute("open");
+  const metrics = within(screen.getByRole("region", { name: "Ringkasan pekerjaan" }));
+  expect(metrics.getByText("Tindak lanjut terlambat")).toBeInTheDocument();
+  expect(metrics.getByText("Laboratorium tertunda")).toBeInTheDocument();
+});
+it("does not turn denied follow-up or laboratory counts into zeros", async () => {
+  serve({ ...fixture, followUps: { state: "PERMISSION_DENIED", data: null }, laboratory: { state: "PERMISSION_DENIED", data: null } }); start(); await loaded();
+  const metrics = within(screen.getByRole("region", { name: "Ringkasan pekerjaan" }));
+  expect(metrics.queryByText("0")).not.toBeInTheDocument();
+  expect(metrics.getAllByText("Akses terbatas")).toHaveLength(2);
 });
 it("paginates queues independently and keeps totals", async () => {
   const calls = backend(call => {
