@@ -32,7 +32,7 @@ class IntegrationBoundarySchemaIntegrationTest {
             oldRows = existingRows(s);
             oldIndexes = value(s, "select string_agg(indexdef,'|' order by indexname) from pg_indexes where tablename in ('external_systems','external_identifiers','sync_runs','sync_items')");
         }
-        migrated = Flyway.configure().dataSource(POSTGRES.getJdbcUrl(), POSTGRES.getUsername(), POSTGRES.getPassword()).load().migrate().migrationsExecuted;
+        migrated = Flyway.configure().dataSource(POSTGRES.getJdbcUrl(), POSTGRES.getUsername(), POSTGRES.getPassword()).target("17").load().migrate().migrationsExecuted;
     }
 
     @BeforeEach void transaction() throws SQLException {

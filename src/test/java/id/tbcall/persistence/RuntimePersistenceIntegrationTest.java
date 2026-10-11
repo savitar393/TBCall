@@ -9,6 +9,7 @@ import java.time.OffsetDateTime;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import java.util.UUID;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
@@ -48,7 +49,7 @@ class RuntimePersistenceIntegrationTest {
     private static final LocalDate START = LocalDate.of(2026, 1, 1);
     private static final OffsetDateTime SCHEDULED = OffsetDateTime.parse("2026-01-02T08:00:00+07:00");
 
-    // Independent, approved v1.2 scope, including entities that have no deterministic business defaults.
+    // Independent versioned scope, including additive medication schedules and entities without deterministic defaults.
     private static final Map<Class<?>, String> VERSIONED = Map.ofEntries(
             Map.entry(Facility.class, "facilities"), Map.entry(User.class, "users"),
             Map.entry(Patient.class, "patients"), Map.entry(PatientUserLink.class, "patient_user_links"),
@@ -62,7 +63,8 @@ class RuntimePersistenceIntegrationTest {
             Map.entry(Contact.class, "contacts"), Map.entry(ContactInvestigation.class, "contact_investigations"),
             Map.entry(PreventiveTreatment.class, "preventive_treatments"), Map.entry(AdverseEvent.class, "adverse_events"),
             Map.entry(MonitoringPlan.class, "monitoring_plans"), Map.entry(MonitoringEvent.class, "monitoring_events"),
-            Map.entry(Alert.class, "alerts"), Map.entry(Notification.class, "notifications"));
+            Map.entry(Alert.class, "alerts"), Map.entry(Notification.class, "notifications"),
+            Map.entry(MedicationSchedule.class,"medication_schedules"));
 
     @Test
     void versionColumnsAndJpaVersionsCoverExactlyTheApprovedTables() {
@@ -73,7 +75,7 @@ class RuntimePersistenceIntegrationTest {
         assertThat(jdbc.queryForObject("""
                 select count(*) from information_schema.columns where table_schema='public'
                 and column_name='version' and data_type='bigint' and is_nullable='NO' and column_default='0'
-                """, Integer.class)).isEqualTo(26);
+                """, Integer.class)).isEqualTo(27);
         Map<Class<?>, Object> fixtures = fixtures();
         em.flush();
         for (var entry : VERSIONED.entrySet()) {
@@ -86,7 +88,7 @@ class RuntimePersistenceIntegrationTest {
                     .isZero();
         }
         assertThat(emf.getMetamodel().getEntities().stream().filter(e -> e.hasSingleIdAttribute())
-                .filter(e -> ((jakarta.persistence.metamodel.IdentifiableType<?>) e).hasVersionAttribute()).count()).isEqualTo(26);
+                .filter(e -> ((jakarta.persistence.metamodel.IdentifiableType<?>) e).hasVersionAttribute()).count()).isEqualTo(27);
     }
 
     @Test
@@ -333,6 +335,13 @@ class RuntimePersistenceIntegrationTest {
         Drug drug = new Drug(); drug.setCode("TEST"); drug.setName("Obat uji"); persist(rows, drug);
         RegimenDrug regimenDrug = new RegimenDrug(); regimenDrug.setRegimenId(regimen.getId()); regimenDrug.setDrugId(drug.getId()); persist(rows, regimenDrug);
         Treatment treatment = new Treatment(); treatment.setTbCase(tbCase); treatment.setFacility(facility); treatment.setStartDate(START); persist(rows, treatment);
+        MedicationSchedule medication = new MedicationSchedule(); medication.setId(UUID.randomUUID());
+        MedicationScheduleRevision prescription = new MedicationScheduleRevision(); prescription.setId(UUID.randomUUID());
+        medication.setTreatment(treatment); medication.setCurrentRevisionId(prescription.getId()); medication.setStatus("ACTIVE");
+        medication.setCreatedByUser(user); medication.setCreatedAt(SCHEDULED); medication.setUpdatedAt(SCHEDULED); persist(rows, medication);
+        prescription.setSchedule(medication); prescription.setRevisionNumber(1); prescription.setStatus("ACTIVE"); prescription.setTimeZone("Asia/Jakarta");
+        prescription.setStartDate(START); prescription.setWeekdayMask(127); prescription.setTimes(Set.of(java.time.LocalTime.of(8,0)));
+        prescription.setValidFrom(SCHEDULED); prescription.setCreatedAt(SCHEDULED); prescription.setCreatedByUser(user); persist(rows,prescription);
         TreatmentDrug treatmentDrug = new TreatmentDrug(); treatmentDrug.setTreatment(treatment); treatmentDrug.setDrug(drug); persist(rows, treatmentDrug);
         DoseEvent dose = new DoseEvent(); dose.setTreatment(treatment); dose.setScheduledDate(START); dose.setStatus("TAKEN_OBSERVED"); persist(rows, dose);
         FollowUp followUp = new FollowUp(); followUp.setTreatment(treatment); followUp.setFollowUpType("CLINICAL"); followUp.setScheduledAt(SCHEDULED); persist(rows, followUp);
