@@ -36,3 +36,20 @@ export function portalNavigation(user: Me): NavigationItem[] {
         links.push({ label: "Notifikasi Saya", href: "/portal/notifications" });
     return links;
 }
+
+// Patient-only presentation; role/permission checks remain independent of labels.
+export function patientNavigation(user: Me): NavigationItem[] {
+    if (!canPortal(user, "patient")) return [];
+    const links: NavigationItem[] = [
+        { label: "Beranda", href: "/portal" }, { label: "Kalender", href: "/portal/calendar" },
+    ];
+    for (const [permission, label, href] of [
+        ["TREATMENT_READ", "Pengobatan", "/portal/treatment"],
+        ["MONITORING_READ", "Pemantauan", "/portal/monitoring"],
+        ["NOTIFICATION_READ_SELF", "Notifikasi", "/portal/notifications"],
+    ]) if (user.permissions.includes(permission)) links.push({ label, href });
+    links.push({ label: "Profil", href: "/portal/profile" }, { label: "Bantuan", href: "/portal/support" });
+    if (user.permissions.includes("TPT_READ")) links.push({ label: "Terapi pencegahan (TPT)", href: "/portal/tpt" });
+    if (user.permissions.includes("ALERT_READ")) links.push({ label: "Peringatan", href: "/portal/alerts" });
+    return links;
+}

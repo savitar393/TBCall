@@ -3,7 +3,7 @@ import { headers } from "next/headers";
 import { AppProviders } from "./providers";
 import "./globals.css";
 
-export const metadata: Metadata = { title: { default: "TBCall", template: "%s | TBCall" }, description: "Tuberculosis Monitoring System" };
+export const metadata: Metadata = { title: { default: "TBCall", template: "%s | TBCall" }, description: "Tuberculosis Monitoring System", icons: { icon: [{ url: "/brand/logo.png", type: "image/png" }], apple: "/brand/logo.png" } };
 
 export default async function RootLayout({ children }: { children: React.ReactNode }) {
   // Reading request headers forces dynamic rendering for the per-request CSP nonce.

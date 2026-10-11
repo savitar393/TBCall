@@ -41,9 +41,7 @@ it.each(["PATIENT", "TREATMENT_SUPPORTER"])("%s with artificial permissions cann
   await screen.findByRole("heading", {
     name: "Akses tidak diizinkan"
   });
-  expect(screen.queryByRole("link", {
-    name: "Notifikasi"
-  })).not.toBeInTheDocument();
+  expect(document.querySelector('a[href="/notifications"]')).not.toBeInTheDocument();
 });
 it.each(["MONITORING_READ", "TREATMENT_READ"])("target route requires independent %s", async permission => {
   const calls = monitoringBackend(undefined, {
@@ -199,9 +197,7 @@ it.each(["TREATMENT", "TPT"] as const)("existing %s contextual link requires off
         name: target === "TREATMENT" ? "Detail pengobatan" : "Detail TPT"
       });
     }
-    const link = screen.queryByRole("link", {
-      name: "Pemantauan"
-    });
+    const link = document.querySelector(`a[href="/${target === "TREATMENT" ? "treatments" : "preventive-treatments"}/${target === "TREATMENT" ? f.treatment.id : f.tpt.id}/monitoring"]`);
     expect(!!link).toBe(variation === "all");
     if (link) expect(link).toHaveAttribute("href", `/${target === "TREATMENT" ? "treatments" : "preventive-treatments"}/${target === "TREATMENT" ? f.treatment.id : f.tpt.id}/monitoring`);
   }

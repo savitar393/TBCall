@@ -1,4 +1,5 @@
 "use client";
+import { formatDate } from "@/lib/date-format";
 import { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { useSession } from "@/lib/auth/session";
@@ -21,8 +22,9 @@ export function DoseEvidence({ target, active, startDate }: {
     const read = user!.permissions.includes("ADHERENCE_READ"), record = user!.permissions.includes("ADHERENCE_RECORD");
     const query = useQuery({ ...portalQueries.doses(user!.id, target, page), enabled: read });
     const refs = usePortalReferences();
+    const displayStatuses = target.kind === "patient" ? [...(refs.data?.data.patientDoseStatuses ?? []), ...(refs.data?.data.supporterDoseStatuses ?? [])] : [...(refs.data?.data.supporterDoseStatuses ?? []), ...(refs.data?.data.patientDoseStatuses ?? [])];
     return <section className={card}><h2 className="text-lg font-semibold">Laporan bukti dosis</h2><p className="text-sm text-muted-foreground">{doseGuidance}</p>
-    {read && (!query.data ? <PortalState query={query} empty="Belum ada laporan bukti dosis."/> : <><ul className="space-y-4">{query.data.data.content.map(d => <li key={d.id}><Fields items={{ Tanggal: d.scheduledDate, Status: label(target.kind === "patient" ? refs.data?.data.patientDoseStatuses : refs.data?.data.supporterDoseStatuses, d.status), "Dicatat pada": d.recordedAt, "Cara pemberian": label(refs.data?.data.administrationModes, d.administrationMode), Sumber: d.source }}/></li>)}</ul>{!query.data.data.content.length && <p>Belum ada laporan bukti dosis.</p>}<Pagination page={page} total={query.data.data.totalElements} onPage={setPage}/></>)}
+    {read && (!query.data ? <PortalState query={query} empty="Belum ada laporan bukti dosis."/> : <><ul className="space-y-2">{query.data.data.content.map(d => <li key={d.id}><details className="rounded-xl border px-4 py-2"><summary className="min-h-11 cursor-pointer py-2 text-sm font-medium">{formatDate(d.scheduledDate)} · {label(displayStatuses, d.status)}</summary><div className="pb-3 pt-2"><Fields items={{ Tanggal: d.scheduledDate, Status: label(displayStatuses, d.status), "Dicatat pada": d.recordedAt, "Cara pemberian": label(refs.data?.data.administrationModes, d.administrationMode), Sumber: d.source }}/></div></details></li>)}</ul>{!query.data.data.content.length && <p>Belum ada laporan bukti dosis.</p>}<Pagination page={page} total={query.data.data.totalElements} onPage={setPage}/></>)}
     {record && active ? <DoseForm target={target} startDate={startDate}/> : record ? <p>Laporan dosis tersedia hanya untuk pengobatan aktif yang dapat ditampilkan.</p> : null}
   </section>;
 }

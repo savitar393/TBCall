@@ -1,4 +1,4 @@
-import { screen, waitFor, fireEvent } from "@testing-library/react";
+import { screen, waitFor, fireEvent, within } from "@testing-library/react";
 import { expect, it, vi } from "vitest";
 import { portalBackend, renderPortal, routing, failure } from "./portal-harness";
 import * as f from "./portal-fixtures";
@@ -44,7 +44,7 @@ it("patient missing PATIENT_READ leaves independent cards available without prof
     const calls = portalBackend({ ...f.patient, permissions: ["TREATMENT_READ"] });
     await renderPortal("profile");
     await screen.findByText("Izin baca profil belum tersedia.");
-    expect(screen.getAllByRole("link", { name: "Pengobatan Saya" })).toHaveLength(2);
+    expect(within(screen.getByRole("navigation",{name:"Navigasi utama desktop"})).getByRole("link",{name:"Pengobatan"})).toHaveAttribute("href","/portal/treatment");
     expect(calls.some(c => c.url.endsWith("/me/patient"))).toBe(false);
 });
 it("supporter independent monitoring permission does not request treatment, doses or alerts", async () => {
