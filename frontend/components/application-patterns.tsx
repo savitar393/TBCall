@@ -11,7 +11,7 @@ export function AppBreadcrumbs({ items }: { items: Breadcrumb[] }) {
   </li>)}</ol></nav>;
 }
 export function AppPageHeader({ title, description, eyebrow, actions }: { title: string; description?: ReactNode; eyebrow?: string; actions?: ReactNode }) {
-  return <header className="app-page-header"><div className="min-w-0">{eyebrow && <p className="eyebrow">{eyebrow}</p>}<h1 className="page-title">{title}</h1>{description && <div className="page-description">{description}</div>}</div>{actions && <div className="app-actions">{actions}</div>}</header>;
+  return <header role="generic" className="app-page-header"><div className="min-w-0">{eyebrow && <p className="eyebrow">{eyebrow}</p>}<h1 className="page-title">{title}</h1>{description && <div className="page-description">{description}</div>}</div>{actions && <div className="app-actions">{actions}</div>}</header>;
 }
 export function AppSection({ title, description, actions, children, className }: { title: string; description?: ReactNode; actions?: ReactNode; children: ReactNode; className?: string }) {
   return <section aria-label={title} className={cn("surface space-y-4", className)}><div className="flex flex-wrap items-start justify-between gap-3"><div className="min-w-0"><h2 className="section-title">{title}</h2>{description && <div className="mt-2 max-w-3xl text-sm leading-6 text-muted-foreground">{description}</div>}</div>{actions && <div className="app-actions">{actions}</div>}</div>{children}</section>;

@@ -43,6 +43,13 @@ it("denies direct module access for PATIENT with PATIENT_READ without making cli
 it("provides empty and pagination states using the backend total", async () => {
   backend(c => c.url.includes("/patients?") ? Response.json({ content: [], page: 0, size: 20, totalElements: 0 }) : undefined);
   renderWorklist(); await screen.findByText("Tidak ada pasien yang sesuai.");
-  expect(screen.getByRole("button", { name: "Halaman berikutnya" })).toBeDisabled();
-  expect(screen.getByRole("button", { name: "Halaman sebelumnya" })).toBeDisabled();
+  expect(screen.queryByRole("button", { name: "Halaman berikutnya" })).not.toBeInTheDocument();
+  expect(screen.queryByRole("button", { name: "Halaman sebelumnya" })).not.toBeInTheDocument();
+});
+it("keeps Previous available if the active worklist shrinks while viewing a later page", async () => {
+  backend(c => c.url.includes("/patients?") ? Response.json(c.url.includes("page=1") ? { content: [], page: 1, size: 20, totalElements: 0 } : { ...patientPage, totalElements: 21 }) : undefined);
+  renderWorklist();
+  await userEvent.click(await screen.findByRole("button", { name: "Halaman berikutnya" }));
+  await screen.findByText("Tidak ada pasien yang sesuai.");
+  expect(screen.getByRole("button", { name: "Halaman sebelumnya" })).toBeEnabled();
 });

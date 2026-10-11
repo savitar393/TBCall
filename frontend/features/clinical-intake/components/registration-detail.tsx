@@ -6,6 +6,7 @@ import { useQuery } from "@tanstack/react-query";
 import { useSession } from "@/lib/auth/session";
 import { z } from "@/lib/validation";
 import { Button } from "@/components/ui/button";
+import { AppDisclosure, AppPageHeader, AppSection, AppStatusBadge, AppViewLinks } from "@/components/application-patterns";
 import { clinicalApi } from "../api";
 import { clinicalQueries } from "../queries";
 import { canClinical } from "../permissions";
@@ -16,7 +17,7 @@ import { DiagnosisFields } from "../forms/diagnosis-fields";
 import { CaseFields } from "../forms/case-fields";
 import { Field } from "../forms/fields";
 import { RecordForm } from "./record-form";
-import { DisplayFields, PatientHeading, WorklistLink } from "./record-display";
+import { DisplayFields, WorklistLink } from "./record-display";
 import { QueryState } from "./query-state";
 const confirmationSchema = caseFormSchema.extend({ diagnosisId: z.uuid("Pilih diagnosis untuk konfirmasi.") });
 export function RegistrationDetail({ id }: { id: string }) {
@@ -32,16 +33,33 @@ export function RegistrationDetail({ id }: { id: string }) {
   const r = query.data.data; const ref = references.data?.data;
   const eligible = diagnoses.data?.data.filter(d => d.treatmentDisposition === "TREAT_HERE" || d.treatmentDisposition === "REFERRED") ?? [];
   const referenceState = !canClinical(user, "PATIENT_READ") ? <p>Izin membaca referensi klinis diperlukan untuk mengisi formulir.</p> : !references.data ? <QueryState query={references} /> : null;
-  return <>{references.isError && references.data && <QueryState query={references} />}<h1 className="text-2xl font-semibold">Detail registrasi</h1><WorklistLink /><PatientHeading patientId={r.patient.patientId} name={r.patient.fullName} />
-    {canClinical(user, "LAB_REQUEST_WRITE") && ["OPEN", "DIAGNOSED"].includes(r.status) && <Link className="inline-block text-primary underline" href={`/laboratory/requests/new/registration/${id}`}>Buat permintaan laboratorium</Link>}
-    <DisplayFields values={[["Status", ref?.registrationStatusFilters.find(o => o.code === r.status)?.name ?? r.status], ["Fasilitas registrasi", r.facility.name], ["Tanggal registrasi", r.registrationDate], ["Nomor registrasi fasilitas", r.facilityRegistrationNumber], ["Nomor rekam medis", r.medicalRecordNumber], ["Identitas spesimen", r.specimenIdentityNumber], ["Jenis terduga", ref?.suspectTypes.find(o => o.code === r.suspectTypeCode)?.name ?? r.suspectTypeCode], ["Pengobatan sebelumnya", ref?.previousTreatmentCategories.find(o => o.code === r.previousTreatmentCategoryCode)?.name ?? r.previousTreatmentCategoryCode], ["Jenis pemberi rujukan", r.referredByType], ["Referensi pemberi rujukan", r.referredByReference], ["Catatan rujukan", r.referralNotes], ["Berat awal (kg)", r.initialWeightKg], ["HIV", ref?.hivStatuses.find(o => o.code === r.hivStatusCode)?.name ?? r.hivStatusCode], ["DM", ref?.dmStatuses.find(o => o.code === r.dmStatusCode)?.name ?? r.dmStatusCode]]} />
-    {canClinical(user, "REGISTRATION_WRITE") && r.status === "OPEN" && <Button variant="outline" aria-expanded={editing} onClick={() => setEditing(!editing)}>{editing ? "Tutup editor registrasi" : "Ubah registrasi"}</Button>}
-    {editing && canClinical(user, "REGISTRATION_WRITE") && (referenceState ?? <RecordForm initial={initial} schema={registrationFormSchema} etag={query.data.etag} fetching={query.isFetching} unavailable={query.isError || references.isError || r.status !== "OPEN"} save={(values, dirty, signal) => clinicalApi.patchRegistration(id, registrationPatch(values, dirty), query.data!.etag!, signal)}><RegistrationFields references={ref!} /></RecordForm>)}
-    <section className="space-y-4"><h2 className="font-semibold">Diagnosis registrasi</h2>{canClinical(user, "DIAGNOSIS_READ") ? diagnoses.isPending || diagnoses.isError ? <QueryState query={diagnoses} /> : <>{!diagnoses.data!.data.length && <p>Belum ada diagnosis.</p>}<ul className="space-y-3">{diagnoses.data!.data.map(d => <li key={d.id} className="space-y-2 rounded-xl border bg-white p-5 text-sm"><p>{d.diagnosisDate} · {d.anatomicalSite?.name} · {d.diagnosisType?.name}</p><p>{d.diagnosisResult}</p><p>{ref?.treatmentDispositions.find(o => o.code === d.treatmentDisposition)?.name ?? d.treatmentDisposition}</p><Link className="inline-block text-primary underline" href={`/diagnoses/${d.id}`}>Buka diagnosis</Link></li>)}</ul></> : <p>Izin membaca diagnosis belum tersedia.</p>}
-      {canClinical(user, "DIAGNOSIS_WRITE") && ["OPEN", "DIAGNOSED"].includes(r.status) && <Button variant="outline" aria-expanded={creating} onClick={() => setCreating(!creating)}>{creating ? "Tutup formulir diagnosis" : "Tambah diagnosis"}</Button>}
-      {creating && canClinical(user, "DIAGNOSIS_WRITE") && (referenceState ?? <RecordForm initial={newDiagnosis} schema={diagnosisFormSchema} etag={query.data.etag} fetching={query.isFetching} unavailable={query.isError || references.isError || !["OPEN", "DIAGNOSED"].includes(r.status)} create submitLabel="Simpan diagnosis" save={(values, _dirty, signal) => clinicalApi.createDiagnosis(id, diagnosisInput(values), query.data!.etag!, signal)} onSuccess={() => setCreating(false)}><DiagnosisFields references={ref!} currentFacilityId={r.facility.id} /></RecordForm>)}
+  return <article className="clinical-workspace">
+    <AppPageHeader title="Detail registrasi" eyebrow="Ruang kerja registrasi" actions={<WorklistLink />} />
+    {references.isError && references.data && <QueryState query={references} />}
+    <section aria-label="Konteks registrasi" className="clinical-context">
+      <div className="clinical-context-heading"><div><p className="eyebrow">Pasien</p><h2 className="section-title">{canClinical(user, "PATIENT_READ") ? <Link className="text-primary underline" href={`/patients/${r.patient.patientId}`}>{r.patient.fullName}</Link> : r.patient.fullName}</h2><p className="mt-2 text-sm text-muted-foreground">Registrasi · {r.registrationDate} · {r.facility.name}</p></div><AppStatusBadge tone={r.status === "OPEN" ? "active" : "neutral"}>{ref?.registrationStatusFilters.find(o => o.code === r.status)?.name ?? r.status}</AppStatusBadge></div>
+      <div className="app-actions">
+        {canClinical(user, "REGISTRATION_WRITE") && r.status === "OPEN" && <Button variant="outline" aria-expanded={editing} aria-controls="registration-editor" onClick={() => setEditing(!editing)}>{editing ? "Tutup editor registrasi" : "Ubah registrasi"}</Button>}
+        {canClinical(user, "LAB_REQUEST_WRITE") && ["OPEN", "DIAGNOSED"].includes(r.status) && <Button asChild variant="outline"><Link href={`/laboratory/requests/new/registration/${id}`}>Buat permintaan laboratorium</Link></Button>}
+      </div>
     </section>
-    {canClinical(user, "CASE_WRITE", "DIAGNOSIS_READ") && r.status === "DIAGNOSED" && !!eligible.length && !diagnoses.isError && <Button variant="outline" aria-expanded={confirming} onClick={() => setConfirming(!confirming)}>{confirming ? "Tutup konfirmasi kasus" : "Konfirmasi kasus"}</Button>}
+    <AppViewLinks label="Bagian detail registrasi" items={[{ label: "Data registrasi", href: "#registration-data", current: false }, { label: "Diagnosis registrasi", href: "#registration-diagnoses", current: false }, ...(canClinical(user, "CASE_WRITE", "DIAGNOSIS_READ") ? [{ label: "Konfirmasi kasus", href: "#registration-confirmation", current: false }] : [])]} />
+    <div id="registration-data" className="clinical-section" tabIndex={-1}><AppSection title="Data registrasi" description="Informasi awal dan rujukan yang dicatat saat registrasi.">
+      <div className="clinical-data-grid"><DisplayFields values={[["Jenis terduga", ref?.suspectTypes.find(o => o.code === r.suspectTypeCode)?.name ?? r.suspectTypeCode], ["Pengobatan sebelumnya", ref?.previousTreatmentCategories.find(o => o.code === r.previousTreatmentCategoryCode)?.name ?? r.previousTreatmentCategoryCode], ["Berat awal (kg)", r.initialWeightKg], ["HIV", ref?.hivStatuses.find(o => o.code === r.hivStatusCode)?.name ?? r.hivStatusCode], ["DM", ref?.dmStatuses.find(o => o.code === r.dmStatusCode)?.name ?? r.dmStatusCode], ["Jenis pemberi rujukan", r.referredByType], ["Referensi pemberi rujukan", r.referredByReference], ["Catatan rujukan", r.referralNotes]]} /></div>
+      <AppDisclosure title="Nomor dan pencatatan registrasi"><div className="clinical-data-grid"><DisplayFields values={[["Status", ref?.registrationStatusFilters.find(o => o.code === r.status)?.name ?? r.status], ["Fasilitas registrasi", r.facility.name], ["Tanggal registrasi", r.registrationDate], ["Nomor registrasi fasilitas", r.facilityRegistrationNumber], ["Nomor rekam medis", r.medicalRecordNumber], ["Identitas spesimen", r.specimenIdentityNumber]]} /></div></AppDisclosure>
+    </AppSection></div>
+    <div id="registration-editor" hidden={!editing}>
+    {editing && canClinical(user, "REGISTRATION_WRITE") && (referenceState ?? <RecordForm initial={initial} schema={registrationFormSchema} etag={query.data.etag} fetching={query.isFetching} unavailable={query.isError || references.isError || r.status !== "OPEN"} save={(values, dirty, signal) => clinicalApi.patchRegistration(id, registrationPatch(values, dirty), query.data!.etag!, signal)}><RegistrationFields references={ref!} /></RecordForm>)}
+    </div>
+    <div id="registration-diagnoses" className="clinical-section" tabIndex={-1}><AppSection title="Diagnosis registrasi" actions={canClinical(user, "DIAGNOSIS_WRITE") && ["OPEN", "DIAGNOSED"].includes(r.status) && <Button variant="outline" aria-expanded={creating} aria-controls="registration-diagnosis-form" onClick={() => setCreating(!creating)}>{creating ? "Tutup formulir diagnosis" : "Tambah diagnosis"}</Button>}>
+      {canClinical(user, "DIAGNOSIS_READ") ? diagnoses.isPending || diagnoses.isError ? <QueryState query={diagnoses} /> : <>{!diagnoses.data!.data.length && <p>Belum ada diagnosis.</p>}<ul className="clinical-record-list">{diagnoses.data!.data.map(d => <li key={d.id} className="clinical-record-row"><div className="clinical-record-main"><p className="font-medium">Diagnosis · {d.diagnosisDate}</p><p className="text-sm text-muted-foreground">{d.anatomicalSite?.name} · {d.diagnosisType?.name}</p><p className="text-sm whitespace-pre-wrap">{d.diagnosisResult}</p><AppStatusBadge>{ref?.treatmentDispositions.find(o => o.code === d.treatmentDisposition)?.name ?? d.treatmentDisposition}</AppStatusBadge></div><div className="clinical-record-actions"><Button asChild variant="outline"><Link href={`/diagnoses/${d.id}`}>Buka diagnosis</Link></Button></div></li>)}</ul></> : <p>Izin membaca diagnosis belum tersedia.</p>}
+      <div id="registration-diagnosis-form" hidden={!creating}>
+      {creating && canClinical(user, "DIAGNOSIS_WRITE") && (referenceState ?? <RecordForm initial={newDiagnosis} schema={diagnosisFormSchema} etag={query.data.etag} fetching={query.isFetching} unavailable={query.isError || references.isError || !["OPEN", "DIAGNOSED"].includes(r.status)} create submitLabel="Simpan diagnosis" save={(values, _dirty, signal) => clinicalApi.createDiagnosis(id, diagnosisInput(values), query.data!.etag!, signal)} onSuccess={() => setCreating(false)}><DiagnosisFields references={ref!} currentFacilityId={r.facility.id} /></RecordForm>)}
+      </div>
+    </AppSection></div>
+    {canClinical(user, "CASE_WRITE", "DIAGNOSIS_READ") && <div id="registration-confirmation" className="clinical-section" tabIndex={-1}><AppSection title="Konfirmasi kasus" description="Pilih diagnosis yang memenuhi syarat untuk melanjutkan registrasi menjadi kasus.">
+    {r.status === "DIAGNOSED" && !!eligible.length && !diagnoses.isError ? <Button variant="outline" aria-expanded={confirming} aria-controls="registration-confirmation-form" onClick={() => setConfirming(!confirming)}>{confirming ? "Tutup konfirmasi kasus" : "Konfirmasi kasus"}</Button> : <p className="text-sm text-muted-foreground">Konfirmasi tersedia untuk registrasi berstatus sudah didiagnosis dengan diagnosis yang memenuhi syarat.</p>}
+    <div id="registration-confirmation-form" hidden={!confirming}>
     {confirming && canClinical(user, "CASE_WRITE", "DIAGNOSIS_READ") && (referenceState ?? <RecordForm initial={newCase} schema={confirmationSchema} etag={query.data.etag} fetching={query.isFetching || diagnoses.isFetching} unavailable={query.isError || references.isError || diagnoses.isError || r.status !== "DIAGNOSED"} create submitLabel="Simpan konfirmasi kasus" save={async (values, _dirty, signal) => {
       if (!eligible.some(d => d.id === values.diagnosisId)) return undefined;
       const result = await clinicalApi.confirmCase(id, { diagnosisId: values.diagnosisId, ...caseInput(values) }, query.data!.etag!, signal);
@@ -50,5 +68,7 @@ export function RegistrationDetail({ id }: { id: string }) {
       <Field name="diagnosisId" label="Diagnosis untuk konfirmasi" options={eligible.map(d => ({ code: d.id, name: `${d.diagnosisDate} · ${d.anatomicalSite?.name ?? "Diagnosis"} · ${d.diagnosisResult ?? ""}` }))} />
       <CaseFields references={ref!} />
     </RecordForm>)}
-  </>;
+    </div>
+    </AppSection></div>}
+  </article>;
 }

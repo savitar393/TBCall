@@ -266,3 +266,44 @@
   @keyframes public-chart-reveal { from { opacity: .3; } to { opacity: 1; } }
   @keyframes public-bar-grow { from { transform: scaleX(0); } to { transform: scaleX(1); } }
 }
+
+/* Clinical workspace: existing records and actions, without inferred clinical conclusions. */
+.authenticated-app .clinical-workspace { display: grid; gap: 1.25rem; min-width: 0; }
+.authenticated-app .clinical-context { padding: 1.5rem; background: linear-gradient(115deg, #edf6f1, #fff 80%); border: 1px solid #d2e5d9; border-left: 4px solid #20714e; border-radius: 1rem; display: grid; gap: .9rem; min-width: 0; }
+.authenticated-app .clinical-context-heading { display: flex; align-items: flex-start; justify-content: space-between; gap: 1rem; flex-wrap: wrap; }
+.authenticated-app .clinical-context h2 { font-size: 1.3rem; font-weight: 650; letter-spacing: -.025em; overflow-wrap: anywhere; }
+.authenticated-app .clinical-context-heading p { font-size: .875rem; color: var(--muted-foreground); margin-top: .35rem; }
+.authenticated-app .clinical-context-meta { display: flex; flex-wrap: wrap; align-items: center; gap: .6rem 1.25rem; color: var(--muted-foreground); font-size: .875rem; line-height: 1.7; }
+.authenticated-app .clinical-section { scroll-margin-top: 6rem; min-width: 0; }
+.authenticated-app .clinical-record-list { display: grid; gap: .75rem; }
+.authenticated-app .clinical-record-row { display: grid; gap: .6rem; padding: 1rem 1.2rem; border: 1px solid #e1e9e4; border-radius: .8rem; background: #fff; min-width: 0; overflow-wrap: anywhere; }
+.authenticated-app .clinical-record-row h3 { font-weight: 600; font-size: .95rem; }
+.authenticated-app .clinical-record-row p { font-size: .875rem; line-height: 1.7; }
+.authenticated-app .clinical-record-main { min-width: 0; display: grid; gap: .5rem; }
+.authenticated-app .clinical-record-actions { display: flex; flex-wrap: wrap; align-items: center; gap: .65rem 1rem; font-size: .875rem; }
+.authenticated-app .clinical-data-grid dl { gap: 1rem; }
+.authenticated-app .clinical-data-grid { min-width: 0; }
+.authenticated-app .clinical-identifier { font-variant-numeric: tabular-nums; font-size: .8rem; color: var(--muted-foreground); overflow-wrap: anywhere; }
+.authenticated-app .clinical-filter-panel { background: #fff; border: 1px solid #e1e9e4; padding: 1.25rem; border-radius: 1rem; }
+.authenticated-app .clinical-filter-grid { display: grid; gap: 1rem; grid-template-columns: repeat(3, minmax(0, 1fr)); }
+.authenticated-app .clinical-filter-grid > :first-child { grid-column: span 2; }
+.authenticated-app .clinical-editor { padding: 1.5rem; border: 2px solid #d2e5d9; border-radius: 1rem; background: #fff; display: grid; gap: 1rem; scroll-margin-top: 6rem; }
+.authenticated-app .clinical-editor h2:focus, .authenticated-app .clinical-form h3:focus { outline: 2px solid #20714e; outline-offset: 5px; border-radius: .2rem; }
+.authenticated-app .clinical-form-grid { display: grid; gap: 1.25rem; grid-template-columns: repeat(2, minmax(0, 1fr)); }
+.authenticated-app .clinical-form-grid > p { grid-column: 1 / -1; }
+.authenticated-app .clinical-form-actions { display: flex; flex-wrap: wrap; gap: .75rem; padding-top: 1.25rem; border-top: 1px solid #e1e9e4; }
+.authenticated-app .clinical-readonly, .authenticated-app .clinical-saved { padding: .85rem 1rem; background: #edf6f1; border-radius: .75rem; font-size: .875rem; line-height: 1.6; }
+.authenticated-app .clinical-empty { padding: .75rem 0; font-size: .875rem; color: var(--muted-foreground); }
+.authenticated-app .clinical-schedule { border-top: 3px solid #20714e; }
+@media (max-width: 700px) {
+ .authenticated-app .clinical-filter-grid, .authenticated-app .clinical-form-grid { grid-template-columns: minmax(0, 1fr); }
+ .authenticated-app .clinical-filter-grid > :first-child { grid-column: auto; }
+ .authenticated-app .clinical-context, .authenticated-app .clinical-editor { padding: 1rem; }
+ .authenticated-app .clinical-record-row { padding: 1rem; }
+}
+
+.authenticated-app .clinical-workspace .clinical-fields { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); background: transparent; border: 0; border-radius: 0; padding: 0; gap: 1rem 2rem; }
+.authenticated-app .clinical-workspace .clinical-fields > div { display: grid; gap: .3rem; align-content: start; border-bottom: 1px solid #edf1ee; padding-bottom: .75rem; min-width: 0; }
+.authenticated-app .clinical-workspace .clinical-fields dt { font-size: .75rem; }
+.authenticated-app .clinical-workspace .clinical-fields dd { overflow-wrap: anywhere; }
+@media (max-width: 700px) { .authenticated-app .clinical-workspace .clinical-fields { grid-template-columns: minmax(0, 1fr); } }
