@@ -283,6 +283,10 @@
 .authenticated-app .clinical-record-actions { display: flex; flex-wrap: wrap; align-items: center; gap: .65rem 1rem; font-size: .875rem; }
 .authenticated-app .clinical-data-grid dl { gap: 1rem; }
 .authenticated-app .clinical-data-grid { min-width: 0; }
+.authenticated-app .lab-progress { display: flex; flex-wrap: wrap; gap: .35rem 1.5rem; padding: .75rem 1rem; background: #f5f8f6; border-radius: .65rem; color: var(--muted-foreground); }
+.authenticated-app .lab-progress > :first-child { color: var(--foreground); }
+.authenticated-app .clinical-workspace .clinical-data-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 14rem), 1fr)); gap: 1rem; }
+.authenticated-app .clinical-data-grid > * { min-width: 0; overflow-wrap: anywhere; }
 .authenticated-app .clinical-identifier { font-variant-numeric: tabular-nums; font-size: .8rem; color: var(--muted-foreground); overflow-wrap: anywhere; }
 .authenticated-app .clinical-filter-panel { background: #fff; border: 1px solid #e1e9e4; padding: 1.25rem; border-radius: 1rem; }
 .authenticated-app .clinical-filter-grid { display: grid; gap: 1rem; grid-template-columns: repeat(3, minmax(0, 1fr)); }

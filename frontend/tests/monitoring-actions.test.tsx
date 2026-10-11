@@ -55,9 +55,10 @@ it("TPT manual form excludes treatment-only types and allows 1..100 empty rows",
   expect(screen.getByRole("button", {
     name: "Hapus kegiatan 1"
   })).toBeDisabled();
-  for (let i = 1; i < 100; i++) fireEvent.click(screen.getByRole("button", {
-    name: "Tambah kegiatan manual"
-  }));
+  // The same button survives row additions. Avoid 99 full accessible-tree scans
+  // as the form grows; retain all interactions, the 100-row assertions and timeout.
+  const addEvent = screen.getByRole("button", { name: "Tambah kegiatan manual" });
+  for (let i = 1; i < 100; i++) fireEvent.click(addEvent);
   expect(screen.getAllByRole("group", {
     name: /Kegiatan nomor/
   })).toHaveLength(100);

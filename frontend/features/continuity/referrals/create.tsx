@@ -3,6 +3,8 @@ import { useMemo, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { useRouter } from "next/navigation";
 import { z } from "@/lib/validation";
+import { AppDisclosure,AppPageHeader,AppStatusBadge } from "@/components/application-patterns";
+import { formatDate } from "@/lib/date-format";
 import { useSession } from "@/lib/auth/session";
 import { continuityQueries as q } from "../queries";
 import { continuityApi } from "../api";
@@ -34,7 +36,7 @@ function SendForm({ id, preparation: p, available, labels }: {
     { path: ["destinationFacilityId"], message: "Pilih fasilitas tujuan." });
   return <>{saved && <p role="status">Rujukan tersimpan.</p>}
     <ContinuityForm initial={initial} schema={schema}
-      available={available && unchanged && !saved} submitLabel="Kirim rujukan" context={{ caseId: id }}
+      available={available && unchanged && !saved} title="Tujuan dan catatan rujukan" submitLabel="Kirim rujukan" context={{ caseId: id }}
       onClose={() => router.back()}
       onSuccess={(r: Awaited<ReturnType<typeof continuityApi.send>>) => {
         if (canContinuity(user, "REFERRAL_READ")) router.push(`/referrals/${r.data.id}`);
@@ -47,10 +49,10 @@ function SendForm({ id, preparation: p, available, labels }: {
         ...(kind === "TREATMENT_TRANSFER" ? { treatmentId: intent.preparation.openTreatment!.id } : {}),
         ...(v.notes.trim() ? { notes: v.notes.trim() } : {}),
       }, signal)}>
-      <h2>{label(labels, kind)}</h2>
+      <p className="font-medium">{label(labels, kind)}</p>
       {kind === "PRE_TREATMENT_REFERRAL"
         ? <p>Tujuan sesuai diagnosis konfirmasi: {intent.preparation.preTreatmentDestination!.name}. Tujuan ini tetap.</p>
-        : <><p>Episode pengobatan aktif: {intent.preparation.openTreatment!.id}</p><FacilitySearch exclude={p.sourceFacility.id} /></>}
+        : <><p>Pengobatan aktif: {intent.preparation.openTreatment!.regimenName??intent.preparation.openTreatment!.regimenCode??"Paduan tercatat"} · Mulai: {formatDate(intent.preparation.openTreatment!.startDate)} · Akhir rencana: {formatDate(intent.preparation.openTreatment!.plannedEndDate)}</p><AppDisclosure title="Identitas episode pengobatan"><p>Episode pengobatan aktif: {intent.preparation.openTreatment!.id}</p></AppDisclosure><FacilitySearch exclude={p.sourceFacility.id} /></>}
       <Field name="notes" label="Catatan rujukan" multiline />
       {!unchanged && <p role="status">Persiapan telah berubah. Isian dipertahankan untuk ditinjau; buka kembali halaman ini untuk memulai persiapan baru.</p>}
     </ContinuityForm></>;
@@ -62,10 +64,10 @@ export function ReferralCreate({ id }: { id: string }) {
   const references = useQuery({ ...q.referralReferences(user!.id), enabled: canContinuity(user, "REFERRAL_READ") });
   const p = query.data?.data;
   if (!p) return <QueryState query={query} />;
-  return <><h1 className="text-2xl font-semibold">Buat rujukan</h1>
-    <p>{p.sourceFacility.name} · {p.caseStatus}</p>{query.isError && <QueryState query={query} />}
-    <p>Persiapan bersifat sementara; server akan memeriksa kembali status saat pengiriman.</p>
+  return <div className="clinical-workspace"><AppPageHeader title="Buat rujukan" eyebrow="Kelanjutan layanan" description="Tinjau konteks kasus dan tentukan tujuan rujukan sesuai alur yang tersedia."/>
+    <section aria-label="Konteks rujukan" className="clinical-context"><div className="clinical-context-heading"><h2>{p.sourceFacility.name}</h2><AppStatusBadge>{label(undefined,p.caseStatus)}</AppStatusBadge></div><p>{label(undefined,p.caseCategoryCode??"—")}</p></section>{query.isError && <QueryState query={query}/>}
     <SendForm id={id} preparation={p} labels={references.data?.data.referralTypes}
       available={!query.isFetching && !query.isError && canContinuity(user, "REFERRAL_WRITE")} />
-  </>;
+    <AppDisclosure title="Tentang persiapan rujukan"><p>Persiapan bersifat sementara; server akan memeriksa kembali status saat pengiriman.</p></AppDisclosure>
+  </div>;
 }

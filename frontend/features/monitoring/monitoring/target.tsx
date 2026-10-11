@@ -6,8 +6,9 @@ import { useRouter } from "next/navigation";
 import { useQuery } from "@tanstack/react-query";
 import { useSession } from "@/lib/auth/session";
 import { Button } from "@/components/ui/button";
+import { AppPageHeader, AppSection, AppStatusBadge, AppFormSection } from "@/components/application-patterns";
 import { Field } from "@/features/continuity/fields";
-import { QueryState, DisplayFields, Pagination } from "@/features/continuity/display";
+import { QueryState, DisplayFields, Pagination, label as targetStatusLabel } from "@/features/continuity/display";
 import { monitoringQueries as q } from "../queries";
 import { monitoringApi } from "../api";
 import { canMonitoring } from "../permissions";
@@ -44,19 +45,18 @@ export function TargetMonitoring({
   const types = eventTypes(ref, type);
   const active = history.data.data.content.some(p => p.status === "ACTIVE") || activeCheck.data === true;
   const available = canMonitoring(user, "MONITORING_MANAGE") && activeCheck.data === false && t.status === "ACTIVE" && !active && !activeCheck.isError && !activeCheck.isFetching && !target.isError && !history.isError && !refs.isError && !target.isFetching && !history.isFetching;
-  return <>
-  <h1 className="text-2xl font-semibold"> Pemantauan {type === "TPT" ? "TPT" : "pengobatan"}</h1>
-  <DisplayFields values={[["Jenis target", label(ref.alertTargetTypes, type)], ["Status target", t.status], ["Mulai target", t.startDate], ["Akhir rencana target", t.plannedEndDate]]} />
-  <Button variant="outline" disabled={target.isFetching || history.isFetching} onClick={() => {
+  return <div className="clinical-workspace">
+  <AppPageHeader title={`Pemantauan ${type === "TPT" ? "TPT" : "pengobatan"}`} eyebrow="Rencana dan kegiatan" description="Tinjau riwayat rencana dan buka kegiatan pemantauan yang tercatat." actions={<Button variant="outline" disabled={target.isFetching || history.isFetching} onClick={() => {
       void target.refetch();
       void history.refetch();
       if (canMonitoring(user, "MONITORING_MANAGE") && t.status === "ACTIVE") void activeCheck.refetch();
       if (refs.isError) void refs.refetch();
-    }}>Muat ulang pemantauan</Button>
+    }}>Muat ulang pemantauan</Button>} />
+  <section className="clinical-context" aria-label="Konteks pemantauan"><div className="clinical-context-heading"><h2>{label(ref.alertTargetTypes, type)}</h2><AppStatusBadge tone={t.status === "ACTIVE" ? "active" : t.status === "COMPLETED" ? "complete" : "neutral"}>{targetStatusLabel(undefined, t.status)}</AppStatusBadge></div><DisplayFields values={[["Mulai target", t.startDate], ["Akhir rencana target", t.plannedEndDate]]}/><Link className="text-primary underline" href={type === "TPT" ? `/preventive-treatments/${id}` : `/treatments/${id}`}>Kembali ke {type === "TPT" ? "detail TPT" : "detail pengobatan"}</Link></section>
   {target.isError && <QueryState query={target} />}
   {history.isError && <QueryState query={history} />}
   {refs.isError && <QueryState query={refs} />}
-  {(t.status !== "ACTIVE" || active) && <p>Rencana aktif baru belum dapat dibuat: target harus aktif dan belum memiliki rencana aktif.</p>}
+  {(t.status !== "ACTIVE" || active) && <p className="clinical-readonly">Rencana aktif baru belum dapat dibuat: target harus aktif dan belum memiliki rencana aktif.</p>}
   {canMonitoring(user, "MONITORING_MANAGE") && t.status === "ACTIVE" && activeCheck.isPending && <p role="status">Memeriksa riwayat rencana…</p>}
   {activeCheck.isError && <QueryState query={activeCheck} />}
   {available && canMonitoring(user, "MONITORING_MANAGE") && <Button disabled={editor} onClick={() => setEditor(true)}>Buat rencana pemantauan</Button>}
@@ -70,19 +70,18 @@ export function TargetMonitoring({
       } : {}),
       events: v.events.map(eventInput)
     }, signal)} onSuccess={r => router.push(`/monitoring-plans/${r.data.id}`)}>
-    <Field name="startDate" label="Tanggal mulai rencana" type="date" required />
+    <AppFormSection title="Periode rencana"><div className="clinical-form-grid"><Field name="startDate" label="Tanggal mulai rencana" type="date" required />
     <Field name="endDate" label="Tanggal akhir rencana" type="date" />
-    <Field name="notes" label="Catatan rencana" multiline />
+    <Field name="notes" label="Catatan rencana" multiline /></div></AppFormSection>
     <InitialEvents types={types} />
   </MonitoringForm>}
-  <section aria-label="Riwayat rencana" className="space-y-4">
-    <h2 className="font-semibold">Riwayat rencana</h2>
-    {!history.data.data.content.length && <p>Belum ada rencana.</p>}
-    {history.data.data.content.map(p => <article key={p.id} className="rounded-xl border bg-white p-4">
-      <Link className="text-primary underline" href={`/monitoring-plans/${p.id}`}>Buka rencana</Link>
-      <DisplayFields values={[["Status", label(ref.planStatuses, p.status)], ["Mulai", p.startDate], ["Akhir", p.endDate], ["Versi aturan (metadata)", p.rulesVersion], ...Object.entries(p.eventCounts).map(([status, count]) => [label(ref.eventStatuses, status), count] as [string, number])]} />
-    </article>)}
-  </section>
+  <AppSection title="Riwayat rencana">
+    {!history.data.data.content.length && <p className="clinical-empty">Belum ada rencana.</p>}
+    <div className="clinical-record-list">{history.data.data.content.map(p => <article key={p.id} className="clinical-record-row">
+      <div className="clinical-context-heading"><h3>Rencana pemantauan</h3><AppStatusBadge tone={p.status === "ACTIVE" ? "active" : p.status === "COMPLETED" ? "complete" : "neutral"}>{label(ref.planStatuses, p.status)}</AppStatusBadge></div>
+      <DisplayFields values={[["Mulai", p.startDate], ["Akhir", p.endDate], ["Versi aturan (metadata)", p.rulesVersion], ...Object.entries(p.eventCounts).map(([status, count]) => [label(ref.eventStatuses, status), count] as [string, number])]} /><div className="clinical-record-actions"><Link className="text-primary underline" href={`/monitoring-plans/${p.id}`}>Buka rencana</Link></div>
+    </article>)}</div>
+  </AppSection>
   <Pagination page={page} total={history.data.data.totalElements} setPage={setPage} />
-</>;
+</div>;
 }

@@ -9,7 +9,7 @@ import { AppBreadcrumbs } from "./application-patterns";
 import { cn } from "@/lib/utils";
 import { useSidebar } from "./sidebar-preference";
 import { Brand } from "./brand";
-import { ApiFeedback } from "./api-feedback";
+import { ApiFeedbackBoundary } from "./api-feedback";
 import { Button } from "./ui/button";
 import { Sheet, SheetContent, SheetDescription, SheetHeader, SheetTitle, SheetTrigger } from "./ui/sheet";
 
@@ -90,7 +90,7 @@ export function AppShell({ children }: { children: ReactNode }) {
         </div>
       </header>
       <main id="main-content" tabIndex={-1} className={cn("app-workspace mx-auto max-w-7xl space-y-6 p-4 sm:p-7 lg:p-9", patient && "pb-28 sm:pb-28 lg:pb-10")}>
-        <AppBreadcrumbs items={crumbs}/><ApiFeedback error={session.error} />{children}
+        <AppBreadcrumbs items={crumbs}/><ApiFeedbackBoundary error={session.error}>{children}</ApiFeedbackBoundary>
       </main>
       {patient && <nav aria-label="Akses cepat pasien" className="fixed inset-x-0 bottom-0 z-40 flex justify-around border-t bg-white px-1 pb-[env(safe-area-inset-bottom)] lg:hidden">{patientLinks.map(({ href, label, icon: Icon }) => {
         const current = navigationActive(pathname,href,user);
