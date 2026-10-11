@@ -1,4 +1,5 @@
 "use client";
+import { UnlinkedAccount } from "@/features/onboarding/unlinked-account";
 import { Building2, Link2, ShieldCheck, UsersRound } from "lucide-react";
 import { useSession } from "@/lib/auth/session";
 import { Card, CardContent, CardHeader } from "./ui/card";
@@ -6,7 +7,7 @@ import { Card, CardContent, CardHeader } from "./ui/card";
 export function IdentityDashboard() {
   const { user } = useSession();
   if (!user) return null;
-  return <>
+  return <><UnlinkedAccount/>
     <div><p className="mb-2 text-sm font-medium text-primary">Beranda</p><h1 className="text-3xl font-semibold tracking-tight sm:text-4xl">Selamat datang</h1><p className="mt-3 text-muted-foreground">{user.email ?? user.phone ?? "Pengguna TBCall"}</p></div>
     <div className="grid gap-5 md:grid-cols-3">
       <Card className="shadow-sm"><CardHeader><div className="flex size-10 items-center justify-center rounded-xl bg-primary/10 text-primary"><ShieldCheck aria-hidden="true" className="size-5" /></div></CardHeader><CardContent><h2 className="font-semibold">Peran Anda</h2><div className="mt-3 flex flex-wrap gap-2">{user.roles.length ? user.roles.map(role => <span key={role.code} className="rounded-full bg-secondary px-3 py-1 text-sm">{role.name}</span>) : <p className="text-sm text-muted-foreground">Belum ada peran aktif</p>}</div></CardContent></Card>

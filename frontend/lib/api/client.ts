@@ -2,7 +2,7 @@ import { readXsrfToken } from "./csrf";
 import { ApiError, type ApiProblem } from "./problem";
 
 export type Versioned<T> = { data: T; etag?: string };
-export type ApiOptions = { method?: "GET" | "POST" | "PATCH" | "DELETE"; body?: unknown; etag?: string; signal?: AbortSignal };
+export type ApiOptions = { method?: "GET" | "POST" | "PATCH" | "DELETE"; body?: unknown; etag?: string; signal?: AbortSignal; expectedStatus?: number };
 
 function fallbackProblem(status: number, traceId: string): ApiProblem {
   return { type: "about:blank", title: "Permintaan tidak dapat diproses", status, traceId };
@@ -48,6 +48,8 @@ export async function apiRequest<T>(path: string, options: ApiOptions = {}): Pro
     }
     throw new ApiError(problem, response.headers.get("X-Request-ID") ?? problem.traceId ?? requestId);
   }
+  if (options.expectedStatus !== undefined && response.status !== options.expectedStatus)
+    throw new ApiError({ ...fallbackProblem(502, requestId), code: "INVALID_RESPONSE" }, response.headers.get("X-Request-ID") ?? requestId);
   if (response.status === 204 || response.status === 205) return { data: undefined as T, etag: response.headers.get("ETag") ?? undefined };
   try { return { data: await response.json() as T, etag: response.headers.get("ETag") ?? undefined }; }
   catch { throw new ApiError({ ...fallbackProblem(502, requestId), code: "INVALID_RESPONSE" }, response.headers.get("X-Request-ID") ?? requestId); }

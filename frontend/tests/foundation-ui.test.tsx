@@ -112,11 +112,13 @@ describe("Indonesian login", () => {
     await waitFor(() => expect(replace).toHaveBeenCalledWith("/"));
     expect(transport.mock.calls.every(([, options]) => options?.method === "GET")).toBe(true);
   });
-  it("shows only implemented navigation and no recovery/registration or clinical links", async () => {
+  it("shows public account navigation without clinical or staff registration links", async () => {
     anonymous(); renderPage(<LoginPage />);
     await waitFor(() => expect(screen.getByRole("button", { name: "Masuk" })).toBeEnabled());
-    for (const link of screen.getAllByRole("link")) expect(["/login", "/"]).toContain(link.getAttribute("href"));
-    expect(screen.queryByText(/Daftar akun|Lupa kata sandi/)).not.toBeInTheDocument();
+    for (const link of screen.getAllByRole("link")) expect(["/login", "/", "/register", "/forgot-password"]).toContain(link.getAttribute("href"));
+    expect(screen.getByRole("link", { name: "Lupa kata sandi?" })).toHaveAttribute("href", "/forgot-password");
+    expect(screen.getByRole("link", { name: "Buat akun" })).toHaveAttribute("href", "/register");
+    expect(screen.queryByText(/Daftar petugas|Daftar administrator/)).not.toBeInTheDocument();
   });
 });
 

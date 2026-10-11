@@ -17,6 +17,12 @@ export class ApiError extends Error {
 }
 
 export function problemMessage(error: ApiError): { title: string; detail: string } {
+  if (error.problem.code === "VERIFICATION_DELIVERY_UNAVAILABLE")
+    return { title: "Pengiriman belum tersedia", detail: "Pengiriman email atau SMS belum dikonfigurasi. Tidak ada instruksi yang dikirim. Hubungi administrator fasilitas." };
+  if (["VERIFICATION_TOKEN_INVALID", "PASSWORD_RESET_TOKEN_INVALID"].includes(error.problem.code ?? ""))
+    return { title: "Kode tidak berlaku", detail: "Kode tidak valid, kedaluwarsa, atau sudah digunakan. Minta kode baru melalui kontak terverifikasi Anda." };
+  if (error.problem.code === "LOGIN_IDENTITY_EXISTS")
+    return { title: "Pendaftaran belum dapat dilanjutkan", detail: "Coba login atau gunakan pemulihan akun. Jangan gunakan kontak milik orang lain." };
   if (error.problem.status === 401 && error.problem.code === "INVALID_CREDENTIALS")
     return { title: "Login tidak berhasil", detail: "Periksa kembali email atau nomor telepon dan kata sandi Anda." };
   switch (error.kind) {

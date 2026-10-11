@@ -1,4 +1,5 @@
 "use client";
+import Link from "next/link";
 import { z } from "@/lib/validation";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -33,11 +34,13 @@ export function LoginForm() {
       <Input id="login-password" type="password" autoComplete="current-password" maxLength={128} disabled={pending} aria-invalid={!!errors.password} aria-describedby={errors.password ? "password-error" : undefined} {...register("password")} />
       {errors.password && <p id="password-error" role="alert" className="text-sm text-destructive">{errors.password.message}</p>}
     </div>
+    <Link href="/forgot-password" className="inline-flex min-h-11 items-center text-sm font-medium text-primary underline underline-offset-4">Lupa kata sandi?</Link>
     <ApiFeedback error={session.error} />
     <Button className="w-full" type="submit" disabled={pending || unavailable}>
       {pending ? <><LoaderCircle aria-hidden="true" className="animate-spin" /> Memproses…</> : <>Masuk <ArrowRight aria-hidden="true" /></>}
     </Button>
     {session.status === "loading" && <p role="status" className="text-center text-sm text-muted-foreground">Memeriksa sesi Anda…</p>}
     {session.status === "unavailable" && <Button className="w-full" type="button" variant="outline" onClick={() => void session.refresh().catch(() => {})}>Coba kembali</Button>}
+    <p className="text-center text-sm">Belum memiliki akun? <Link href="/register" className="inline-flex min-h-11 items-center font-medium text-primary underline underline-offset-4">Buat akun</Link></p>
   </form>;
 }

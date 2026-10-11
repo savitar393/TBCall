@@ -1,3 +1,4 @@
+import { ResetPasswordForm } from "@/features/onboarding/forms";
 import { act, render, screen, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { useQueryClient } from "@tanstack/react-query";
@@ -187,4 +188,25 @@ describe("memory-only authoritative /me session", () => {
     await waitFor(() => expect(screen.getByTestId("status")).toHaveTextContent("unavailable"));
     expect(screen.getByTestId("identity")).toHaveTextContent("anonymous");
   });
+});
+
+it("a successful password reset rechecks /me and discards the revoked identity and protected cache",async()=>{
+ let revoked=false;
+ setTransport(path=>{
+  if(path.endsWith('/auth/password-reset/confirm')){revoked=true;return new Response(null,{status:204});}
+  document.cookie='XSRF-TOKEN=fixture-csrf; Path=/';
+  return revoked?authenticationRequired():Response.json(fixtureUser);
+ });
+ render(<AppProviders><Probe/><ResetPasswordForm/></AppProviders>);
+ await waitFor(()=>expect(screen.getByTestId('status')).toHaveTextContent('authenticated'));
+ await userEvent.click(screen.getByText('Seed private cache'));
+ await userEvent.type(screen.getByLabelText('Kode pemulihan'),'x'.repeat(43));
+ await userEvent.type(screen.getByLabelText('Kata sandi baru',{exact:true}),'Synthetic renewed pass 123!');
+ await userEvent.type(screen.getByLabelText('Konfirmasi kata sandi baru',{exact:true}),'Synthetic renewed pass 123!');
+ await userEvent.click(screen.getByRole('button',{name:'Simpan kata sandi baru'}));
+ await waitFor(()=>expect(screen.getByTestId('status')).toHaveTextContent('anonymous'));
+ expect(screen.getByTestId('cache')).toHaveTextContent('empty');
+ expect(screen.getByTestId('identity')).toHaveTextContent('anonymous');
+ expect(calls.filter(c=>c.method==='POST')).toHaveLength(1);
+ expect(replace).toHaveBeenCalledWith('/login');
 });
