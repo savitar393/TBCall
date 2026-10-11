@@ -41,6 +41,14 @@ describe("Indonesian login", () => {
     transport.mockImplementation(async () => { document.cookie = "XSRF-TOKEN=bootstrap; Path=/"; return authenticationRequired(); });
     path.current = "/login";
   }
+  it("uses the supplied square brand mark on login without a duplicate horizontal logo", async () => {
+    anonymous(); const {container}=renderPage(<LoginPage />);
+    await screen.findByRole("heading", {name:"Masuk ke akun Anda"});
+    const logos=screen.getAllByRole("img", {name:"TBCall"});
+    expect(logos).toHaveLength(2); // Responsive alternatives; only one is visible at each breakpoint.
+    for(const logo of logos) expect(logo.getAttribute("src")).toContain("logo.png");
+    expect(container.querySelector('img[src*="long-logo"]')).toBeNull();
+  });
   it("associates labels and validates locally without posting empty credentials", async () => {
     anonymous(); renderPage(<LoginPage />);
     const button = await screen.findByRole("button", { name: "Masuk" });
@@ -140,6 +148,7 @@ describe("authenticated responsive identity shell", () => {
   it("collapses and expands desktop navigation while keeping accessible labels", async () => {
     transport.mockResolvedValue(Response.json(fixtureUser)); renderPage(<HomePage />);
     await screen.findByRole("heading", { name: "Selamat datang" });
+    await userEvent.click(screen.getByRole("button", { name: "Perluas navigasi" }));
     await userEvent.click(screen.getByRole("button", { name: "Ciutkan navigasi" }));
     expect(screen.getByRole("button", { name: "Perluas navigasi" })).toHaveAttribute("aria-expanded", "false");
     expect(within(screen.getByRole("navigation", { name: "Navigasi utama desktop" })).getByRole("link", { name: "Beranda" })).toBeInTheDocument();

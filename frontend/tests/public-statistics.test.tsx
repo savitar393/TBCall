@@ -43,3 +43,17 @@ it("education uses all four supplied illustrations with safe external links", ()
   }
   expect(screen.getByText(/Ilustrasi disediakan pemilik TBCall/)).toBeInTheDocument();
 });
+
+it("chart shares a numeric zero baseline and offers the same exact facts in an accessible table",async()=>{
+  render(<TbPublicStatistics/>);
+  expect(screen.getByRole("img",{name:/Diagram batang horizontal/})).toBeInTheDocument();
+  expect(screen.getByText("0",{selector:"svg text"})).toBeInTheDocument();
+  expect(screen.getByText("8.000",{selector:"svg text"})).toBeInTheDocument();
+  await userEvent.click(screen.getByText("Lihat tabel data"));
+  const table=within(screen.getByRole("table",{name:/Penemuan kasus TBC/}));
+  expect(table.getAllByRole("row")).toHaveLength(7);
+  expect(table.getByRole("cell",{name:"6.992"})).toBeInTheDocument();
+  await userEvent.click(screen.getByRole("button",{name:"Lihat seluruh 35 wilayah"}));
+  expect(table.getAllByRole("row")).toHaveLength(36);
+  expect(table.getByRole("cell",{name:"662"})).toBeInTheDocument();
+});

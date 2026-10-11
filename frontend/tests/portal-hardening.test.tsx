@@ -21,7 +21,7 @@ it("mixed-role navigation independently retains portal and staff authorization",
     expect(portalNavigation({ ...f.supporter, permissions: [] }).map(n => n.href)).toEqual([]);
 });
 it("mixed patient/officer shell retains authorized staff links and portal links",async()=>{
-  portalBackend({...f.patient,roles:[...f.patient.roles,{code:"TB_OFFICER",name:"Petugas"}],activeFacilities:[f.facility]});await renderPortal("profile");await screen.findByText("Nama pasien privat");expect(screen.getByRole("link",{name:"Daftar pasien"})).toHaveAttribute("href","/patients");expect(screen.getByRole("link",{name:"Portal Saya"})).toHaveAttribute("href","/portal");expect(screen.getByText("Fasilitas aktif")).toBeInTheDocument();
+  portalBackend({...f.patient,roles:[...f.patient.roles,{code:"TB_OFFICER",name:"Petugas"}],activeFacilities:[f.facility]});await renderPortal("profile");await screen.findByText("Nama pasien privat");expect(screen.getByRole("link",{name:"Daftar pasien"})).toHaveAttribute("href","/patients");expect(screen.getByRole("link",{name:"Portal Saya"})).toHaveAttribute("href","/portal");await userEvent.click(screen.getByRole("button",{name:"Perluas navigasi"}));expect(screen.getByText("Fasilitas aktif")).toBeInTheDocument();
 });
 it("empty supplied supporter route ID is denied before resource calls", async () => {
     const calls = portalBackend(f.supporter);

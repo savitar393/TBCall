@@ -75,3 +75,32 @@
 }
 
 .calendar-workspace.calendar-day { grid-template-columns: minmax(0, 1fr); }
+
+/* A fixed rail anchors the workspace; its navigation panel overlays rather than resizes it. */
+.sidebar-panel { width: 6rem; transition: width 220ms ease, box-shadow 220ms ease, border-radius 220ms ease; }
+.sidebar-panel-expanded { width: 18rem; border-radius: 0 1.25rem 1.25rem 0; box-shadow: 8px 0 28px #16352b12; }
+.sidebar-toggle { left: calc(6rem - 22px); transition: left 220ms ease, background-color 160ms ease; }
+.sidebar-slot[data-expanded="true"] .sidebar-toggle { left: calc(18rem - 22px); }
+.sidebar-scroll { scrollbar-width: thin; }
+.sidebar-link { white-space: nowrap; }
+.login-mark { position: relative; width: 15rem; height: 13rem; overflow: hidden; }
+.login-mark img { position: absolute; width: 240%; max-width: none; left: 50%; top: 0; transform: translate(-50%, -32%); filter: drop-shadow(0 0 1px #f2ffd4) drop-shadow(0 2px 12px #ffffff18); }
+.login-mark-mobile { width: 10rem; height: 9rem; }
+.login-mark-mobile img { filter: none; }
+.chart-axis, .chart-row { display: grid; grid-template-columns: minmax(0, 1fr) 3.25rem; align-items: center; gap: .75rem; }
+.chart-axis { margin-bottom: .75rem; }
+.chart-axis > span:first-child, .chart-row > span:first-child { grid-column: 1 / -1; }
+@media (min-width: 640px) { .chart-axis, .chart-row { grid-template-columns: minmax(12rem, .38fr) minmax(0, 1fr) 3.5rem; gap: 1.5rem; } .chart-axis > span:first-child, .chart-row > span:first-child { grid-column: auto; } }
+@media (prefers-reduced-motion: no-preference) {
+  button, a { transition: background-color 160ms ease, color 160ms ease, box-shadow 160ms ease; }
+  .disclosure > summary { transition: color 160ms ease; }
+  .disclosure > summary:hover { color: var(--primary); }
+  .public-page article, .public-page #edukasi a { transition: transform 180ms ease, box-shadow 180ms ease; }
+  .public-page article:hover, .public-page #edukasi a:hover { transform: translateY(-3px); box-shadow: 0 8px 24px #16352b0c; }
+  @supports (animation-timeline: view()) {
+    .public-page #fitur, .public-page #edukasi, .public-page #statistik { animation: section-reveal linear both; animation-timeline: view(); animation-range: entry 0% entry 20%; }
+    @keyframes section-reveal { from { opacity: .7; transform: translateY(12px); } to { opacity: 1; transform: translateY(0); } }
+  }
+}
+
+@media (max-width: 374px) { .public-page > header > div > a[aria-label='TBCall'] { width: 7rem; } }
