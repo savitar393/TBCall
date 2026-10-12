@@ -36,7 +36,7 @@ class OperationalDashboardIntegrationTest {
     }
     static final String PATH="/api/v1/operational-dashboard",PASSWORD="Fictional dashboard password 123!";
     static String hash;
-    @Autowired MockMvc mvc; @Autowired JdbcTemplate jdbc; @Autowired PasswordHasher passwords;
+    @Autowired MockMvc mvc; @Autowired JdbcTemplate jdbc; @Autowired PasswordHasher passwords; @Autowired Clock clock;
     final JsonMapper json=JsonMapper.builder().build();
     UUID facility,foreign,inactive,officer,patient,active,completed,referred,treatment;
     UUID atNow,atEnd,overdue,lab;
@@ -165,5 +165,7 @@ class OperationalDashboardIntegrationTest {
         UUID reg=jdbc.queryForObject("select registration_id from tb_cases where id=?",UUID.class,c);
         return jdbc.queryForObject("insert into lab_requests(case_id,registration_id,requesting_facility_id,testing_facility_id,referral_type,requested_at,status,notes) values (?,?,?,?,'EXTERNAL','2026-10-10T00:00:00Z',?,'PRIVATE-LAB') returning id",UUID.class,registrationOwner ? null : c,registrationOwner ? reg : null,requesting,testing,status);
     }
-    private Cookie login(String email) throws Exception { return mvc.perform(post("/api/v1/auth/login").with(csrf()).contentType("application/json").content(json.writeValueAsString(Map.of("identity",email,"password",PASSWORD)))).andExpect(status().isOk()).andReturn().getResponse().getCookie("TBCALL_SESSION"); }
+    private Cookie login(String email) throws Exception {
+        // Align this owned test DB's session default with its fixed dashboard clock.
+        jdbc.execute("alter table user_sessions alter column created_at set default timestamptz '"+clock.instant()+"'"); return mvc.perform(post("/api/v1/auth/login").with(csrf()).contentType("application/json").content(json.writeValueAsString(Map.of("identity",email,"password",PASSWORD)))).andExpect(status().isOk()).andReturn().getResponse().getCookie("TBCALL_SESSION"); }
 }

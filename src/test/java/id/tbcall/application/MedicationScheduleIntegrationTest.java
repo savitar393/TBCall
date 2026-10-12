@@ -62,6 +62,13 @@ class MedicationScheduleIntegrationTest {
         jdbc.update("insert into patient_supporters(case_id,supporter_type,full_name,linked_user_id,active) values (?,'PMO','Fictional Supporter',?,true)",caseId,support);
         staffCookie=login("officer@example.invalid");selfCookie=login("patient@example.invalid");supportCookie=login("support@example.invalid");caller=staffCookie;
     }
+    @Test void controlledSessionCreationRetainsTheExpiryConstraint() {
+        assertThat(jdbc.queryForList("select created_at from user_sessions",OffsetDateTime.class))
+                .allMatch(created -> created.toInstant().equals(TIME.get()));
+        assertThatThrownBy(()->jdbc.update("insert into user_sessions(user_id,token_hash,expires_at) values (?,'fictional-expired-token',?::timestamptz)",staff,TIME.get().minusSeconds(1).toString()))
+                .isInstanceOf(org.springframework.dao.DataAccessException.class)
+                .hasMessageContaining("chk_user_sessions_expiry");
+    }
     @Test void createReadAndBoundedCalendarKeepScheduleSeparateFromEvidence()throws Exception{
         assertThat(call(get(path()),null,200).path("status").asText()).isEqualTo("ABSENT");
         JsonNode schedule=create();assertThat(schedule.path("kind").asText()).isEqualTo("PRESCRIBED_SCHEDULE");
@@ -331,6 +338,10 @@ class MedicationScheduleIntegrationTest {
     }
     private UUID facility(){return jdbc.queryForObject("insert into facilities(name) values ('Fictional Facility') returning id",UUID.class);}
     private UUID user(String email,String role,UUID f){UUID id=jdbc.queryForObject("insert into users(email,password_hash,status,email_verified_at) values (?,?,'ACTIVE',now()) returning id",UUID.class,email,hash);jdbc.update("insert into user_roles(user_id,role_id) select ?,id from roles where code=?",id,role);if(f!=null)jdbc.update("insert into user_facilities(user_id,facility_id) values (?,?)",id,f);return id;}
-    private Cookie login(String email)throws Exception{return mvc.perform(post("/api/v1/auth/login").with(csrf()).contentType("application/json").content(json.writeValueAsString(Map.of("identity",email,"password",PASSWORD)))).andExpect(status().isOk()).andReturn().getResponse().getCookie("TBCALL_SESSION");}
+    private Cookie login(String email)throws Exception{
+        // This disposable DB must use the same simulated clock as the scheduling test.
+        // Keep the expiry CHECK intact; do not depend on the host's advancing calendar.
+        jdbc.execute("alter table user_sessions alter column created_at set default timestamptz '"+TIME.get()+"'");
+        return mvc.perform(post("/api/v1/auth/login").with(csrf()).contentType("application/json").content(json.writeValueAsString(Map.of("identity",email,"password",PASSWORD)))).andExpect(status().isOk()).andReturn().getResponse().getCookie("TBCALL_SESSION");}
     private void audit(String action,int count){assertThat(jdbc.queryForObject("select count(*) from audit_logs where action=?",Integer.class,action)).isEqualTo(count);}
 }

@@ -68,14 +68,17 @@ class RuntimePersistenceIntegrationTest {
 
     @Test
     void versionColumnsAndJpaVersionsCoverExactlyTheApprovedTables() {
+        // JDBC reporting aggregates use explicit ETag versions; existing JPA coverage is unchanged.
+        Set<String> databaseVersioned = new java.util.HashSet<>(VERSIONED.values());
+        databaseVersioned.addAll(Set.of("reporting_grants", "reporting_snapshots"));
         assertThat(jdbc.queryForList("""
                 select table_name from information_schema.columns
-                where table_schema='public' and column_name='version' and table_name<>'flyway_schema_history'
-                """, String.class)).containsExactlyInAnyOrderElementsOf(VERSIONED.values());
+                where table_schema='public' and column_name='version' and data_type='bigint' and table_name<>'flyway_schema_history'
+                """, String.class)).containsExactlyInAnyOrderElementsOf(databaseVersioned);
         assertThat(jdbc.queryForObject("""
                 select count(*) from information_schema.columns where table_schema='public'
                 and column_name='version' and data_type='bigint' and is_nullable='NO' and column_default='0'
-                """, Integer.class)).isEqualTo(27);
+                """, Integer.class)).isEqualTo(29);
         Map<Class<?>, Object> fixtures = fixtures();
         em.flush();
         for (var entry : VERSIONED.entrySet()) {

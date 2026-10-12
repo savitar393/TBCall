@@ -34,4 +34,10 @@ public class AuditService {
     }
     @Transactional(propagation = Propagation.REQUIRES_NEW)
     public void authorizationDenied(UUID actor) { record(actor, "AUTHORIZATION_DENIED", "IDENTITY_LINK", null); }
+    @Transactional(propagation = Propagation.REQUIRES_NEW)
+    public void reportingDenied(UUID actor,String action,UUID snapshot) {
+        if(!java.util.Set.of("REPORT_ACCESS_DENIED","REPORT_PUBLICATION_WITHHELD").contains(action))
+            throw new IllegalArgumentException("Unsupported reporting audit action");
+        record(actor,action,"PROGRAM_REPORT",snapshot);
+    }
 }
