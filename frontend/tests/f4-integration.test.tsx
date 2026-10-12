@@ -7,8 +7,8 @@ vi.mock("next/navigation", () => ({ useRouter: () => routing, usePathname: () =>
 it("integration list shows metadata flag/configuration, counts, latest safe run and approved links", async () => {
     const calls = backend();
     await renderF4("integrations");
-    await screen.findByText("UNCONFIGURED");
-    expect(screen.getByText('Status "aktif" adalah metadata TBCall dan tidak berarti konektor sudah dikonfigurasi atau terhubung.')).toBeInTheDocument();
+    await screen.findByText("Belum dikonfigurasi");
+    expect(screen.getByText('Metadata lokal TBCall · bukan koneksi SITB')).toBeInTheDocument();
     expect(screen.getByText("PRIVATE_CURSOR")).toBeInTheDocument();
     expect(screen.getByRole("link", { name: "Buka detail proses" })).toHaveAttribute("href", `/integrations/SITB/sync-runs/${f.runId}`);
     expect(calls.every(c => c.url.startsWith("/api/tbcall/v1/"))).toBe(true);
@@ -32,7 +32,8 @@ it("integration sections keep independent pages in memory and never change histo
     await userEvent.click(screen.getByRole("button", { name: "Berikutnya" }));
     await screen.findByText("Halaman 2 · 41 data");
     await userEvent.click(screen.getByRole("button", { name: "Otoritas sumber" }));
-    await screen.findByText("Halaman 1 · 1 data");
+    await within(screen.getByRole("region", { name: "Otoritas sumber" })).findAllByText("PATIENT");
+    expect(within(screen.getByRole("region", { name: "Otoritas sumber" })).queryByRole("navigation", { name: "Halaman data" })).not.toBeInTheDocument();
     await userEvent.click(screen.getByRole("button", { name: "Identitas eksternal" }));
     await screen.findByText("Halaman 2 · 41 data");
     expect(calls.some(c => c.url.includes("external-identifiers?page=1"))).toBe(true);
@@ -52,7 +53,7 @@ it("run displays only approved item metadata and pages locally without N+1 clini
 it.each(["integrations", "integration", "run"] as const)("%s has no automatic focus/reconnect refetch or mutations", async (page) => {
     const calls = backend();
     await renderF4(page);
-    await screen.findByText("UNCONFIGURED").catch(() => screen.findByText("PRIVATE_HASH"));
+    await screen.findByText("Belum dikonfigurasi").catch(() => screen.findByText("PRIVATE_HASH"));
     const count = calls.length;
     fireEvent(window, new Event("focus"));
     fireEvent(window, new Event("online"));

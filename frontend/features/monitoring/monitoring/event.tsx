@@ -4,6 +4,7 @@ import { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { useSession } from "@/lib/auth/session";
 import { Button } from "@/components/ui/button";
+import { AppStatusBadge, AppFormSection } from "@/components/application-patterns";
 import { QueryState, DisplayFields } from "@/features/continuity/display";
 import { Field, CheckField } from "@/features/continuity/fields";
 import { monitoringQueries as q } from "../queries";
@@ -55,26 +56,27 @@ export function EventPanel({
     event: e,
     etag: query.data?.etag
   });
-  return <div className="space-y-4">
-  <DisplayFields values={[["Jenis kegiatan", label(ref ? eventTypes(ref, targetType) : undefined, e.eventType)], ["Status", label(ref?.eventStatuses, e.status)], ["Jadwal terbaru", e.scheduledAt], ["Batas waktu terbaru", e.dueAt], ["Selesai", e.completedAt]]} />
+  return <div className="clinical-workspace">
+  <section className="clinical-context" aria-label="Konteks kegiatan"><div className="clinical-context-heading"><h2>{label(ref ? eventTypes(ref, targetType) : undefined, e.eventType)}</h2><AppStatusBadge tone={e.status === "OVERDUE" ? "warning" : e.status === "COMPLETED" ? "complete" : "neutral"}>{label(ref?.eventStatuses, e.status)}</AppStatusBadge></div>
+  <DisplayFields values={[["Jadwal terbaru", e.scheduledAt], ["Batas waktu terbaru", e.dueAt], ["Selesai", e.completedAt]]} /></section>
   {query.isError && <QueryState query={query} />}
   <Button variant="outline" disabled={query.isFetching} onClick={() => void query.refetch()}>Muat ulang kegiatan</Button>
-  {manage && openStatus && !editor && <div className="flex flex-wrap gap-3">
-    {reschedulable && <Button disabled={!available} onClick={() => choose("reschedule")}>Jadwalkan ulang</Button>}
-    <Button disabled={!available} onClick={() => choose("complete")}>Selesaikan kegiatan</Button>
-    <Button disabled={!available} onClick={() => choose("cancel")}>Batalkan kegiatan</Button>
+  {manage && openStatus && <div className="clinical-record-actions">
+    {reschedulable && <Button disabled={!available || !!editor} onClick={() => choose("reschedule")}>Jadwalkan ulang</Button>}
+    <Button disabled={!available || !!editor} onClick={() => choose("complete")}>Selesaikan kegiatan</Button>
+    <Button variant="outline" disabled={!available || !!editor} onClick={() => choose("cancel")}>Batalkan kegiatan</Button>
   </div>}
   {observed && editor === "reschedule" && <MonitoringForm initial={rescheduleValues(observed.event)} schema={rescheduleSchema(observed.event)} available={available && reschedulable && !!observed.etag} onReview={review} submitLabel="Simpan jadwal" onClose={() => setEditor(null)} onSuccess={onClose} save={(v, dirty, signal) => monitoringApi.reschedule(id, eventPatch(v, dirty), observed.etag, signal)}>
-    <Field name="scheduledAt" label="Jadwal kegiatan" type="datetime-local" required />
-    <Field name="dueAt" label="Batas waktu kegiatan" type="datetime-local" />
+    <AppFormSection title="Jadwalkan ulang"><div className="clinical-form-grid"><Field name="scheduledAt" label="Jadwal kegiatan" type="datetime-local" required />
+    <Field name="dueAt" label="Batas waktu kegiatan" type="datetime-local" /></div></AppFormSection>
   </MonitoringForm>}
   {observed && editor === "complete" && <MonitoringForm initial={{
       completedAt: ""
     }} schema={completionSchema(e)} available={available && openStatus && !!observed.etag} onReview={review} submitLabel="Simpan penyelesaian" onClose={() => setEditor(null)} onSuccess={onClose} save={(v, _, signal) => monitoringApi.eventAction(id, "complete", v.completedAt ? {
       completedAt: completionTime(v.completedAt)
     } : {}, observed.etag, signal)}>
-    <p>Kosong berarti waktu server saat kegiatan diselesaikan. Browser hanya memeriksa waktu yang diisi.</p>
-    <Field name="completedAt" label="Waktu selesai (opsional)" type="datetime-local" />
+    <AppFormSection title="Penyelesaian kegiatan" description="Kosong berarti waktu server saat kegiatan diselesaikan.">
+    <Field name="completedAt" label="Waktu selesai (opsional)" type="datetime-local" /></AppFormSection>
   </MonitoringForm>}
   {observed && editor === "cancel" && <MonitoringForm initial={{
       confirmed: false

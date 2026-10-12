@@ -3,8 +3,9 @@
 import { useFieldArray, useFormContext } from "react-hook-form";
 import { Field } from "@/features/continuity/fields";
 import { Button } from "@/components/ui/button";
+import { AppFormSection } from "@/components/application-patterns";
 import { emptyEvent } from "./forms";
-export const manualGuidance = "TBCall tidak membuat jadwal pemantauan otomatis. Tambahkan setiap kegiatan dan waktunya berdasarkan rencana yang telah ditetapkan petugas.";
+export const manualGuidance = "Isi kegiatan dan waktunya sesuai rencana petugas. Jadwal tidak dibuat otomatis.";
 export function EventFields({
   types,
   prefix = "",
@@ -38,14 +39,13 @@ export function InitialEvents({
     control,
     name: "events"
   });
-  return <section className="space-y-4" aria-label="Kegiatan manual">
-  <p>{manualGuidance}</p>
-  <p>Isi 1–100 kegiatan secara eksplisit.</p>
+  return <AppFormSection title="Kegiatan manual" description={manualGuidance}>
+  <p className="text-sm text-muted-foreground">1–100 kegiatan</p>
   {rows.fields.map((row, i) => <fieldset key={row.id} className="space-y-4 rounded-lg border p-4">
     <legend> Kegiatan nomor {i + 1}</legend>
-    <EventFields types={types} prefix={`events.${i}.`} number={i + 1} />
+    <div className="clinical-form-grid"><EventFields types={types} prefix={`events.${i}.`} number={i + 1} /></div>
     <Button type="button" variant="outline" disabled={rows.fields.length === 1} onClick={() => rows.remove(i)} aria-label={`Hapus kegiatan ${i + 1}`}> Hapus kegiatan {i + 1}</Button>
   </fieldset>)}
   <Button type="button" disabled={rows.fields.length >= 100} onClick={() => rows.append(emptyEvent())}>Tambah kegiatan manual</Button>
-</section>;
+</AppFormSection>;
 }

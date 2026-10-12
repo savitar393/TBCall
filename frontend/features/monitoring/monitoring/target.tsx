@@ -6,7 +6,7 @@ import { useRouter } from "next/navigation";
 import { useQuery } from "@tanstack/react-query";
 import { useSession } from "@/lib/auth/session";
 import { Button } from "@/components/ui/button";
-import { AppPageHeader, AppSection, AppStatusBadge, AppFormSection } from "@/components/application-patterns";
+import { AppPageHeader, AppSection, AppStatusBadge, AppFormSection, AppDisclosure } from "@/components/application-patterns";
 import { Field } from "@/features/continuity/fields";
 import { QueryState, DisplayFields, Pagination, label as targetStatusLabel } from "@/features/continuity/display";
 import { monitoringQueries as q } from "../queries";
@@ -46,20 +46,21 @@ export function TargetMonitoring({
   const active = history.data.data.content.some(p => p.status === "ACTIVE") || activeCheck.data === true;
   const available = canMonitoring(user, "MONITORING_MANAGE") && activeCheck.data === false && t.status === "ACTIVE" && !active && !activeCheck.isError && !activeCheck.isFetching && !target.isError && !history.isError && !refs.isError && !target.isFetching && !history.isFetching;
   return <div className="clinical-workspace">
-  <AppPageHeader title={`Pemantauan ${type === "TPT" ? "TPT" : "pengobatan"}`} eyebrow="Rencana dan kegiatan" description="Tinjau riwayat rencana dan buka kegiatan pemantauan yang tercatat." actions={<Button variant="outline" disabled={target.isFetching || history.isFetching} onClick={() => {
+  <AppPageHeader title={`Pemantauan ${type === "TPT" ? "TPT" : "pengobatan"}`} eyebrow="Rencana dan kegiatan" actions={<Button variant="outline" disabled={target.isFetching || history.isFetching} onClick={() => {
       void target.refetch();
       void history.refetch();
       if (canMonitoring(user, "MONITORING_MANAGE") && t.status === "ACTIVE") void activeCheck.refetch();
       if (refs.isError) void refs.refetch();
     }}>Muat ulang pemantauan</Button>} />
-  <section className="clinical-context" aria-label="Konteks pemantauan"><div className="clinical-context-heading"><h2>{label(ref.alertTargetTypes, type)}</h2><AppStatusBadge tone={t.status === "ACTIVE" ? "active" : t.status === "COMPLETED" ? "complete" : "neutral"}>{targetStatusLabel(undefined, t.status)}</AppStatusBadge></div><DisplayFields values={[["Mulai target", t.startDate], ["Akhir rencana target", t.plannedEndDate]]}/><Link className="text-primary underline" href={type === "TPT" ? `/preventive-treatments/${id}` : `/treatments/${id}`}>Kembali ke {type === "TPT" ? "detail TPT" : "detail pengobatan"}</Link></section>
+  <section className="clinical-context" aria-label="Konteks pemantauan"><div className="clinical-context-heading"><h2>{label(ref.alertTargetTypes, type)}</h2><AppStatusBadge tone={t.status === "ACTIVE" ? "active" : t.status === "COMPLETED" ? "complete" : "neutral"}>{targetStatusLabel(undefined, t.status)}</AppStatusBadge></div><DisplayFields values={[["Mulai target", t.startDate], ["Akhir rencana target", t.plannedEndDate]]}/><div className="clinical-record-actions"><Link className="text-primary underline" href={type === "TPT" ? `/preventive-treatments/${id}` : `/treatments/${id}`}>Kembali ke {type === "TPT" ? "detail TPT" : "detail pengobatan"}</Link>
+  {available && canMonitoring(user, "MONITORING_MANAGE") && <Button disabled={editor} onClick={() => setEditor(true)}>Buat rencana pemantauan</Button>}
+  </div></section>
   {target.isError && <QueryState query={target} />}
   {history.isError && <QueryState query={history} />}
   {refs.isError && <QueryState query={refs} />}
   {(t.status !== "ACTIVE" || active) && <p className="clinical-readonly">Rencana aktif baru belum dapat dibuat: target harus aktif dan belum memiliki rencana aktif.</p>}
   {canMonitoring(user, "MONITORING_MANAGE") && t.status === "ACTIVE" && activeCheck.isPending && <p role="status">Memeriksa riwayat rencana…</p>}
   {activeCheck.isError && <QueryState query={activeCheck} />}
-  {available && canMonitoring(user, "MONITORING_MANAGE") && <Button disabled={editor} onClick={() => setEditor(true)}>Buat rencana pemantauan</Button>}
   {editor && <MonitoringForm initial={emptyPlan()} schema={createSchema(types, t)} available={available && canMonitoring(user, "MONITORING_MANAGE")} submitLabel="Simpan rencana baru" onClose={() => setEditor(false)} save={(v, _, signal) => monitoringApi.create(type, id, {
       startDate: v.startDate,
       ...(v.endDate ? {
@@ -79,9 +80,10 @@ export function TargetMonitoring({
     {!history.data.data.content.length && <p className="clinical-empty">Belum ada rencana.</p>}
     <div className="clinical-record-list">{history.data.data.content.map(p => <article key={p.id} className="clinical-record-row">
       <div className="clinical-context-heading"><h3>Rencana pemantauan</h3><AppStatusBadge tone={p.status === "ACTIVE" ? "active" : p.status === "COMPLETED" ? "complete" : "neutral"}>{label(ref.planStatuses, p.status)}</AppStatusBadge></div>
-      <DisplayFields values={[["Mulai", p.startDate], ["Akhir", p.endDate], ["Versi aturan (metadata)", p.rulesVersion], ...Object.entries(p.eventCounts).map(([status, count]) => [label(ref.eventStatuses, status), count] as [string, number])]} /><div className="clinical-record-actions"><Link className="text-primary underline" href={`/monitoring-plans/${p.id}`}>Buka rencana</Link></div>
+      <DisplayFields values={[["Mulai", p.startDate], ["Akhir", p.endDate], ...Object.entries(p.eventCounts).map(([status, count]) => [label(ref.eventStatuses, status), count] as [string, number])]} /><div className="clinical-record-actions"><Link className="text-primary underline" href={`/monitoring-plans/${p.id}`}>Buka rencana</Link></div>
+      <AppDisclosure title="Metadata rencana"><DisplayFields values={[["Versi aturan (metadata)", p.rulesVersion]]} /></AppDisclosure>
     </article>)}</div>
-  </AppSection>
   <Pagination page={page} total={history.data.data.totalElements} setPage={setPage} />
+  </AppSection>
 </div>;
 }

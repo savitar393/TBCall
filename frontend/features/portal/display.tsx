@@ -2,7 +2,7 @@
 import { displayTemporal } from "@/lib/date-format";
 import type { ReactNode } from "react";
 import { ApiError } from "@/lib/api/problem";
-import { ApiFeedback } from "@/components/api-feedback";
+import { ApiFeedback, usePresentedApiError } from "@/components/api-feedback";
 import { Button } from "@/components/ui/button";
 export function PortalState({ query, empty = "Belum ada catatan." }: {
     query: {
@@ -12,13 +12,15 @@ export function PortalState({ query, empty = "Belum ada catatan." }: {
     };
     empty?: string;
 }) {
+    const presentedError = usePresentedApiError();
+    const duplicate = query.error instanceof ApiError && query.error === presentedError;
     if (query.isPending)
         return <p role="status">Memuat data…</p>;
     if (query.error instanceof ApiError && query.error.problem.status === 404)
         return <p>{empty}</p>;
     if (query.error instanceof ApiError && query.error.problem.status === 409)
         return <div role="alert"><p>{query.error.problem.code === "ACTIVE_TPT_AMBIGUOUS" ? "Terdapat lebih dari satu catatan TPT aktif. Hubungi petugas untuk memastikan catatan yang sesuai." : "Keadaan catatan telah berubah. Muat ulang dan periksa sebelum mencoba kembali."}</p><Button variant="outline" onClick={() => void query.refetch()}>Muat ulang</Button></div>;
-    return <div><ApiFeedback error={query.error instanceof ApiError ? query.error : new ApiError({ status: 503, title: "Layanan belum tersedia" })}/><Button variant="outline" onClick={() => void query.refetch()}>Coba kembali</Button></div>;
+    return <div>{!duplicate && <ApiFeedback error={query.error instanceof ApiError ? query.error : new ApiError({ status: 503, title: "Layanan belum tersedia" })}/>}<Button variant="outline" onClick={() => void query.refetch()}>Coba kembali</Button></div>;
 }
 export function Fields({ items }: {
     items: Record<string, ReactNode>;
@@ -27,7 +29,7 @@ export function Pagination({ page, total, onPage }: {
     page: number;
     total: number;
     onPage: (page: number) => void;
-}) { return <nav aria-label="Halaman daftar" className="flex flex-wrap items-center gap-3"><Button variant="outline" disabled={page === 0} onClick={() => onPage(page - 1)}>Sebelumnya</Button><span>Halaman {page + 1}</span><Button variant="outline" disabled={(page + 1) * 20 >= total} onClick={() => onPage(page + 1)}>Berikutnya</Button></nav>; }
+}) { if (page === 0 && total <= 20) return null; return <nav aria-label="Halaman daftar" className="flex flex-wrap items-center gap-3"><Button variant="outline" disabled={page === 0} onClick={() => onPage(page - 1)}>Sebelumnya</Button><span>Halaman {page + 1}</span><Button variant="outline" disabled={(page + 1) * 20 >= total} onClick={() => onPage(page + 1)}>Berikutnya</Button></nav>; }
 export function Refresh({ onClick }: {
     onClick: () => unknown;
 }) { return <Button variant="outline" onClick={() => void onClick()}>Muat ulang catatan</Button>; }

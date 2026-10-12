@@ -154,5 +154,6 @@ it("linked supporter treatment remains safe and raw counts never claim an adhere
     portalBackend(f.supporter);
     await renderPortal("case");
     expect(await screen.findByText("Nama pasien privat")).toBeInTheDocument();
-    expect(screen.getByText("Jumlah laporan bukti dosis, bukan skor kepatuhan.")).toBeInTheDocument();
+    expect(screen.getByText("Hitungan laporan tercatat")).toBeInTheDocument();
+    expect(screen.getByRole("region", { name: "Jumlah laporan bukti dosis" })).toHaveTextContent("2");
 });

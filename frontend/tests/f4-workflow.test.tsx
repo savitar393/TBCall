@@ -48,7 +48,7 @@ it("lookup 404 is neutral and renders no raw backend prose", async () => {
 it.each(["integrations", "integration", "run"] as const)("%s shows read-only local metadata with no mutation", async (page) => {
     const calls = backend();
     await renderF4(page);
-    await screen.findByText(/Integrasi pada tahap ini hanya menampilkan metadata lokal TBCall/);
+    await screen.findByText(/Metadata lokal TBCall · bukan koneksi SITB/);
     await waitFor(() => expect(calls.some(c => c.url.includes("/integrations"))).toBe(true));
     expect(calls.every(c => !c.options.method || c.options.method === "GET")).toBe(true);
     expect(screen.queryByRole("button", { name: /Connect|Configure|Aktifkan|Mulai sinkronisasi|Resolusi/ })).not.toBeInTheDocument();

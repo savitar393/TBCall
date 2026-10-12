@@ -1,8 +1,9 @@
 "use client";
 import type { ReactNode } from "react";
-import { ApiFeedback } from "@/components/api-feedback";
+import { ApiFeedback, usePresentedApiError } from "@/components/api-feedback";
 import { ApiError } from "@/lib/api/problem";
 import { Button } from "@/components/ui/button";
+import { AppSection, AppStatusBadge } from "@/components/application-patterns";
 export function Fields({ values }: {
     values: Record<string, string | number | boolean | null | undefined>;
 }) {
@@ -15,13 +16,20 @@ export function Panel({ title, children }: {
     title: string;
     children: ReactNode;
 }) {
-    return <section className="space-y-4 rounded-xl border bg-white p-5">
-    <h2 className="text-lg font-semibold">{title}</h2>{children}</section>;
+    return <AppSection title={title}>{children}</AppSection>;
+}
+export function AccountStatus({ status }: { status: string }) {
+    const labels: Record<string, string> = { ACTIVE: "Aktif", SUSPENDED: "Ditangguhkan", DISABLED: "Dinonaktifkan", PENDING: "Menunggu verifikasi" };
+    return <AppStatusBadge tone={status === "ACTIVE" ? "active" : "warning"}>{labels[status] ?? status}</AppStatusBadge>;
 }
 export function QueryState({ pending, error }: {
     pending: boolean;
     error: Error | null;
-}) { return <div aria-live="polite">{pending && <p>Memuat data…</p>}<ApiFeedback error={error instanceof ApiError ? error : null}/>{error && !(error instanceof ApiError) && <p>Layanan belum tersedia.</p>}</div>; }
+}) {
+    const presentedError = usePresentedApiError();
+    const apiError = error instanceof ApiError ? error : null;
+    return <div aria-live="polite">{pending && <p>Memuat data…</p>}<ApiFeedback error={apiError === presentedError ? null : apiError}/>{error && !(error instanceof ApiError) && <p>Layanan belum tersedia.</p>}</div>;
+}
 export function Refresh({ busy, onClick }: {
     busy: boolean;
     onClick: () => void;
@@ -32,6 +40,8 @@ export function Pagination({ page, size, total, onPage }: {
     total: number;
     onPage: (page: number) => void;
 }) {
+    if (page === 0 && total <= size)
+        return null;
     return <nav aria-label="Halaman data" className="flex flex-wrap items-center gap-3">
     <Button type="button" variant="outline" disabled={page === 0} onClick={() => onPage(page - 1)}>Sebelumnya</Button>
     <span>Halaman {page + 1} · {total} data</span>

@@ -37,6 +37,7 @@ export function MonitoringForm<T extends FieldValues, R>({
     resolver: zodResolver(schema as Parameters<typeof zodResolver>[0]) as Resolver<T>
   });
   const region = useRef<HTMLDivElement>(null);
+  const trigger = useRef(typeof document !== "undefined" && document.activeElement instanceof HTMLElement ? document.activeElement : null);
   const previous = useRef(initial);
   void form.formState.dirtyFields;
   const {
@@ -52,10 +53,14 @@ export function MonitoringForm<T extends FieldValues, R>({
   }, [initial, reset]);
   useEffect(() => {
     region.current?.focus();
+    const previousFocus = trigger.current;
+    return () => {
+      if (previousFocus?.isConnected) previousFocus.focus();
+    };
   }, []);
-  return <div ref={region} tabIndex={-1}>
+  return <div ref={region} tabIndex={-1} role="region" aria-label={`Formulir: ${submitLabel}`} className="clinical-editor focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-primary">
   <FormProvider {...form}>
-    <form autoComplete="off" noValidate className="space-y-5 rounded-xl border bg-white p-5" onSubmit={form.handleSubmit(async values => {
+    <form autoComplete="off" noValidate className="space-y-5" onSubmit={form.handleSubmit(async values => {
         if (available) await command.run(signal => save(values, form.formState.dirtyFields, signal), onSuccess);
       })}>
       <fieldset disabled={command.pending || command.locked} className="space-y-5">{children}</fieldset>
@@ -69,7 +74,7 @@ export function MonitoringForm<T extends FieldValues, R>({
             command.reviewed();
           }}>Saya sudah meninjau data terbaru</Button>
       </div>}
-      <div className="flex flex-wrap gap-3">
+      <div className="clinical-record-actions">
         <Button type="submit" disabled={!available || command.pending || command.locked || command.reviewRequired}>{command.pending ? "Menyimpan…" : submitLabel}</Button>
         <Button type="button" variant="outline" disabled={command.pending} onClick={onClose}>Tutup formulir</Button>
       </div>

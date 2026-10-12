@@ -6,12 +6,13 @@ import { useSession } from "@/lib/auth/session";
 import { ApiFeedback } from "@/components/api-feedback";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { AppDisclosure, AppFormSection, AppSection } from "@/components/application-patterns";
 import { portalApi } from "../api";
 import { portalQueries } from "../queries";
 import { usePortalReferences, doseOptions, label } from "../references";
 import { usePortalCommand } from "../use-command";
 import { localToday } from "../local-date";
-import { card, doseGuidance, Fields, Pagination, PortalState } from "../display";
+import { Fields, Pagination, PortalState } from "../display";
 import type { PortalTarget } from "../types";
 export function DoseEvidence({ target, active, startDate }: {
     target: PortalTarget;
@@ -23,10 +24,10 @@ export function DoseEvidence({ target, active, startDate }: {
     const query = useQuery({ ...portalQueries.doses(user!.id, target, page), enabled: read });
     const refs = usePortalReferences();
     const displayStatuses = target.kind === "patient" ? [...(refs.data?.data.patientDoseStatuses ?? []), ...(refs.data?.data.supporterDoseStatuses ?? [])] : [...(refs.data?.data.supporterDoseStatuses ?? []), ...(refs.data?.data.patientDoseStatuses ?? [])];
-    return <section className={card}><h2 className="text-lg font-semibold">Laporan bukti dosis</h2><p className="text-sm text-muted-foreground">{doseGuidance}</p>
-    {read && (!query.data ? <PortalState query={query} empty="Belum ada laporan bukti dosis."/> : <><ul className="space-y-2">{query.data.data.content.map(d => <li key={d.id}><details className="rounded-xl border px-4 py-2"><summary className="min-h-11 cursor-pointer py-2 text-sm font-medium">{formatDate(d.scheduledDate)} · {label(displayStatuses, d.status)}</summary><div className="pb-3 pt-2"><Fields items={{ Tanggal: d.scheduledDate, Status: label(displayStatuses, d.status), "Dicatat pada": d.recordedAt, "Cara pemberian": label(refs.data?.data.administrationModes, d.administrationMode), Sumber: d.source }}/></div></details></li>)}</ul>{!query.data.data.content.length && <p>Belum ada laporan bukti dosis.</p>}<Pagination page={page} total={query.data.data.totalElements} onPage={setPage}/></>)}
+    return <AppSection title="Laporan bukti dosis">
+    {read && (query.isPending || query.error || !query.data ? <PortalState query={query} empty="Belum ada laporan bukti dosis."/> : <><ul className="clinical-record-list">{query.data.data.content.map(d => <li key={d.id} className="clinical-record-row"><AppDisclosure title={`${formatDate(d.scheduledDate)} · ${label(displayStatuses, d.status)}`}><Fields items={{ Tanggal: d.scheduledDate, Status: label(displayStatuses, d.status), "Dicatat pada": d.recordedAt, "Cara pemberian": label(refs.data?.data.administrationModes, d.administrationMode), Sumber: d.source }}/></AppDisclosure></li>)}</ul>{!query.data.data.content.length && <p>Belum ada laporan bukti dosis.</p>}<Pagination page={page} total={query.data.data.totalElements} onPage={setPage}/></>)}
     {record && active ? <DoseForm target={target} startDate={startDate}/> : record ? <p>Laporan dosis tersedia hanya untuk pengobatan aktif yang dapat ditampilkan.</p> : null}
-  </section>;
+  </AppSection>;
 }
 function DoseForm({ target, startDate }: {
     target: PortalTarget;
@@ -52,12 +53,13 @@ function DoseForm({ target, startDate }: {
                 return;
             void command.run(signal => portalApi.recordDose(target, { scheduledDate, status, ...(mode ? { administrationMode: mode } : {}), ...(notes.trim() ? { notes: notes.trim() } : {}) }, signal), () => { setDate(""); setStatus(""); setMode(""); setNotes(""); });
         }}>
-    <h3 className="font-semibold">Catat laporan dosis</h3>
+    <AppFormSection title="Catat laporan dosis"><div className="grid gap-4 sm:grid-cols-2">
     <label className="block">Tanggal dosis<Input aria-label="Tanggal dosis" type="date" required min={startDate} max={localToday()} value={scheduledDate} onChange={e => { setDate(e.target.value); setDateError(false); }} disabled={command.pending}/></label>
     {dateError && <p role="alert">Tanggal dosis tidak boleh setelah hari ini.</p>}
     <label className="block">Status laporan<select className="mt-1 min-h-11 w-full rounded border p-2" aria-label="Status laporan" required value={status} onChange={e => setStatus(e.target.value)} disabled={command.pending}><option value="">Pilih status laporan</option>{options.map(o => <option key={o.code} value={o.code}>{o.name}</option>)}</select></label>
     <label className="block">Cara pemberian (opsional)<select className="mt-1 min-h-11 w-full rounded border p-2" aria-label="Cara pemberian" value={mode} onChange={e => setMode(e.target.value)} disabled={command.pending}><option value="">Tidak diisi</option>{modes.map(o => <option key={o.code} value={o.code}>{o.name}</option>)}</select></label>
-    <label className="block">Catatan (opsional)<textarea className="mt-1 w-full rounded border p-2" aria-label="Catatan dosis" value={notes} onChange={e => setNotes(e.target.value)} disabled={command.pending}/></label>
+    <label className="block sm:col-span-2">Catatan (opsional)<textarea className="mt-1 w-full rounded border p-2" aria-label="Catatan dosis" value={notes} onChange={e => setNotes(e.target.value)} disabled={command.pending}/></label>
+    </div></AppFormSection>
     <ApiFeedback error={command.error}/>{command.error?.problem.status === 409 && <p role="alert">Catatan atau keadaan pengobatan telah berubah. Periksa ulang sebelum mengirim secara manual.</p>}
     {command.success && <p role="status">Laporan dosis tersimpan.</p>}
     {((status && !validStatus) || !validMode) && <p role="alert">Pilihan referensi berubah. Pilih ulang status atau cara pemberian.</p>}

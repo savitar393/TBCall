@@ -93,6 +93,7 @@ it.each(["account", "scope", "role", "permission"] as const)("%s change aborts m
     await userEvent.click(screen.getByRole("button", { name: "Cari pengguna tepat" }));
     await screen.findByText("t***@example.test");
     await userEvent.click(screen.getByRole("button", { name: "Jadikan utama Fasyankes lingkup sendiri" }));
+    await userEvent.click(screen.getByRole("button", { name: "Ya, jadikan utama fasyankes lingkup sendiri" }));
     await waitFor(() => expect(resolve).toBeDefined());
     await userEvent.click(screen.getByText("Ganti konteks"));
     await waitFor(() => expect(signal.aborted).toBe(true));
@@ -148,8 +149,7 @@ it.each(["membership", "role", "status"] as const)("self %s refreshes Me before 
     await userEvent.click(screen.getByRole("button", { name: "Cari pengguna tepat" }));
     await screen.findByText("t***@example.test");
     await userEvent.click(screen.getByRole("button", { name: kind === "membership" ? "Jadikan utama Fasyankes lingkup sendiri" : kind === "role" ? "Berikan Laboratorium hidup" : "Tangguhkan akun" }));
-    if (kind === "status")
-        await userEvent.click(screen.getByRole("button", { name: "Ya, tangguhkan akun" }));
+    await userEvent.click(screen.getByRole("button", { name: kind === "membership" ? "Ya, jadikan utama fasyankes lingkup sendiri" : kind === "role" ? "Ya, berikan laboratorium hidup" : "Ya, tangguhkan akun" }));
     await screen.findByText("Akses tidak diizinkan");
     const mutation = calls.findIndex(c => ["POST", "DELETE"].includes(c.options.method ?? ""));
     expect(calls[mutation + 1].url).toBe("/api/tbcall/v1/me");

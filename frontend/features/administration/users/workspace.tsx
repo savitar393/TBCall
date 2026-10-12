@@ -10,7 +10,8 @@ import { administrationApi } from "../api";
 import { canFacilities, canRoles, canStatuses } from "../permissions";
 import { useAdministrationReferences } from "../references";
 import { useAdministrationCommand } from "../use-command";
-import { Fields, Panel, QueryState } from "../display";
+import { AccountStatus, Fields, Panel, QueryState } from "../display";
+import { AppDisclosure, AppFormSection, AppPageHeader, AppStatusBadge, AppTable } from "@/components/application-patterns";
 import { ConfirmAction } from "../confirm";
 import { FacilitySearch } from "../facilities/parent-picker";
 import type { UserLookup, ManagedRole } from "../types";
@@ -18,6 +19,7 @@ export function UserWorkspace() {
     const session = useSession(), client = useQueryClient(), actor = session.user!, snapshot = JSON.stringify(actor), refs = useAdministrationReferences(), command = useAdministrationCommand();
     const [input, setInput] = useState(""), [result, setResult] = useState<UserLookup | null>(null), [error, setError] = useState<ApiError | null>(null), [loading, setLoading] = useState(false), [notFound, setNotFound] = useState(false), [fresh, setFresh] = useState(false);
     const [selected, setSelected] = useState(""), [primary, setPrimary] = useState(false), [hasIdentity, setHasIdentity] = useState(false);
+    const [selectedFacilityName, setSelectedFacilityName] = useState("");
     const identity = useRef(""), generation = useRef(0), mounted = useRef(true), controller = useRef<AbortController | null>(null);
     useEffect(() => {
         mounted.current = true;
@@ -30,7 +32,7 @@ export function UserWorkspace() {
         });
         return () => { mounted.current = false; controller.current?.abort(); identity.current = ""; unsubscribe(); };
     }, [client, snapshot]);
-    function clear() { controller.current?.abort(); identity.current = ""; generation.current++; setHasIdentity(false); setInput(""); setResult(null); setError(null); setNotFound(false); setFresh(false); setLoading(false); setSelected(""); setPrimary(false); }
+    function clear() { controller.current?.abort(); identity.current = ""; generation.current++; setHasIdentity(false); setInput(""); setResult(null); setError(null); setNotFound(false); setFresh(false); setLoading(false); setSelected(""); setSelectedFacilityName(""); setPrimary(false); }
     async function lookup(value: string) {
         if (!mounted.current || JSON.stringify(client.getQueryData(ME_QUERY_KEY)) !== snapshot)
             return;
@@ -44,6 +46,7 @@ export function UserWorkspace() {
         setResult(null);
         setFresh(false);
         setSelected("");
+        setSelectedFacilityName("");
         setPrimary(false);
         setError(null);
         setNotFound(false);
@@ -85,9 +88,9 @@ export function UserWorkspace() {
     const sys = actor.roles.some(r => r.code === "SYSTEM_ADMIN"), candidates = sys ? result?.activeFacilities ?? [] : actor.activeFacilities;
     const pending = command.pending || loading, blocked = pending || !fresh;
     const actionable = result?.activeFacilities.filter(f => sys || actor.activeFacilities.some(own => own.id === f.id)) ?? [];
-    return <>
-    <h1 className="text-2xl font-semibold">Administrasi pengguna</h1>
-    <p>Masukkan email atau nomor telepon tepat yang telah terverifikasi. Hasil menampilkan identitas tersamar.</p>
+    return <div className="clinical-workspace [&>section]:min-w-0 [&_table]:min-w-[36rem]">
+    <AppPageHeader title="Administrasi pengguna" eyebrow="Administrasi" description="Pencarian tepat menggunakan email atau nomor telepon terverifikasi." />
+    <Panel title="Cari pengguna">
     <form className="flex flex-wrap items-end gap-3" onSubmit={e => {
             e.preventDefault();
             const value = input.trim();
@@ -96,40 +99,60 @@ export function UserWorkspace() {
             setInput("");
             void lookup(value);
         }}>
-    <label>Email atau nomor telepon tepat<Input value={input} maxLength={255} autoComplete="off" disabled={pending} onChange={e => setInput(e.target.value)}/>
-    </label>
-    <Button disabled={!input.trim() || pending}>Cari pengguna tepat</Button>
-    <Button type="button" variant="outline" onClick={clear}>Bersihkan hasil</Button>
+        <label>Email atau nomor telepon tepat<Input value={input} maxLength={255} autoComplete="off" disabled={pending} onChange={e => setInput(e.target.value)}/></label>
+        <Button disabled={!input.trim() || pending}>Cari pengguna tepat</Button>
+        <Button type="button" variant="outline" onClick={clear}>Bersihkan hasil</Button>
     </form>
     <QueryState pending={loading} error={error}/>
-    <ApiFeedback error={command.error}/>{notFound && <p role="status">Pengguna dengan identitas terverifikasi tersebut tidak ditemukan.</p>}{hasIdentity && !fresh && !loading && <div role="status">
+    {notFound && <p role="status">Pengguna dengan identitas terverifikasi tersebut tidak ditemukan.</p>}
+    </Panel>
+    <ApiFeedback error={command.error}/>
+    {hasIdentity && !fresh && !loading && <div role="status" className="clinical-context">
         <p>Periksa keadaan atau penugasan terbaru sebelum memilih tindakan lagi.</p>
         <Button variant="outline" disabled={pending} onClick={() => void lookup(identity.current)}>Cari ulang pengguna</Button>
-        </div>}{result && <>
-        <Panel title="Hasil pengguna tepat">
-        <Fields values={{ "Email tersamar": result.email, "Telepon tersamar": result.phone, "Status akun": result.status, "Email terverifikasi": result.emailVerified, "Telepon terverifikasi": result.phoneVerified }}/>
-        <p>Peran: {result.roles.map(r => r.name).join(" · ") || "—"}</p>{result.hasOtherFacilityAssignments && <p>Pengguna memiliki penugasan aktif lain di luar lingkup Anda.</p>}</Panel>
+    </div>}
+    {result && <>
+        <section className="clinical-context" aria-label="Hasil pengguna tepat">
+            <div className="clinical-context-heading"><h2>Hasil pengguna tepat</h2><AccountStatus status={result.status}/></div>
+            <Fields values={{ "Email tersamar": result.email, "Telepon tersamar": result.phone }}/>
+            <div className="flex flex-wrap gap-2" aria-label="Peran pengguna">{result.roles.length ? result.roles.map(role => <AppStatusBadge key={role.code}>{role.name}</AppStatusBadge>) : <span className="text-sm">Belum ada peran</span>}</div>
+            {result.hasOtherFacilityAssignments && <p className="text-sm">Pengguna memiliki penugasan aktif lain di luar lingkup Anda.</p>}
+            <AppDisclosure title="Verifikasi dan metadata pengguna"><Fields values={{ "Status akun": result.status, "Email terverifikasi": result.emailVerified, "Telepon terverifikasi": result.phoneVerified, "ID pengguna": result.userId, Versi: result.version }}/></AppDisclosure>
+        </section>
         <Panel title="Penugasan fasyankes">
-        <p>Memilih penugasan utama dapat menggantikan penugasan utama lainnya.</p>
-        <ul className="space-y-3">{actionable.map(f => <li key={f.id} className="flex flex-wrap items-center gap-3">
-            <span>{f.name} · {f.primary ? "Utama" : "Bukan utama"}</span>
-            <Button variant="outline" disabled={blocked} onClick={() => mutate(signal => administrationApi.membership(f.id, result.userId, !f.primary, signal))}>{f.primary ? "Jadikan bukan utama" : "Jadikan utama"} {f.name}</Button>
-            <ConfirmAction label={`Hapus penugasan ${f.name}`} description="Penugasan aktif ini akan dihapus. Periksa lingkup dan pengguna sebelum melanjutkan." disabled={blocked} onConfirm={() => mutate(signal => administrationApi.membership(f.id, result.userId, null, signal))}/>
-            </li>)}</ul>
-        <label>Fasyankes penugasan<select className="block w-full rounded border p-2" value={selected} disabled={blocked} onChange={e => setSelected(e.target.value)}>
-        <option value="">Pilih fasyankes</option>{candidates.map(f => <option key={f.id} value={f.id}>{f.name}</option>)}{selected && !candidates.some(f => f.id === selected) && <option value={selected}>Fasyankes dipilih dari pencarian</option>}</select>
-        </label>{canFacilities(actor) && <FacilitySearch label="Fasyankes aktif untuk penugasan" disabled={blocked} onSelect={id => setSelected(id)}/>}<label className="flex items-center gap-2">
-        <input type="checkbox" checked={primary} disabled={blocked} onChange={e => setPrimary(e.target.checked)}/>Penugasan utama</label>
-        <Button disabled={blocked || !selected} onClick={() => mutate(signal => administrationApi.membership(selected, result.userId, primary, signal))}>Simpan penugasan</Button>
-        </Panel>{canRoles(actor) && <Panel title="Peran global">
-            <QueryState pending={refs.isPending} error={refs.error}/>{result.status !== "ACTIVE" ? <p>Perubahan peran tersedia untuk akun ACTIVE yang terverifikasi.</p> : <>
-                <p>Peran operasional TB_OFFICER, LAB_STAFF, dan FACILITY_ADMIN memerlukan penugasan aktif. Kelayakan diperiksa saat perubahan dikirim.</p>{result.activeFacilities.length === 0 && <p role="status">Pengguna belum memiliki penugasan fasyankes aktif.</p>}<ul className="space-y-3">{refs.data?.data.adminManagedRoles.map(role => {
-                        const assigned = result.roles.some(r => r.code === role.code);
-                        return <li key={role.code} className="flex flex-wrap items-center gap-3">
-                        <span>{role.name} · {assigned ? "Diberikan" : "Belum diberikan"}</span>
-                        <Button variant="outline" disabled={blocked} onClick={() => mutate(signal => administrationApi.role(result.userId, role.code as ManagedRole, !assigned, signal))}>{assigned ? "Hapus" : "Berikan"} {role.name}</Button>
-                        </li>;
-                    })}</ul>
-                </>}</Panel>}{canStatuses(actor) && <Panel title="Status akun">
-            <p>Perubahan menggunakan hasil pencarian tepat terbaru. Penangguhan atau penonaktifan dapat mengakhiri sesi pengguna.</p>{result.status === "ACTIVE" && <ConfirmAction label="Tangguhkan akun" description="Sesi pengguna dapat dicabut. Tangguhkan akun ini?" disabled={blocked} onConfirm={() => mutate(signal => administrationApi.status(result.userId, "suspend", result.version, signal))}/>} {result.status === "SUSPENDED" && <Button variant="outline" disabled={blocked} onClick={() => mutate(signal => administrationApi.status(result.userId, "reactivate", result.version, signal))}>Aktifkan kembali akun</Button>} {["ACTIVE", "SUSPENDED"].includes(result.status) ? <ConfirmAction label="Nonaktifkan akun" description="Akun akan dinonaktifkan dan sesinya dicabut. Tindakan ini tidak menyediakan pengaktifan kembali melalui antarmuka." disabled={blocked} onConfirm={() => mutate(signal => administrationApi.status(result.userId, "disable", result.version, signal))}/> : <p>Tidak ada tindakan status yang didukung untuk keadaan akun ini.</p>}</Panel>}</>}</>;
+            {actionable.length ? <AppTable caption="Penugasan pengguna"><thead><tr><th scope="col">Fasyankes</th><th scope="col">Penugasan</th><th scope="col">Tindakan</th></tr></thead><tbody>{actionable.map(f => <tr key={f.id}>
+                <th scope="row">{f.name}</th><td><AppStatusBadge tone={f.primary ? "active" : "neutral"}>{f.primary ? "Utama" : "Bukan utama"}</AppStatusBadge></td>
+                <td><div className="app-actions"><ConfirmAction label={`${f.primary ? "Jadikan bukan utama" : "Jadikan utama"} ${f.name}`} description={`Ubah penugasan ${result.email || result.phone || "pengguna ini"} pada ${f.name} menjadi ${f.primary ? "bukan utama" : "utama"}? Penugasan utama lainnya dapat digantikan.`} disabled={blocked} onConfirm={() => mutate(signal => administrationApi.membership(f.id, result.userId, !f.primary, signal))}/>
+                <ConfirmAction label={`Hapus penugasan ${f.name}`} description={`Hapus penugasan aktif ${result.email || result.phone || "pengguna ini"} pada ${f.name}? Akses pengguna pada fasyankes ini dapat berubah.`} disabled={blocked} onConfirm={() => mutate(signal => administrationApi.membership(f.id, result.userId, null, signal))}/></div></td>
+            </tr>)}</tbody></AppTable> : <p role="status">Belum ada penugasan aktif dalam lingkup Anda.</p>}
+            <AppFormSection title="Tambah atau ubah penugasan">
+                <div className="grid gap-4 sm:grid-cols-2"><label>Fasyankes penugasan<select className="block w-full rounded border p-2" value={selected} disabled={blocked} onChange={e => { setSelected(e.target.value); setSelectedFacilityName(candidates.find(f => f.id === e.target.value)?.name ?? ""); }}>
+                <option value="">Pilih fasyankes</option>{candidates.map(f => <option key={f.id} value={f.id}>{f.name}</option>)}{selected && !candidates.some(f => f.id === selected) && <option value={selected}>{selectedFacilityName || "Fasyankes dipilih dari pencarian"}</option>}</select></label>
+                <label className="flex items-center gap-2"><input type="checkbox" checked={primary} disabled={blocked} onChange={e => setPrimary(e.target.checked)}/>Penugasan utama</label></div>
+                {canFacilities(actor) && <FacilitySearch label="Fasyankes aktif untuk penugasan" disabled={blocked} onSelect={(id, name) => { setSelected(id); setSelectedFacilityName(name); }}/>}
+                <ConfirmAction label="Simpan penugasan" description={`Simpan penugasan ${primary ? "utama" : "bukan utama"} untuk ${result.email || result.phone || "pengguna ini"} pada ${selectedFacilityName || "fasyankes yang dipilih"}? ${primary ? "Penugasan utama lainnya dapat digantikan." : "Akses pengguna akan mengikuti penugasan ini."}`} disabled={blocked || !selected} onConfirm={() => mutate(signal => administrationApi.membership(selected, result.userId, primary, signal))}/>
+            </AppFormSection>
+        </Panel>
+        {canRoles(actor) && <Panel title="Peran global">
+            <QueryState pending={refs.isPending} error={refs.error}/>
+            {result.status !== "ACTIVE" ? <p>Perubahan peran tersedia untuk akun ACTIVE yang terverifikasi.</p> : <>
+                {result.activeFacilities.length === 0 && <p role="status">Pengguna belum memiliki penugasan fasyankes aktif.</p>}
+                {refs.data && <AppTable caption="Peran global pengguna"><thead><tr><th scope="col">Peran</th><th scope="col">Status</th><th scope="col">Tindakan</th></tr></thead><tbody>{refs.data.data.adminManagedRoles.map(role => {
+                    const assigned = result.roles.some(r => r.code === role.code);
+                    return <tr key={role.code}><th scope="row">{role.name}</th><td><AppStatusBadge tone={assigned ? "active" : "neutral"}>{assigned ? "Diberikan" : "Belum diberikan"}</AppStatusBadge></td><td>
+                        <ConfirmAction label={`${assigned ? "Hapus" : "Berikan"} ${role.name}`} description={`${assigned ? "Hapus" : "Berikan"} peran ${role.name} untuk ${result.email || result.phone || "pengguna ini"}? Hak akses dan sesi pengguna dapat berubah.`} disabled={blocked} onConfirm={() => mutate(signal => administrationApi.role(result.userId, role.code as ManagedRole, !assigned, signal))}/>
+                    </td></tr>;
+                })}</tbody></AppTable>}
+                <AppDisclosure title="Kelayakan peran operasional"><p className="text-sm">Peran operasional TB_OFFICER, LAB_STAFF, dan FACILITY_ADMIN memerlukan penugasan aktif. Kelayakan diperiksa saat perubahan dikirim.</p></AppDisclosure>
+            </>}
+        </Panel>}
+        {canStatuses(actor) && <Panel title="Status akun">
+            <div className="app-actions"><AccountStatus status={result.status}/>
+                {result.status === "ACTIVE" && <ConfirmAction label="Tangguhkan akun" description={`Tangguhkan akun ${result.email || result.phone || "pengguna ini"}? Sesi pengguna dapat dicabut.`} disabled={blocked} onConfirm={() => mutate(signal => administrationApi.status(result.userId, "suspend", result.version, signal))}/>}
+                {result.status === "SUSPENDED" && <ConfirmAction label="Aktifkan kembali akun" description={`Aktifkan kembali akun ${result.email || result.phone || "pengguna ini"}? Pengguna dapat masuk kembali dengan hak akses yang berlaku.`} disabled={blocked} onConfirm={() => mutate(signal => administrationApi.status(result.userId, "reactivate", result.version, signal))}/>}
+                {["ACTIVE", "SUSPENDED"].includes(result.status) ? <ConfirmAction label="Nonaktifkan akun" description={`Nonaktifkan akun ${result.email || result.phone || "pengguna ini"}? Sesi pengguna akan dicabut. Tindakan ini tidak menyediakan pengaktifan kembali melalui antarmuka.`} disabled={blocked} onConfirm={() => mutate(signal => administrationApi.status(result.userId, "disable", result.version, signal))}/> : <p>Tidak ada tindakan status yang didukung untuk keadaan akun ini.</p>}
+            </div>
+        </Panel>}
+    </>}
+    </div>;
 }

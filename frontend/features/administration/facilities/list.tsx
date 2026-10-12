@@ -6,16 +6,17 @@ import { useSession } from "@/lib/auth/session";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { administrationQueries } from "../queries";
-import { Panel, Fields, Pagination, QueryState, Refresh } from "../display";
+import { Pagination, QueryState, Refresh } from "../display";
+import { AppPageHeader, AppSection, AppStatusBadge, AppTable } from "@/components/application-patterns";
 import type { FacilityFilters } from "../types";
 export function FacilityList() {
     const { user } = useSession();
     const [query, setQuery] = useState(""), [active, setActive] = useState("all"), [filters, setFilters] = useState<FacilityFilters>({ page: 0 });
     const read = useQuery(administrationQueries.facilities(user!, filters));
     const page = read.data?.data;
-    return <>
-    <h1 className="text-2xl font-semibold">Fasyankes</h1>
-    <Link href="/admin/facilities/new" className="text-primary underline">Tambah fasyankes</Link>
+    return <div className="clinical-workspace [&>section]:min-w-0 [&_table]:min-w-[36rem]">
+    <AppPageHeader title="Fasyankes" eyebrow="Administrasi" actions={<Link href="/admin/facilities/new" className="text-primary underline">Tambah fasyankes</Link>} />
+    <AppSection title="Daftar fasyankes" actions={<Refresh busy={read.isFetching} onClick={() => void read.refetch()}/> }>
     <form className="flex flex-wrap items-end gap-3" onSubmit={e => {
             e.preventDefault();
             const q = query.trim();
@@ -33,10 +34,8 @@ export function FacilityList() {
     </label>
     <Button disabled={!!query.trim() && query.trim().length < 2}>Cari fasyankes</Button>
     </form>
-    <Refresh busy={read.isFetching} onClick={() => void read.refetch()}/>
-    <QueryState pending={read.isPending} error={read.error}/>{page && <>{page.content.length === 0 && <p>Tidak ada fasyankes.</p>}{page.content.map(row => <Panel key={row.id} title={row.name}>
-            <Fields values={{ "Kode jenis": row.facilityTypeCode, "Induk": row.parentFacilityId, "Provinsi": row.provinceCode, "Kabupaten/kota": row.regencyCode, "Aktif": row.active }}/>
-            <Link href={`/admin/facilities/${row.id}`} className="text-primary underline">Buka detail {row.name}</Link>
-            </Panel>)}<Pagination page={page.page} size={page.size} total={page.totalElements} onPage={p => setFilters({ ...filters, page: p })}/>
-        </>}</>;
+    <QueryState pending={read.isPending} error={read.error}/>{page && <>{page.content.length === 0 ? <p role="status">Tidak ada fasyankes.</p> : <AppTable caption="Daftar fasyankes"><thead><tr><th scope="col">Fasyankes</th><th scope="col">Jenis</th><th scope="col">Wilayah</th><th scope="col">Status</th><th scope="col">Tindakan</th></tr></thead><tbody>{page.content.map(row => <tr key={row.id}>
+        <th scope="row">{row.name}</th><td>{row.facilityTypeCode || "—"}</td><td>{[row.provinceCode, row.regencyCode].filter(Boolean).join(" · ") || "—"}</td><td><AppStatusBadge tone={row.active ? "active" : "neutral"}>{row.active ? "Aktif" : "Tidak aktif"}</AppStatusBadge></td><td><Link href={`/admin/facilities/${row.id}`} className="text-primary underline">Buka detail {row.name}</Link></td>
+        </tr>)}</tbody></AppTable>}<Pagination page={page.page} size={page.size} total={page.totalElements} onPage={p => setFilters({ ...filters, page: p })}/>
+        </>}</AppSection></div>;
 }

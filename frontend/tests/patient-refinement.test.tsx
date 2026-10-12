@@ -32,9 +32,9 @@ it("treatment exposes all follow-up records through progressive disclosure witho
   expect(toggle.closest("details")).not.toHaveAttribute("open");
   await userEvent.click(toggle);
   expect(toggle.closest("details")).toHaveAttribute("open");
-  const summaries=toggle.closest("details")!.querySelectorAll(":scope > div > details > summary");
-  expect(summaries).toHaveLength(24);
-  history.forEach(follow=>expect([...summaries].some(summary=>summary.textContent?.includes(follow.followUpType))).toBe(true));
+  const records=within(toggle.closest("details")!).getAllByRole("listitem");
+  expect(records).toHaveLength(24);
+  history.forEach(follow=>expect(within(toggle.closest("details")!).getByText(follow.followUpType,{selector:"summary"})).toHaveTextContent(follow.followUpType));
   expect(calls.every(c=>!c.options.method||c.options.method==="GET")).toBe(true);
 });
 it("profile separates account and medical details without a duplicate navigation grid",async()=>{
@@ -50,7 +50,7 @@ it("authorized follow-up history remains available when no current treatment is 
   portalBackend(f.patient,c=>c.url.split("?")[0].endsWith("/treatment")?new Response(null,{status:404}):undefined);
   await renderPortal("treatment");
   await screen.findByRole("heading",{name:"Tindak lanjut berikutnya"});
-  expect(await screen.findByText(f.followUp.followUpType,{selector:"summary span"})).toBeInTheDocument();
+  expect(await screen.findByText(f.followUp.followUpType,{selector:"summary"})).toBeInTheDocument();
   await screen.findByText("Belum ada catatan pengobatan.");
   expect(screen.queryByRole("region",{name:"Ringkasan pengobatan"})).not.toBeInTheDocument();
 });
@@ -66,10 +66,10 @@ it("treatment refetch failure does not hide independently authorized follow-ups"
   portalBackend(f.patient,c=>reject&&c.url.split("?")[0].endsWith("/treatment")?failure(503,"TEMPORARY"):undefined);
   await renderPortal("treatment");
   await screen.findByRole("region",{name:"Ringkasan pengobatan"});
-  await screen.findByText(f.followUp.followUpType,{selector:"summary span"});
+  await screen.findByText(f.followUp.followUpType,{selector:"summary"});
   reject=true;
   await userEvent.click(screen.getByRole("button",{name:"Muat ulang catatan"}));
   await screen.findByRole("button",{name:"Coba kembali"});
   expect(screen.getByRole("heading",{name:"Tindak lanjut berikutnya"})).toBeInTheDocument();
-  expect(screen.getByText(f.followUp.followUpType,{selector:"summary span"})).toBeInTheDocument();
+  expect(screen.getByText(f.followUp.followUpType,{selector:"summary"})).toBeInTheDocument();
 });
