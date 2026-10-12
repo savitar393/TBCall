@@ -1,0 +1,27 @@
+%% ============================================================
+%% 3. PATIENT LINK VERIFICATION (Staff-Assisted)
+%% ============================================================
+graph TD
+    Start3([TB Officer Verifikasi<br/>Patient Link]) --> CheckAuth3{TB Officer<br/>Punya Permission<br/>PATIENT_LINK_VERIFY?}
+    
+    CheckAuth3 -->|No| ErrorAuth3[Error: 403 Forbidden]
+    ErrorAuth3 --> End3Fail([End])
+    
+    CheckAuth3 -->|Yes| InputLink3[Input: user_id & patient_id]
+    InputLink3 --> CheckExisting3{Link Sudah Ada<br/>& VERIFIED?}
+    
+    CheckExisting3 -->|Yes - User| ErrorExist3a[Error: User sudah punya<br/>VERIFIED SELF link lain]
+    ErrorExist3a --> End3Fail
+    
+    CheckExisting3 -->|Yes - Patient| ErrorExist3b[Error: Patient sudah punya<br/>VERIFIED SELF link lain]
+    ErrorExist3b --> End3Fail
+    
+    CheckExisting3 -->|No Conflict| CheckScope3{Patient dalam<br/>Scope Facility<br/>Officer?}
+    CheckScope3 -->|No| ErrorScope3[Error: Out of Scope]
+    ErrorScope3 --> End3Fail
+    
+    CheckScope3 -->|Yes| CreateOrUpdateLink3[Create/Update patient_user_link<br/>relationship_type: SELF<br/>verification_status: VERIFIED]
+    CreateOrUpdateLink3 --> SetVerifiedFields3[Set verified_at & verified_by]
+    SetVerifiedFields3 --> AssignRole3[Assign Role: PATIENT to User]
+    AssignRole3 --> AuditLog3[Create Audit Log]
+    AuditLog3 --> End3Success([Patient Link Verified<br/>User dapat akses data pasien])

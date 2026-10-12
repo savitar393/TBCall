@@ -1,0 +1,71 @@
+%% ============================================================
+%% 9. EXTERNAL SYSTEM SYNC (SITB Integration)
+%% ============================================================
+graph TD
+    Start9([Sync Scheduler<br/>Triggered]) --> CheckExternalSystem9[Check External Systems<br/>where active = true]
+    
+    CheckExternalSystem9 --> CreateSyncRun9[Create Sync Run<br/>direction: INBOUND/OUTBOUND<br/>status: RUNNING]
+    CreateSyncRun9 --> CheckDirection9{Sync<br/>Direction?}
+    
+    CheckDirection9 -->|INBOUND| FetchFromSITB9[Fetch Data dari SITB API<br/>since last cursor_value]
+    CheckDirection9 -->|OUTBOUND| PrepareLocalData9[Prepare Local Data<br/>yang perlu di-sync]
+    
+    FetchFromSITB9 --> ParseResponse9[Parse Response JSON]
+    ParseResponse9 --> IterateRecords9[Iterate Each Record]
+    
+    PrepareLocalData9 --> IterateRecords9
+    IterateRecords9 --> CheckRecord9{More<br/>Records?}
+    
+    CheckRecord9 -->|No| FinalizeSyncRun9[Finalize Sync Run]
+    
+    CheckRecord9 -->|Yes| CreateSyncItem9[Create Sync Item<br/>entity_type<br/>external_id<br/>status: PENDING]
+    CreateSyncItem9 --> CheckExternalId9[Check External Identifiers]
+    CheckExternalId9 --> EntityExists9{Entity<br/>Already Exists<br/>Locally?}
+    
+    EntityExists9 -->|No| DetermineOpCreate9[operation: CREATE]
+    EntityExists9 -->|Yes| CheckHash9{content_hash<br/>Changed?}
+    
+    CheckHash9 -->|No| DetermineOpIgnore9[operation: IGNORE]
+    CheckHash9 -->|Yes| DetermineOpUpdate9[operation: UPDATE]
+    
+    DetermineOpCreate9 --> ValidateData9[Validate Incoming Data]
+    DetermineOpUpdate9 --> ValidateData9
+    DetermineOpIgnore9 --> UpdateSyncItemSkipped9[Update Sync Item<br/>status: SKIPPED]
+    UpdateSyncItemSkipped9 --> CheckRecord9
+    
+    ValidateData9 --> DataValid9{Data<br/>Valid?}
+    
+    DataValid9 -->|No| UpdateSyncItemFailed9[Update Sync Item<br/>status: FAILED<br/>Store error_message]
+    UpdateSyncItemFailed9 --> IncrementFailed9[Increment<br/>sync_run.records_failed]
+    IncrementFailed9 --> CheckRecord9
+    
+    DataValid9 -->|Yes| CheckOperation9{Operation?}
+    
+    CheckOperation9 -->|CREATE| CreateEntity9[Create Local Entity<br/>Map SITB fields]
+    CheckOperation9 -->|UPDATE| UpdateEntity9[Update Local Entity<br/>Merge Changes]
+    
+    CreateEntity9 --> CreateExternalIdentifier9[Create External Identifier<br/>Link external_id ↔ entity_id]
+    UpdateEntity9 --> UpdateExternalIdentifier9[Update External Identifier<br/>Update last_seen_at]
+    
+    CreateExternalIdentifier9 --> UpdateSyncItemSuccess9[Update Sync Item<br/>status: SUCCEEDED<br/>Set processed_at]
+    UpdateExternalIdentifier9 --> UpdateSyncItemSuccess9
+    
+    UpdateSyncItemSuccess9 --> IncrementCounter9{Operation?}
+    IncrementCounter9 -->|CREATE| IncrementCreated9[Increment<br/>sync_run.records_created]
+    IncrementCounter9 -->|UPDATE| IncrementUpdated9[Increment<br/>sync_run.records_updated]
+    
+    IncrementCreated9 --> CheckRecord9
+    IncrementUpdated9 --> CheckRecord9
+    
+    FinalizeSyncRun9 --> UpdateSyncRunStatus9{Any<br/>Failures?}
+    UpdateSyncRunStatus9 -->|All Success| SetStatusSucceeded9[Update Sync Run<br/>status: SUCCEEDED]
+    UpdateSyncRunStatus9 -->|Some Failures| SetStatusPartial9[Update Sync Run<br/>status: PARTIAL]
+    UpdateSyncRunStatus9 -->|All Failed| SetStatusFailed9[Update Sync Run<br/>status: FAILED]
+    
+    SetStatusSucceeded9 --> UpdateCursor9[Update cursor_value<br/>untuk next sync]
+    SetStatusPartial9 --> UpdateCursor9
+    SetStatusFailed9 --> LogError9[Log Error Details]
+    
+    UpdateCursor9 --> SetFinishedAt9[Set finished_at]
+    LogError9 --> SetFinishedAt9
+    SetFinishedAt9 --> End9([Sync Completed])

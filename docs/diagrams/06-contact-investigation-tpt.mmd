@@ -1,0 +1,51 @@
+%% ============================================================
+%% 6. CONTACT INVESTIGATION & TPT WORKFLOW
+%% ============================================================
+graph TD
+    Start6([Investigasi Kontak<br/>dari Index Case]) --> IdentifyContacts6[Identifikasi Contacts<br/>dari Index Case]
+    
+    IdentifyContacts6 --> CreateContact6[Create Contact for each]
+    CreateContact6 --> InputContact6[Input:<br/>- full_name<br/>- relationship_to_index_case<br/>- household_contact<br/>- birth_date<br/>- address, phone]
+    
+    InputContact6 --> CreateInvestigation6[Create Contact Investigation]
+    CreateInvestigation6 --> CheckWorkflow6{Workflow<br/>Type?}
+    
+    CheckWorkflow6 -->|INTERNAL| SetStatusNew6[Status: NEW]
+    CheckWorkflow6 -->|OUTGOING_REFERRAL| SetStatusSent6[Status: SENT<br/>Set destination_facility]
+    CheckWorkflow6 -->|INCOMING_REFERRAL| SetStatusReceived6[Status: RECEIVED<br/>Set source_facility]
+    
+    SetStatusNew6 --> Investigate6[Mulai Investigation<br/>Status: IN_PROGRESS]
+    SetStatusSent6 --> WaitReceive6[Tunggu Diterima Faskes Lain]
+    WaitReceive6 --> Investigate6
+    SetStatusReceived6 --> Investigate6
+    
+    Investigate6 --> ClinicalExam6[Clinical Examination<br/>& Screening]
+    ClinicalExam6 --> LabTest6{Perlu Lab<br/>Test?}
+    
+    LabTest6 -->|Yes| RequestContactLab6[Create Lab Request<br/>untuk Contact]
+    RequestContactLab6 --> GetLabResult6[Get Lab Results]
+    GetLabResult6 --> DetermineResult6[Tentukan Result]
+    
+    LabTest6 -->|No| DetermineResult6
+    DetermineResult6 --> UpdateInvestStatus6[Update Investigation<br/>Status: COMPLETED]
+    UpdateInvestStatus6 --> InputResult6[Input result_code:<br/>- TIDAK_SAKIT<br/>- TERDUGA_TB<br/>- TB_AKTIF<br/>- TB_LATEN]
+    
+    InputResult6 --> CheckResult6{Result?}
+    
+    CheckResult6 -->|TIDAK_SAKIT| End6a([End - Tidak Perlu TPT])
+    
+    CheckResult6 -->|TB_AKTIF| CreateTBCase6[Buat TB Registration<br/>& TB Case untuk Contact]
+    CreateTBCase6 --> End6b([Start TB Treatment])
+    
+    CheckResult6 -->|TB_LATEN/TERDUGA_TB| CheckTPTEligible6{Eligible untuk<br/>TPT?}
+    CheckTPTEligible6 -->|No| End6c([End - Monitoring Saja])
+    
+    CheckTPTEligible6 -->|Yes| CreateTPT6[Create Preventive Treatment]
+    CreateTPT6 --> InputTPT6[Input:<br/>- regimen_id (TPT regimen)<br/>- duration_value & unit<br/>- start_date<br/>- weight_kg]
+    InputTPT6 --> SetTPTStatus6[Status: ACTIVE]
+    SetTPTStatus6 --> MonitorTPT6[Monitor TPT Adherence<br/>Create dose events]
+    MonitorTPT6 --> CheckTPTComplete6{TPT<br/>Selesai?}
+    
+    CheckTPTComplete6 -->|No - Continue| MonitorTPT6
+    CheckTPTComplete6 -->|Yes| UpdateTPTStatus6[Update Status: COMPLETED<br/>Input outcome_code]
+    UpdateTPTStatus6 --> End6Success([TPT Completed])

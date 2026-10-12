@@ -1,0 +1,47 @@
+%% ============================================================
+%% 5. TREATMENT MANAGEMENT WORKFLOW
+%% ============================================================
+graph TD
+    Start5([Mulai Pengobatan TB]) --> CheckCase5{TB Case<br/>Status = ACTIVE?}
+    
+    CheckCase5 -->|No| ErrorCase5[Error: Case tidak aktif]
+    ErrorCase5 --> End5Fail([End])
+    
+    CheckCase5 -->|Yes| SelectRegimen5[Pilih Regimen<br/>TB_SO atau TB_RO]
+    SelectRegimen5 --> CreateTreatment5[Create Treatment]
+    CreateTreatment5 --> InputTreatment5[Input:<br/>- regimen_id<br/>- start_date<br/>- planned_end_date<br/>- initial_weight_kg<br/>- intensive phase dates<br/>- continuation phase dates]
+    InputTreatment5 --> SetTreatmentStatus5[Status: ACTIVE]
+    SetTreatmentStatus5 --> CreateTreatmentDrugs5[Create Treatment Drugs<br/>Link drugs dari regimen]
+    
+    CreateTreatmentDrugs5 --> InputDrugs5[Input untuk setiap Drug:<br/>- dose_value & dose_unit<br/>- frequency_per_week<br/>- treatment_phase<br/>- batch_number]
+    InputDrugs5 --> CreateMonitoringPlan5[Create Monitoring Plan<br/>Status: ACTIVE]
+    CreateMonitoringPlan5 --> GenerateMonitoringEvents5[Generate Monitoring Events<br/>- Kontrol Bulan 2<br/>- Kontrol Bulan 5<br/>- Pemeriksaan Dahak]
+    
+    GenerateMonitoringEvents5 --> AssignPMO5{Ada PMO/<br/>Pendamping?}
+    AssignPMO5 -->|Yes| CreatePatientSupporter5[Create Patient Supporter<br/>supporter_type: PMO]
+    CreatePatientSupporter5 --> DailyDose5[Mulai Daily Dose Recording]
+    
+    AssignPMO5 -->|No| DailyDose5
+    DailyDose5 --> RecordDose5[Create Dose Events<br/>scheduled_date: daily<br/>status: TAKEN_OBSERVED/<br/>TAKEN_SELF_REPORTED/<br/>MISSED]
+    
+    RecordDose5 --> CheckAdherence5{Adherence<br/>Low?}
+    CheckAdherence5 -->|Yes| CreateAlert5[Create Alert<br/>alert_type: TREATMENT_ADHERENCE_LOW<br/>severity: HIGH]
+    CreateAlert5 --> CreateNotification5[Create Notifications<br/>untuk TB Officer]
+    CreateNotification5 --> FollowUpSchedule5[Schedule Follow-up]
+    
+    CheckAdherence5 -->|No| FollowUpSchedule5
+    FollowUpSchedule5 --> CreateFollowUp5[Create Follow-ups<br/>- Kontrol rutin<br/>- Home visit<br/>- Pemeriksaan dahak]
+    
+    CreateFollowUp5 --> CheckAE5{Ada Adverse<br/>Event?}
+    CheckAE5 -->|Yes| RecordAE5[Create Adverse Event<br/>Input: event_type, severity<br/>action_taken, outcome]
+    RecordAE5 --> ContinueTreatment5[Continue Treatment]
+    
+    CheckAE5 -->|No| ContinueTreatment5
+    ContinueTreatment5 --> CheckComplete5{Treatment<br/>Selesai?}
+    
+    CheckComplete5 -->|No - Continue| RecordDose5
+    CheckComplete5 -->|Yes| CreateOutcome5[Create Treatment Outcome]
+    CreateOutcome5 --> InputOutcome5[Input:<br/>- outcome_code<br/>- outcome_date<br/>- notes]
+    InputOutcome5 --> UpdateTreatmentStatus5[Update Treatment<br/>Status: COMPLETED<br/>Set actual_end_date]
+    UpdateTreatmentStatus5 --> UpdateCaseStatus5[Update TB Case<br/>Status: COMPLETED<br/>Set closed_at]
+    UpdateCaseStatus5 --> End5Success([Treatment Completed])

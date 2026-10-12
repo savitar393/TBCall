@@ -72,6 +72,22 @@ Each page response receives a fresh CSP nonce and `no-store`. Next applies the n
 
 Development alone permits script `unsafe-eval`, inline style elements and WebSocket schemes for Next's dev server. Production allows **inline style attributes only** for Radix overlay/scroll management; script attributes remain forbidden. No external font/CDN is used. HTTPS, edge limits and an appropriate deployed origin remain deployment responsibilities.
 
+## Mockup UI/UX routes (TB Call Center)
+
+The approved UI/UX mockups are implemented as self-contained demo screens under `components/tbc/` with static Indonesian demo data. These routes render without backend calls and are clearly labelled "Data demo":
+
+| Route | Mockup source | Scope |
+|---|---|---|
+| `/landing` | Main.png | Public landing: hero, three portals, statistics 2021–2023, education media, emergency call CTA |
+| `/masuk` | TB Call — Masuk.png | Patient login mockup (NIK + BPJS + password); the working backend login remains `/login` |
+| `/daftar` | Daftar · Biodata/Alamat/Akun/Tinjau | 4-step registration wizard (local state only, nothing persisted) |
+| `/verifikasi` | Verifikasi Kontak & Aktivasi | Contact verification + account activation journey simulation |
+| `/portal` | Beranda Native + Portal Pasien (Tabbed) | Patient portal: jadwal minum OAT, lapor gejala & efek, kontak & TPT, lab dahak & catatan, panduan PMO, chat faskes |
+| `/nakes` | Pasien & Registrasi … Pemantauan | Nakes workspace: pasien & registrasi, laboratorium, pengobatan, tindak lanjut, kontinuitas, pemantauan incl. after-verifikasi antrean H-90/H-5/overdue |
+| `/admin` | Command Center … Integrasi & Audit | Admin Faskes workspace: command center (ringkasan/tren/kohort), logistik OAT, tenaga medis, faskes & akun, integrasi & audit |
+
+Shared design system (green health theme, lavender surfaces, pill navigation) lives in `components/tbc/ui.tsx`. These screens are design-implementation mocks: they do not call the backend, store data, or grant any access. Wiring them to real endpoints requires the approved contracts noted in each screen's developer banner.
+
 `components/ui/` contains the checked-in shadcn/ui New York Button, Input, Label, Card and Sheet sources, adapted for Indonesian drawer labels, Tailwind 4 and touch targets. `LICENSE.shadcn` retains the upstream MIT license. See [shadcn's manual installation](https://ui.shadcn.com/docs/installation/manual); application compilation does not invoke a UI generator.
 
 ## Tests and scope

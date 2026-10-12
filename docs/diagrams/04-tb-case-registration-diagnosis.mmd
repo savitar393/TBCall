@@ -1,0 +1,33 @@
+%% ============================================================
+%% 4. TB CASE REGISTRATION & DIAGNOSIS WORKFLOW
+%% ============================================================
+graph TD
+    Start4([Pasien Datang ke Faskes]) --> CheckPatient4{Patient<br/>Sudah Ada?}
+    
+    CheckPatient4 -->|No| CreatePatient4[Create Patient<br/>Input: NIK, Nama, Alamat, dll]
+    CreatePatient4 --> CreateReg4[Create TB Registration]
+    
+    CheckPatient4 -->|Yes| CreateReg4
+    CreateReg4 --> InputReg4[Input:<br/>- facility_id<br/>- registration_date<br/>- suspect_type_code<br/>- initial_weight_kg<br/>- hiv_status, dm_status]
+    InputReg4 --> SetRegStatus4[Status: OPEN]
+    SetRegStatus4 --> RequestLab4{Perlu Pemeriksaan<br/>Lab?}
+    
+    RequestLab4 -->|Yes| CreateLabRequest4[Create Lab Request]
+    CreateLabRequest4 --> SpecimenCollection4[Collect Specimen<br/>Create lab_specimens]
+    SpecimenCollection4 --> LabTesting4[Lab Testing<br/>Create lab_request_tests]
+    LabTesting4 --> LabResults4[Input Lab Results<br/>Create lab_results]
+    LabResults4 --> CreateDiagnosis4[Create Diagnosis]
+    
+    RequestLab4 -->|No - Diagnosis Klinis| CreateDiagnosis4
+    CreateDiagnosis4 --> InputDiagnosis4[Input:<br/>- diagnosis_date<br/>- anatomical_site_code<br/>- diagnosis_type_code<br/>- chest_xray_result<br/>- icd10_code]
+    InputDiagnosis4 --> UpdateRegStatus4[Update Registration<br/>Status: DIAGNOSED]
+    UpdateRegStatus4 --> CheckTBConfirmed4{TB<br/>Terkonfirmasi?}
+    
+    CheckTBConfirmed4 -->|No| CloseReg4[Update Status: CLOSED]
+    CloseReg4 --> End4a([End - Tidak TB])
+    
+    CheckTBConfirmed4 -->|Yes| CreateTBCase4[Create TB Case<br/>Reference diagnosis_id]
+    CreateTBCase4 --> InputCase4[Input:<br/>- case_category_code<br/>- weight_kg, height_cm<br/>- bcg_status<br/>- pregnancy_status]
+    InputCase4 --> SetCaseStatus4[Status: ACTIVE<br/>Set confirmed_at]
+    SetCaseStatus4 --> UpdateRegStatus4b[Update Registration<br/>Status: CONVERTED_TO_CASE]
+    UpdateRegStatus4b --> End4Success([TB Case Created<br/>Siap Mulai Treatment])

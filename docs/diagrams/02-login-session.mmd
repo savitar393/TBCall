@@ -1,0 +1,24 @@
+%% ============================================================
+%% 2. LOGIN & SESSION MANAGEMENT  
+%% ============================================================
+graph TD
+    Start2([User Login]) --> InputLogin2[Input Email/Phone & Password]
+    InputLogin2 --> FindUser2[Cari User by Email/Phone]
+    
+    FindUser2 --> UserExists2{User<br/>Ditemukan?}
+    UserExists2 -->|No| ErrorLogin2[Error: User tidak ditemukan]
+    ErrorLogin2 --> End2Fail([Login Gagal])
+    
+    UserExists2 -->|Yes| CheckPassword2{Password<br/>Match?}
+    CheckPassword2 -->|No| ErrorPassword2[Error: Password salah]
+    ErrorPassword2 --> End2Fail
+    
+    CheckPassword2 -->|Yes| CheckStatus2{User Status<br/>= ACTIVE?}
+    CheckStatus2 -->|No| ErrorStatus2[Error: User PENDING/SUSPENDED/DISABLED]
+    ErrorStatus2 --> End2Fail
+    
+    CheckStatus2 -->|Yes| GenSession2[Generate Random Session Token<br/>Store Hash in user_sessions]
+    GenSession2 --> SetCookie2[Set HttpOnly Secure Cookie<br/>Expires: 8 hours]
+    SetCookie2 --> UpdateLastLogin2[Update last_login_at]
+    UpdateLastLogin2 --> LoadRoles2[Load User Roles & Permissions]
+    LoadRoles2 --> End2Success([Login Success<br/>Session Created])

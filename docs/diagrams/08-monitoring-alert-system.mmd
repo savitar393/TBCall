@@ -1,0 +1,65 @@
+%% ============================================================
+%% 8. MONITORING & ALERT SYSTEM
+%% ============================================================
+graph TD
+    Start8([Monitoring System<br/>Scheduler Running]) --> CheckActivePlans8[Check Active<br/>Monitoring Plans]
+    
+    CheckActivePlans8 --> LoadEvents8[Load Monitoring Events<br/>Status: SCHEDULED/DUE]
+    LoadEvents8 --> CheckDueDate8{Event<br/>Due Date<br/>Reached?}
+    
+    CheckDueDate8 -->|Not Yet| End8Wait([Wait Next Cycle])
+    
+    CheckDueDate8 -->|Yes| UpdateEventDue8[Update Event<br/>Status: DUE]
+    UpdateEventDue8 --> CheckEventType8{Event<br/>Type?}
+    
+    CheckEventType8 -->|PEMERIKSAAN_DAHAK| CheckLabDone8{Lab Result<br/>Ada?}
+    CheckEventType8 -->|KONTROL_RUTIN| CheckFollowUpDone8{Follow-up<br/>Completed?}
+    CheckEventType8 -->|KEPATUHAN_MINUM_OBAT| CheckAdherence8{Adherence<br/>Calculation}
+    
+    CheckLabDone8 -->|No - Overdue| CreateAlertLab8[Create Alert<br/>alert_type: LAB_RESULT_PENDING<br/>severity: HIGH]
+    CheckLabDone8 -->|Yes| CompleteEventLab8[Update Event<br/>Status: COMPLETED]
+    CompleteEventLab8 --> End8Success([Event Completed])
+    
+    CheckFollowUpDone8 -->|No - Overdue| CreateAlertFollowUp8[Create Alert<br/>alert_type: LATE_FOLLOW_UP<br/>severity: WARNING]
+    CheckFollowUpDone8 -->|Yes| CompleteEventFollowUp8[Update Event<br/>Status: COMPLETED]
+    CompleteEventFollowUp8 --> End8Success
+    
+    CheckAdherence8 -->|< 80%| CreateAlertAdherence8[Create Alert<br/>alert_type: TREATMENT_ADHERENCE_LOW<br/>severity: CRITICAL]
+    CheckAdherence8 -->|≥ 80%| CompleteEventAdherence8[Update Event<br/>Status: COMPLETED]
+    CompleteEventAdherence8 --> End8Success
+    
+    CreateAlertLab8 --> ProcessAlert8[Process Alert]
+    CreateAlertFollowUp8 --> ProcessAlert8
+    CreateAlertAdherence8 --> ProcessAlert8
+    
+    ProcessAlert8 --> DetermineRecipients8[Determine Recipients<br/>based on Alert Type & Scope]
+    DetermineRecipients8 --> LoadUsers8[Load TB Officers & PMO<br/>in Scope]
+    LoadUsers8 --> CreateNotifications8[Create Notifications<br/>for Each User]
+    
+    CreateNotifications8 --> CheckChannel8{Notification<br/>Channel?}
+    CheckChannel8 -->|IN_APP| SetInApp8[Status: SENT<br/>Langsung tersedia]
+    CheckChannel8 -->|EMAIL| QueueEmail8[Queue Email<br/>Status: PENDING]
+    CheckChannel8 -->|SMS| QueueSMS8[Queue SMS<br/>Status: PENDING]
+    CheckChannel8 -->|WHATSAPP| QueueWA8[Queue WhatsApp<br/>Status: PENDING]
+    
+    QueueEmail8 --> SendEmail8[Send via Email Service]
+    QueueSMS8 --> SendSMS8[Send via SMS Gateway]
+    QueueWA8 --> SendWA8[Send via WA Business API]
+    
+    SendEmail8 --> UpdateStatusDelivered8[Update Status:<br/>SENT → DELIVERED]
+    SendSMS8 --> UpdateStatusDelivered8
+    SendWA8 --> UpdateStatusDelivered8
+    SetInApp8 --> UpdateStatusDelivered8
+    
+    UpdateStatusDelivered8 --> WaitAcknowledge8[Tunggu User Acknowledge]
+    WaitAcknowledge8 --> UserAcknowledge8{User<br/>Acknowledge<br/>Alert?}
+    
+    UserAcknowledge8 -->|Yes| UpdateAlertAck8[Update Alert<br/>Status: ACKNOWLEDGED<br/>Set acknowledged_at]
+    UpdateAlertAck8 --> UpdateNotifRead8[Update Notification<br/>Status: READ<br/>Set read_at]
+    UpdateNotifRead8 --> ActionTaken8{Action<br/>Taken?}
+    
+    ActionTaken8 -->|Yes| UpdateAlertResolved8[Update Alert<br/>Status: RESOLVED<br/>Set resolved_at]
+    UpdateAlertResolved8 --> End8Success
+    
+    ActionTaken8 -->|No| End8Pending([Alert Still Open])
+    UserAcknowledge8 -->|No - Timeout| End8Timeout([Alert Remains DUE])

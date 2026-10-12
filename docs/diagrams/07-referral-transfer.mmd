@@ -1,0 +1,44 @@
+%% ============================================================
+%% 7. REFERRAL & TRANSFER WORKFLOW
+%% ============================================================
+graph TD
+    Start7([Referral/Transfer<br/>Pasien]) --> CheckType7{Referral<br/>Type?}
+    
+    CheckType7 -->|PRE_TREATMENT_REFERRAL| PreTreatment7[Rujukan Sebelum Treatment<br/>Untuk diagnosis/konfirmasi]
+    CheckType7 -->|TREATMENT_TRANSFER| Transfer7[Transfer Treatment<br/>Pindah faskes lanjut pengobatan]
+    
+    PreTreatment7 --> CreateReferral7[Create Referral]
+    Transfer7 --> CreateReferral7
+    
+    CreateReferral7 --> InputReferral7[Input:<br/>- source_facility_id<br/>- destination_facility_id<br/>- sent_at<br/>- notes]
+    InputReferral7 --> ValidateFacility7{Source ≠<br/>Destination?}
+    
+    ValidateFacility7 -->|No| ErrorFacility7[Error: Same facility]
+    ErrorFacility7 --> End7Fail([End])
+    
+    ValidateFacility7 -->|Yes| SetStatusSent7[Status: SENT]
+    SetStatusSent7 --> NotifyDestination7[Notify Destination Facility]
+    NotifyDestination7 --> WaitReceive7[Tunggu Konfirmasi Penerimaan]
+    
+    WaitReceive7 --> DestinationCheck7{Destination<br/>Terima?}
+    
+    DestinationCheck7 -->|Reject| SetStatusReturned7[Status: RETURNED<br/>Input return_reason]
+    SetStatusReturned7 --> End7Returned([Rujukan Dikembalikan])
+    
+    DestinationCheck7 -->|Accept| UpdateStatusReceived7[Update Status: RECEIVED<br/>Set received_at]
+    UpdateStatusReceived7 --> CheckReferralType7{Referral<br/>Type?}
+    
+    CheckReferralType7 -->|PRE_TREATMENT| ContinueDiagnosis7[Lanjut Diagnosis<br/>di Faskes Tujuan]
+    ContinueDiagnosis7 --> UpdateStatusReported7[Update Status: REPORTED<br/>Set patient_reported_at]
+    UpdateStatusReported7 --> End7SuccessA([Rujukan Selesai])
+    
+    CheckReferralType7 -->|TREATMENT_TRANSFER| UpdateCaseFacility7[Update TB Case<br/>current_facility_id]
+    UpdateCaseFacility7 --> UpdateTreatmentFacility7[Update Treatment<br/>facility_id]
+    UpdateTreatmentFacility7 --> UpdateCaseStatus7[Update TB Case<br/>Status: TRANSFERRED]
+    UpdateCaseStatus7 --> UpdateTreatmentStatus7[Update Treatment<br/>Status: TRANSFERRED]
+    UpdateTreatmentStatus7 --> CreateNewTreatment7{Buat Treatment<br/>Baru?}
+    
+    CreateNewTreatment7 -->|Yes| CreateContinueTreatment7[Create New Treatment<br/>di Faskes Tujuan]
+    CreateContinueTreatment7 --> End7SuccessB([Transfer Selesai])
+    
+    CreateNewTreatment7 -->|No - Continue| UpdateStatusReported7

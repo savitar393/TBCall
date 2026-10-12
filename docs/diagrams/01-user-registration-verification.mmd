@@ -1,0 +1,22 @@
+%% ============================================================
+%% 1. USER REGISTRATION & VERIFICATION
+%% ============================================================
+graph TD
+    Start1([User Memulai Registrasi]) --> InputCred1[Input Email/Phone & Password]
+    InputCred1 --> ValidateCred1{Validasi<br/>Kredensial}
+    
+    ValidateCred1 -->|Invalid| ErrorCred1[Error: Password min 12 char<br/>atau Email/Phone invalid]
+    ErrorCred1 --> InputCred1
+    
+    ValidateCred1 -->|Valid| CreateUser1[Create User<br/>Status: PENDING]
+    CreateUser1 --> GenToken1[Generate Verification Token<br/>Store Hash Only]
+    GenToken1 --> SendVerif1[Kirim Email/SMS Verifikasi]
+    SendVerif1 --> WaitVerif1[User Klik Link Verifikasi]
+    
+    WaitVerif1 --> ValidateToken1{Token Valid<br/>& Belum Expired?}
+    ValidateToken1 -->|No| ErrorToken1[Error: Token Invalid/Expired]
+    ErrorToken1 --> End1([End])
+    
+    ValidateToken1 -->|Yes| ConsumeToken1[Consume Token<br/>One-time Use]
+    ConsumeToken1 --> ActivateUser1[Update User Status: ACTIVE<br/>Set verified_at]
+    ActivateUser1 --> End1Success([User Aktif<br/>Bisa Login])
