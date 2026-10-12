@@ -2,6 +2,12 @@ import { displayTemporal } from "@/lib/date-format";
 import Link from "next/link";
 import { useSession } from "@/lib/auth/session";
 import { canClinical } from "../permissions";
+import type { Label } from "../types";
+// TBCall lifecycle display labels also cover terminal values absent from active-worklist filters.
+export function registrationStatusLabel(code: string, options?: Label[]) {
+  const labels: Record<string, string> = { OPEN: "Terbuka", DIAGNOSED: "Sudah didiagnosis", CONVERTED_TO_CASE: "Dikonfirmasi menjadi kasus", CLOSED: "Ditutup", CANCELLED: "Dibatalkan" };
+  return options?.find(option => option.code === code)?.name ?? labels[code] ?? code;
+}
 export function DisplayFields({ values }: { values: [string, string | number | boolean | null | undefined][] }) {
   return <dl className="clinical-fields grid gap-x-6 gap-y-3 rounded-xl border bg-white p-5 text-sm sm:grid-cols-[minmax(10rem,1fr)_2fr]">{values.map(([label, value]) => <div key={label} className="contents"><dt className="text-muted-foreground">{label}</dt><dd className="break-words whitespace-pre-wrap font-medium">{value == null || value === "" ? "Belum diisi" : typeof value === "boolean" ? value ? "Ya" : "Tidak" : displayTemporal(value) as string | number}</dd></div>)}</dl>;
 }

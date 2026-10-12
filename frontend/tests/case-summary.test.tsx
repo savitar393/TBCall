@@ -29,7 +29,9 @@ it("opens the same summary from completed history with CASE_READ alone", async (
 it.each(["ACTIVE", "COMPLETED"])("consolidates the recorded %s episode with original/corrected results and no mutations", async status => {
   const calls = serveSummary({ ...summaryFixture, status }); renderSummary();
   await screen.findByRole("heading", { name: "Ringkasan kasus" });
-  expect(screen.getByText(new RegExp(`Status kasus: ${status}`))).toBeInTheDocument();
+  expect(screen.getByText(new RegExp(`Status kasus: ${status === "ACTIVE" ? "Aktif" : "Selesai"}`))).toBeInTheDocument();
+  expect(screen.getByRole("region", { name: "Registrasi dan diagnosis" })).toHaveTextContent("1 Januari 2026");
+  expect(screen.getByRole("region", { name: "Pengobatan dan bukti obat" })).toHaveTextContent("Episode 2 Januari 2026 · Selesai");
   const lab = screen.getByRole("region", { name: "Pemeriksaan laboratorium" });
   expect(within(lab).getByText("Fictional corrected value")).toBeInTheDocument(); expect(within(lab).getByText("Fictional original value")).toBeInTheDocument();
   expect(within(lab).getByText(/Hasil asli.*Urutan 1/)).toBeInTheDocument(); expect(within(lab).getByText(/Hasil koreksi.*Urutan 2/)).toBeInTheDocument();
@@ -70,13 +72,17 @@ it("distinguishes out-of-scope registration and denied sections from empty autho
 
 it.each([403, 404, 500])("renders safe summary errors on HTTP %s without server prose", async status => {
   const calls = backend(c => c.url.endsWith("/me") ? Response.json(summaryActor) : c.url.includes("/summary?") ? failure(status, status === 404 ? "RESOURCE_NOT_FOUND" : "ACCESS_DENIED") : undefined); renderSummary();
-  await within(await screen.findByRole("region", { name: "Status ringkasan" })).findByRole("alert");
+  await screen.findByRole("alert");
+  expect(screen.getAllByRole("alert")).toHaveLength(1);
+  expect(within(screen.getByRole("region", { name: "Status ringkasan" })).getByRole("button", { name: "Coba kembali" })).toBeEnabled();
   expect(screen.queryByText(/private server|clinical prose|Fictional summary patient/)).not.toBeInTheDocument(); expect(calls.filter(c => c.url.includes("/summary?")).length).toBe(1);
 });
 
 it.each([{ ...summaryFixture, nik: "PRIVATE-NIK" }, { ...summaryFixture, caseId: ids.patient }])("rejects a protected extra field or inconsistent case identity independently", async value => {
   serveSummary(value); renderSummary();
-  await within(await screen.findByRole("region", { name: "Status ringkasan" })).findByRole("alert"); expect(screen.queryByText("Fictional summary patient")).not.toBeInTheDocument();
+  await screen.findByRole("alert");
+  expect(screen.getAllByRole("alert")).toHaveLength(1);
+  expect(within(screen.getByRole("region", { name: "Status ringkasan" })).getByRole("button", { name: "Coba kembali" })).toBeEnabled(); expect(screen.queryByText("Fictional summary patient")).not.toBeInTheDocument();
 });
 
 it("uses the recorded result status rather than sequence to classify an incomplete legacy result", async () => {
@@ -105,7 +111,9 @@ it("renders missing legacy snapshot fields without inventing a name, timestamp o
 it("paginates sections independently and removes old content if the next page is denied", async () => {
   const calls = backend(c => c.url.endsWith("/me") ? Response.json(summaryActor) : c.url.includes("/summary?") ? c.url.includes("labPage=1") ? failure(403, "ACCESS_DENIED") : Response.json({ ...summaryFixture, laboratory: { ...summaryFixture.laboratory, data: { ...(summaryFixture.laboratory.state === "AVAILABLE" ? summaryFixture.laboratory.data : {}), totalElements: 6 } } }) : undefined);
   renderSummary(); await screen.findByRole("heading", { name: "Ringkasan kasus" }); await userEvent.click(screen.getByRole("button", { name: "Berikutnya laboratorium" }));
-  await within(await screen.findByRole("region", { name: "Status ringkasan" })).findByRole("alert");
+  await screen.findByRole("alert");
+  expect(screen.getAllByRole("alert")).toHaveLength(1);
+  expect(within(screen.getByRole("region", { name: "Status ringkasan" })).getByRole("button", { name: "Coba kembali" })).toBeEnabled();
   expect(screen.queryByText("Fictional corrected value")).not.toBeInTheDocument(); expect(calls.filter(c => c.url.includes("labPage=1") && c.url.includes("diagnosisPage=0") && c.url.includes("treatmentPage=0"))).toHaveLength(1);
 });
 

@@ -1,5 +1,5 @@
 "use client";
-import { useEffect, useId, useState } from "react";
+import { useEffect, useId, useRef, useState } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -15,6 +15,7 @@ import { LinkingFeedback } from "./feedback";
 import { ResolveForm } from "./resolve-form";
 import { Confirm } from "./confirm";
 import { supporterInputSchema, type SupporterInput, type Candidate } from "./schemas";
+import { AppStatusBadge } from "@/components/application-patterns";
 export function CaseSupporterSection({ caseId, caseStatus }: {
     caseId: string;
     caseStatus: string;
@@ -31,6 +32,20 @@ function SupporterWorkspace({ caseId, caseStatus }: {
     const actor = useSession().user!, context = useId(), client = useQueryClient(), [page, setPage] = useState(0), [selected, setSelected] = useState<string | null>(null), [creating, setCreating] = useState(false), [sourceLocked, setSourceLocked] = useState(false), [uncertain, setUncertain] = useState(false);
     const query = useQuery(linkingQueries.supporters(actor.id, context, caseId, page)), command = useLinkingCommand(), prospective = canAddSupporter(caseStatus);
     const form = useForm<SupporterInput>({ resolver: zodResolver(supporterInputSchema), defaultValues: { supporterType: "PMO", fullName: "", phone: "" } });
+    const createRegion = useRef<HTMLDivElement>(null), createTrigger = useRef<HTMLButtonElement>(null), rosterReload = useRef<HTMLButtonElement>(null), restoreCreateFocus = useRef(false);
+    useEffect(() => {
+        if (!creating) return;
+        restoreCreateFocus.current = true;
+        createRegion.current?.focus();
+    }, [creating]);
+    useEffect(() => {
+        if (creating || command.pending || !restoreCreateFocus.current) return;
+        const trigger = createTrigger.current?.disabled ? rosterReload.current : createTrigger.current;
+        if (trigger?.isConnected && !trigger.disabled) {
+            restoreCreateFocus.current = false;
+            trigger.focus();
+        }
+    }, [creating, command.pending]);
     useEffect(() => () => { const filter = { queryKey: linkingKeys(actor.id, context) }; void client.cancelQueries(filter); client.removeQueries(filter); }, [actor.id, client, context]);
     async function refreshRoster() {
         const result = await query.refetch();
@@ -58,21 +73,22 @@ function SupporterWorkspace({ caseId, caseStatus }: {
     {!prospective && <p>Kasus terminal: daftar dapat dibaca dan tautan akun dapat dilepas sesuai kewenangan. Penambahan atau penggantian akun tidak tersedia.</p>}
     <LinkingFeedback error={query.error ?? command.error} resolving={!query.error && command.errorPurpose === "resolve"}/>{uncertain && <p role="alert">Hasil pembuatan belum dapat dipastikan. Muat ulang dan periksa daftar pendamping sebelum membuat ulang; duplikasi dapat terjadi.</p>}
     {query.isPending ? <p>Memuat pendamping…</p> : query.data && <>
-        <ul className="space-y-2">{query.data.data.content.map(row => <li key={row.id}>
-            <p>{row.fullName} · {row.supporterType} · {row.active ? "Aktif" : "Tidak aktif"} · {row.maskedPhone ?? "Tanpa telepon"} · {row.linked ? "Akun tertaut" : "Belum tertaut"}</p>
-            <Button variant="outline" disabled={command.pending} onClick={() => setSelected(row.id)}>Buka pendamping {row.fullName}</Button>
-            </li>)}</ul>{!query.data.data.content.length && <p>Belum ada pendamping dalam halaman ini.</p>}<div className="flex items-center gap-2">
+        <ul className="clinical-record-list">{query.data.data.content.map(row => <li key={row.id} className="clinical-record-row">
+            <div className="clinical-context-heading"><h3 className="font-semibold">{row.fullName}</h3><AppStatusBadge tone={row.active ? "active" : "neutral"}>{row.active ? "Aktif" : "Tidak aktif"}</AppStatusBadge></div>
+            <p className="text-sm">{row.supporterType === "COMPANION" ? "Pendamping" : row.supporterType} · {row.maskedPhone ?? "Tanpa telepon"} · {row.linked ? "Akun tertaut" : "Belum tertaut"}</p>
+            <div className="clinical-record-actions"><Button variant="outline" disabled={command.pending} onClick={() => setSelected(row.id)}>Buka pendamping {row.fullName}</Button></div>
+            </li>)}</ul>{!query.data.data.content.length && <p>Belum ada pendamping dalam halaman ini.</p>}{(page > 0 || query.data.data.totalElements > 20) && <nav aria-label="Halaman pendamping" className="flex flex-wrap items-center gap-2">
         <Button variant="outline" disabled={page === 0 || query.isFetching || command.pending} onClick={() => { setSelected(null); setPage(page - 1); }}>Halaman sebelumnya</Button>
         <span>Halaman {page + 1}</span>
         <Button variant="outline" disabled={(page + 1) * 20 >= query.data.data.totalElements || query.isFetching || command.pending} onClick={() => { setSelected(null); setPage(page + 1); }}>Halaman berikutnya</Button>
-        </div>
+        </nav>}
         </>}
-    <Button variant="outline" disabled={query.isFetching || command.pending} onClick={() => void refreshRoster()}>Muat ulang daftar pendamping</Button>
-    {prospective && <Button disabled={sourceLocked || command.pending || uncertain} onClick={() => { form.reset(); setCreating(true); command.clearError(); }}>Tambah pendamping</Button>}
-    {creating && prospective && <div role="dialog" aria-label="Buat pendamping" className="space-y-3 rounded-xl border p-4">
+    <Button ref={rosterReload} variant="outline" disabled={query.isFetching || command.pending} onClick={() => void refreshRoster()}>Muat ulang daftar pendamping</Button>
+    {prospective && <Button ref={createTrigger} aria-expanded={creating} aria-controls={`${context}-create`} disabled={sourceLocked || command.pending || uncertain} onClick={() => { form.reset(); setCreating(true); command.clearError(); }}>Tambah pendamping</Button>}
+    {creating && prospective && <div ref={createRegion} id={`${context}-create`} tabIndex={-1} role="region" aria-label="Buat pendamping" className="clinical-editor space-y-3 focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-primary">
         <h3 className="font-semibold">Buat pendamping</h3>
         <form onSubmit={form.handleSubmit(create)} className="space-y-3">
-        <label className="block">Jenis pendamping<select {...form.register("supporterType")} disabled={command.pending}>
+        <label className="block">Jenis pendamping<select className="mt-2 min-h-11 w-full rounded-lg border bg-white px-3 text-sm" {...form.register("supporterType")} disabled={command.pending}>
         <option value="PMO">PMO</option>
         <option value="COMPANION">Pendamping</option>
         </select>

@@ -25,7 +25,7 @@ it("discovers completed-only records with CASE_READ and no patient or write perm
   const results = await screen.findByRole("region", { name: "Hasil riwayat kasus" });
   expect(within(results).getByRole("link", { name: "Buka kasus selesai" })).toHaveAttribute("href", `/cases/${ids.tbCase}`);
   expect(within(results).getByText("Fictional completed patient")).toBeInTheDocument();
-  expect(screen.getByText(/kasus aktif \(ACTIVE\) dan dirujuk \(REFERRED\)/i)).toBeInTheDocument();
+  expect(screen.getByText("Kasus selesai pada fasilitas penanggung jawab saat ini.")).toBeInTheDocument();
   expect(calls.filter(c => !c.url.endsWith("/me")).every(c => c.url.includes("/cases/history?") && c.options.method === "GET")).toBe(true);
   expect(screen.queryByLabelText(/NIK|BPJS/)).not.toBeInTheDocument();
 });
@@ -60,10 +60,10 @@ it.each([403, 404])("renders safe denial without records or private error prose 
   expect(screen.queryByText("Fictional completed patient")).not.toBeInTheDocument(); expect(screen.queryByText(/private server details|clinical prose/)).not.toBeInTheDocument();
 });
 
-it("shows an empty historical page with disabled paging", async () => {
+it("shows an empty first historical page without unnecessary paging", async () => {
   backend(c => c.url.includes("/cases/history?") ? Response.json({ ...history, content: [], totalElements: 0 }) : undefined);
   renderClinical(<HistoryPage />); await screen.findByText("Tidak ada kasus selesai yang sesuai.");
-  expect(screen.getByRole("button", { name: "Halaman berikutnya" })).toBeDisabled(); expect(screen.getByRole("button", { name: "Halaman sebelumnya" })).toBeDisabled();
+  expect(screen.queryByRole("button", { name: "Halaman berikutnya" })).not.toBeInTheDocument(); expect(screen.queryByRole("button", { name: "Halaman sebelumnya" })).not.toBeInTheDocument();
 });
 
 it("rejects a response containing an active case instead of mislabeling it completed", async () => {
@@ -91,6 +91,8 @@ it("completed case retains permitted treatment reads but hides case and referral
     : c.url.endsWith(`/cases/${ids.tbCase}`) ? Response.json({ ...caseView, status: "COMPLETED" }, { headers: { ETag: '"terminal-case"' } }) : undefined);
   renderClinical(<ClinicalBoundary permissions={["CASE_READ"]}><CaseDetail id={ids.tbCase} /></ClinicalBoundary>);
   await screen.findByRole("heading", { name: "Detail kasus" });
+  expect(screen.getByRole("region", { name: "Konteks kasus" })).toHaveTextContent("Selesai");
+  expect(screen.getByRole("region", { name: "Konteks kasus" })).not.toHaveTextContent("COMPLETED");
   expect(screen.queryByRole("button", { name: "Ubah kasus" })).not.toBeInTheDocument();
   expect(screen.queryByRole("link", { name: "Buat rujukan" })).not.toBeInTheDocument();
   expect(screen.getByRole("link", { name: "Pengobatan" })).toHaveAttribute("href", `/cases/${ids.tbCase}/treatments`);

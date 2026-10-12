@@ -53,7 +53,7 @@ it("keeps all seven filters operable and sends their original request values", a
 it("keeps completed case history visible and excludes prospective case actions even with write grants", async () => {
   backend(call => call.url.endsWith("/me") ? Response.json({ ...officer, permissions: [...officer.permissions, "LAB_REQUEST_WRITE", "REFERRAL_WRITE"] }) : call.url.endsWith(`/cases/${ids.tbCase}`) ? Response.json({ ...caseView, status: "COMPLETED" }, { headers: { ETag: '"completed-tag"' } }) : undefined);
   renderClinical(<ClinicalBoundary permissions={["CASE_READ"]}><CaseDetail id={ids.tbCase} /></ClinicalBoundary>);
-  expect(await screen.findByText(/Kasus selesai \(COMPLETED\)/)).toBeVisible();
+  expect(await screen.findByText(/Kasus selesai\. Data kasus/)).toBeVisible();
   expect(screen.getByRole("link", { name: "Ringkasan kasus" })).toHaveAttribute("href", `/cases/${ids.tbCase}/summary`);
   expect(screen.queryByRole("button", { name: "Ubah kasus" })).not.toBeInTheDocument();
   expect(screen.queryByRole("link", { name: "Buat rujukan" })).not.toBeInTheDocument();

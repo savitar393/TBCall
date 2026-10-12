@@ -20,8 +20,8 @@ export function PortalNotifications() {
     <AppSection title="Dalam aplikasi">
       {query.isPending || query.error ? <PortalState query={query}/> : query.data && <>
         <ul className="clinical-record-list">{query.data.data.content.filter(n => n.channel === "IN_APP").map((n, i) => <li className="clinical-record-row" key={n.id}>
-          <div className="clinical-context-heading"><h3>{label(refs.data?.data.alertTypes, n.alertType)}</h3><AppStatusBadge>{label(refs.data?.data.notificationStatuses, n.status)}</AppStatusBadge></div>
-          <p>Terkirim pada: {formatDateTime(n.deliveredAt)}</p>
+          <div className="clinical-context-heading"><h3>{n.alertType ? label(refs.data?.data.alertTypes, n.alertType) : "Pemberitahuan akun"}</h3><AppStatusBadge>{label(refs.data?.data.notificationStatuses, n.status)}</AppStatusBadge></div>
+          <p>{n.deliveredAt ? `Terkirim pada: ${formatDateTime(n.deliveredAt)}` : `Dijadwalkan pada: ${formatDateTime(n.scheduledAt)}`}</p>
           {["SENT", "DELIVERED"].includes(n.status) && <div className="clinical-record-actions"><Button disabled={command.pending} onClick={() => void command.run(async (signal, current) => {
             const detail = await portalApi.notification(n.id, signal);
             if (!current()) throw new DOMException("Context changed", "AbortError");
