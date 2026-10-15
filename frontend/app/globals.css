@@ -321,3 +321,15 @@
 .authenticated-app .clinical-workspace .clinical-fields dt { font-size: .75rem; }
 .authenticated-app .clinical-workspace .clinical-fields dd { overflow-wrap: anywhere; }
 @media (max-width: 700px) { .authenticated-app .clinical-workspace .clinical-fields { grid-template-columns: minmax(0, 1fr); } }
+/* Indicative administrative geometry. No animated clinical values or external map tiles. */
+.report-map-section { min-width: 0; overflow: hidden; }
+.report-map-canvas { overflow: hidden; border: 1px solid #e2eaf0; border-radius: 1rem; background: radial-gradient(ellipse at center, #edf6f9 0%, #f7fafc 80%); }
+.report-map-canvas svg { display: block; width: 100%; height: clamp(250px, 36vw, 510px); outline-offset: -4px; }
+.report-map-region { stroke: #698d92; stroke-width: .65; cursor: pointer; transition: fill 140ms ease, stroke 140ms ease; }
+.report-map-region[aria-disabled="true"] { cursor: default; }
+.report-map-region:hover, .report-map-region:focus-visible, .report-map-region[aria-pressed="true"] { stroke: #073f46; stroke-width: 2; outline: none; }
+.report-map-region:focus-visible { stroke: #a63e00; stroke-width: 3; }
+.report-map-key { display: inline-flex; align-items: center; gap: .375rem; }
+.report-map-key i { display: inline-block; width: 1.125rem; height: .75rem; border: 1px solid #7d989e; border-radius: .1875rem; }
+.report-map-unavailable { background: repeating-linear-gradient(45deg, #edf0f3, #edf0f3 3px, #b2bdc5 3px, #b2bdc5 4px); }
+@media (prefers-reduced-motion: reduce) { .report-map-region { transition: none; } }

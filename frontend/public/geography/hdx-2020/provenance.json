@@ -1,0 +1,326 @@
+{
+  "title": "Indicative Indonesia administrative geometry for TBCall synthetic prototype",
+  "source": "HDX COD-AB v01; BPS / OCHA ROAP-FIS-HDX",
+  "validOn": "2020-04-01",
+  "license": "CC BY 3.0 IGO",
+  "licenseUrl": "https://creativecommons.org/licenses/by/3.0/igo/legalcode",
+  "datasetUrl": "https://data.humdata.org/dataset/cod-ab-idn",
+  "resourceUrl": "https://data.humdata.org/dataset/84a1d98a-790b-4d66-9d14-bbfa48500802/resource/e1421da4-8f48-47d2-ac49-79ff5bfa4d24/download/idn_admin_boundaries.geojson.zip",
+  "sourceSha256": "15c1c0b449c5be5bd639c3fd39febf188842d026ddf448f7194799835d6f59ca",
+  "administrativeIdentities": 514,
+  "provinceIdentities": 38,
+  "catalogueVersion": "KEMENDAGRI_2025_2138_AMENDED_2430",
+  "prototypeStatus": "PROTOTYPE_VERIFIED",
+  "productionStatus": "PRODUCTION_UNVERIFIED",
+  "attribution": "Badan Pusat Statistik and OCHA; redistributed and modified by TBCall. No endorsement is implied.",
+  "transformations": [
+    "Explicit reviewed BPS 2020 to Kemendagri 2025 mapping; 26 Papua recodings corroborated by 2022 formation laws.",
+    "Three zero-displacement self-touch repairs, each separating one existing boundary loop into an interior ring.",
+    "Topology-preserving coverage simplification, retaining every island and hole; seven-decimal rounding.",
+    "Province dissolution from explicit current parent assignments; separately simplified national display.",
+    "Fixed-point delta TopoJSON, one ring per arc. Only code, name and parent are included."
+  ],
+  "limitations": [
+    "Indicative visualization, not legally authoritative demarcation or production qualification.",
+    "All 514 administrative identities are represented, not a certified gap-free land surface.",
+    "Eight named lake/reservoir/forest source features remain explicitly unassigned; no area was guessed or filled.",
+    "Geometry has a 2020 vintage. Reconstructed 38-province parents are from the 2025 catalogue; current legal boundary alignment is unverified.",
+    "Clinical reporting permissions are enforced by APIs, never by polygons. TBCall-held counts are not official national surveillance statistics."
+  ],
+  "excludedSourceFeatures": [
+    {
+      "pcode": "ID1388",
+      "name": "Danau",
+      "sourceParent": "ID13"
+    },
+    {
+      "pcode": "ID1688",
+      "name": "Danau",
+      "sourceParent": "ID16"
+    },
+    {
+      "pcode": "ID1888",
+      "name": "Danau",
+      "sourceParent": "ID18"
+    },
+    {
+      "pcode": "ID7188",
+      "name": "Danau",
+      "sourceParent": "ID71"
+    },
+    {
+      "pcode": "ID1288",
+      "name": "Danau Toba",
+      "sourceParent": "ID12"
+    },
+    {
+      "pcode": "ID3399",
+      "name": "Hutan",
+      "sourceParent": "ID33"
+    },
+    {
+      "pcode": "ID3288",
+      "name": "Waduk Cirata",
+      "sourceParent": "ID32"
+    },
+    {
+      "pcode": "ID3388",
+      "name": "Wadung Kedungombo",
+      "sourceParent": "ID33"
+    }
+  ],
+  "validation": {
+    "validNonoverlappingCoverage": true,
+    "islandParts": 8570,
+    "ringsAfterRepairs": 8617,
+    "maxDistrictRelativeSymmetricDifference": 0.00843734852673227,
+    "maxDistrictDiscreteBoundaryDeviationDegrees": 0.00918774708468817,
+    "nationalDisplay": {
+      "toleranceDegrees": 0.00075,
+      "maximumDiscreteBoundaryHausdorffDegrees": 0.010945977442428178,
+      "maximumRelativeSymmetricDifference": 0.006136016768986721,
+      "allPartAndHoleCountsPreserved": true,
+      "vertices": 335465,
+      "coverageValid": true,
+      "note": "Province reconstruction exactly equals the district union BEFORE this separately measured national-display generalization. All 38 identities are retained."
+    },
+    "countrySourceUnionExactBeforeExclusions": true
+  },
+  "developerProvenance": "test-support/reporting/geography/mappings.json and validation.json in the TBCall source repository",
+  "assets": [
+    {
+      "file": "11.topo.json",
+      "bytes": 329060,
+      "gzipBytes": 137716,
+      "sha256": "91c4702d9e6fa712632f629f9fa0992920eafb44e1984f2ba6ca5ecb692259f6"
+    },
+    {
+      "file": "12.topo.json",
+      "bytes": 440717,
+      "gzipBytes": 179199,
+      "sha256": "4f93ac292296b74c498e5a142e24498783a2f3d828d391eb2d7aebbf27315dd1"
+    },
+    {
+      "file": "13.topo.json",
+      "bytes": 285302,
+      "gzipBytes": 117490,
+      "sha256": "9eb32a49680e7e50da79fd7279f77fafa6bbf9fe92731743037c006e3e988461"
+    },
+    {
+      "file": "14.topo.json",
+      "bytes": 205015,
+      "gzipBytes": 84147,
+      "sha256": "ea9445a2b73bba2ab75a63829bc93a23354792133da8d75d38c0bc1e9882322d"
+    },
+    {
+      "file": "15.topo.json",
+      "bytes": 117611,
+      "gzipBytes": 49256,
+      "sha256": "02eb431de02088da1ddcea144692ff24459f1f40897d4a8525a07b5dd6a9afdb"
+    },
+    {
+      "file": "16.topo.json",
+      "bytes": 229796,
+      "gzipBytes": 95037,
+      "sha256": "4f2f5c0d4766d650fe16a57d133c605ce358768a3ae9dc278ad23e9540210ebd"
+    },
+    {
+      "file": "17.topo.json",
+      "bytes": 72783,
+      "gzipBytes": 30670,
+      "sha256": "52e728261216c934859204cd1ea935f29f342f5f7dd9373adb03c741f6415eb6"
+    },
+    {
+      "file": "18.topo.json",
+      "bytes": 238489,
+      "gzipBytes": 97946,
+      "sha256": "270423e0d73f0a4cae3b60073f5192d46ac6ae1d68f992ec44f94da4c9824dc5"
+    },
+    {
+      "file": "19.topo.json",
+      "bytes": 178493,
+      "gzipBytes": 73156,
+      "sha256": "b28c9981d472355243e201509d216387314c313d8c4f56d90b18afc20bda7ef6"
+    },
+    {
+      "file": "21.topo.json",
+      "bytes": 713720,
+      "gzipBytes": 292181,
+      "sha256": "6b3eb909020d81c2dea541536b0b1ee73da9488f608bc173a25116e048ed5c32"
+    },
+    {
+      "file": "31.topo.json",
+      "bytes": 68266,
+      "gzipBytes": 27624,
+      "sha256": "71883fb771fc9d4661da9597fec0825eeddc5015eb5645e9e33ba2d4cc35e949"
+    },
+    {
+      "file": "32.topo.json",
+      "bytes": 423710,
+      "gzipBytes": 167026,
+      "sha256": "f1ab2896d766119390c046f354b2fd2c38d42ac8029ff4d1dd871b609b7e66d6"
+    },
+    {
+      "file": "33.topo.json",
+      "bytes": 474634,
+      "gzipBytes": 184045,
+      "sha256": "7a70941d80b15add7892e5b418b0fd7954f409534c622973558d2a117d7025d4"
+    },
+    {
+      "file": "34.topo.json",
+      "bytes": 50664,
+      "gzipBytes": 20315,
+      "sha256": "81cd6ab8a1e31db5b73baf65347a05585c1f2a3d36b75c34a78a368c686333c7"
+    },
+    {
+      "file": "35.topo.json",
+      "bytes": 607731,
+      "gzipBytes": 233051,
+      "sha256": "a16a0f1144fce04fcaa61b052b4bd304de8a1f4dff5b9bb7e45bf934145852d5"
+    },
+    {
+      "file": "36.topo.json",
+      "bytes": 131866,
+      "gzipBytes": 50727,
+      "sha256": "49132454d302f870720c99be9487b754c77d3c6343f1675d1896717d9fd18428"
+    },
+    {
+      "file": "51.topo.json",
+      "bytes": 111505,
+      "gzipBytes": 45832,
+      "sha256": "56bc8a8c8fade9ead213884babdeeaf7bc10ff1ddba590b2b2629ff009190008"
+    },
+    {
+      "file": "52.topo.json",
+      "bytes": 271838,
+      "gzipBytes": 106070,
+      "sha256": "73053d38b84adfd824f82b9ab2b44650003db54c0da8507059e5b5d28b53a6be"
+    },
+    {
+      "file": "53.topo.json",
+      "bytes": 496255,
+      "gzipBytes": 194878,
+      "sha256": "2f15596dd75c467bd2147e324d4e0ea078b6e6a52a4b5f0cd2390e859d2c9cf9"
+    },
+    {
+      "file": "61.topo.json",
+      "bytes": 382049,
+      "gzipBytes": 158098,
+      "sha256": "32ad4431d12eaa5bb6467e51548899df13db39e39f96c7526eeeec949d722b09"
+    },
+    {
+      "file": "62.topo.json",
+      "bytes": 131294,
+      "gzipBytes": 56337,
+      "sha256": "8c12321675412e677006379ed2dbac0388a61316f7aa2bd00f2a8204c276df99"
+    },
+    {
+      "file": "63.topo.json",
+      "bytes": 219212,
+      "gzipBytes": 91284,
+      "sha256": "1da4d6b94ef688c104f317f39564ea1d83031099ed4dd8b8a8537784ebbbee0a"
+    },
+    {
+      "file": "64.topo.json",
+      "bytes": 378613,
+      "gzipBytes": 155839,
+      "sha256": "a475b2b4f1cb52cc504932071758b7ff315aeea3fa80b98b4fa23897ba374eaf"
+    },
+    {
+      "file": "65.topo.json",
+      "bytes": 246396,
+      "gzipBytes": 102689,
+      "sha256": "5ff9ce69a22225c0f2e3bb07807d82996c1d2694e33081fce97cb848c47a887d"
+    },
+    {
+      "file": "71.topo.json",
+      "bytes": 241710,
+      "gzipBytes": 100111,
+      "sha256": "7e2f3aadcda3855c12c9da31ff670814074dc387e9439ecbc932f6ae1b5a119f"
+    },
+    {
+      "file": "72.topo.json",
+      "bytes": 511903,
+      "gzipBytes": 212019,
+      "sha256": "b3e78659aba51d887e62141df4e75757d996e00c548bc3c247cfc9a466c6a4ea"
+    },
+    {
+      "file": "73.topo.json",
+      "bytes": 413961,
+      "gzipBytes": 169901,
+      "sha256": "aa3ae92e738f5c75e84125875d4c7c9ad5ab00282e1d49d27ce520c62ad8b186"
+    },
+    {
+      "file": "74.topo.json",
+      "bytes": 319380,
+      "gzipBytes": 132451,
+      "sha256": "9952714121486db6f4a64254b49bbfc8eef4238a0b9f02b294f2588162c4a7f8"
+    },
+    {
+      "file": "75.topo.json",
+      "bytes": 118098,
+      "gzipBytes": 50256,
+      "sha256": "8004de0f93607b020911adecf6da7e57102dc274e09aa92d877a14e675bd8b53"
+    },
+    {
+      "file": "76.topo.json",
+      "bytes": 104188,
+      "gzipBytes": 44021,
+      "sha256": "9f0f0cd060dbb51d5d83241e7851fdff3fe213e993d94a58584af07fa6e5c799"
+    },
+    {
+      "file": "81.topo.json",
+      "bytes": 550731,
+      "gzipBytes": 221668,
+      "sha256": "3d9de5578e85ea11ec44b9c315c896205e556d8040e530eaed27f6af93f6caca"
+    },
+    {
+      "file": "82.topo.json",
+      "bytes": 491888,
+      "gzipBytes": 203024,
+      "sha256": "62ca728a35d1998271fa96cab8d79ec72cc02c40c0d72c70f5c1122e1035edb7"
+    },
+    {
+      "file": "91.topo.json",
+      "bytes": 296797,
+      "gzipBytes": 110150,
+      "sha256": "eee7cd7826e4dec916040f1fb0f277a7ac0ec03b31d9259018eddba51e0cc920"
+    },
+    {
+      "file": "92.topo.json",
+      "bytes": 165805,
+      "gzipBytes": 58312,
+      "sha256": "26149b02631962ce77c2f49a88da8474f2d5c2ce3ce6c420e0119c3559be91b1"
+    },
+    {
+      "file": "93.topo.json",
+      "bytes": 116510,
+      "gzipBytes": 41077,
+      "sha256": "45db9e3d6f84950ca5ff67f36e4c1303e78fcd57728ae72870daeeff044a878b"
+    },
+    {
+      "file": "94.topo.json",
+      "bytes": 104811,
+      "gzipBytes": 39954,
+      "sha256": "44d1f222e21a212ef452223b03f2427cf7922d6bc9b8aad58db14321f775e2e2"
+    },
+    {
+      "file": "95.topo.json",
+      "bytes": 35618,
+      "gzipBytes": 13365,
+      "sha256": "e0793b20dbdc8ec3dfab5969a73e64e9c045e4a1470c06339a4ce003fcb4091f"
+    },
+    {
+      "file": "96.topo.json",
+      "bytes": 183302,
+      "gzipBytes": 62500,
+      "sha256": "96c2a4871c3df94d5b8cc9238d516e157a463937001d00a5a19ba840e5fa1f8a"
+    },
+    {
+      "file": "provinces.topo.json",
+      "bytes": 4954342,
+      "gzipBytes": 2000488,
+      "sha256": "50e21ba7cbed08952c3fcaadd102bcfa4f6b138355d4d2bdb0865a985a5668c1"
+    }
+  ]
+}

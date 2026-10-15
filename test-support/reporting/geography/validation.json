@@ -1,0 +1,2920 @@
+{
+  "toolchain": {
+    "shapely": "2.1.2",
+    "GEOS": "3.13.1"
+  },
+  "crs": {
+    "type": "name",
+    "properties": {
+      "name": "urn:ogc:def:crs:OGC:1.3:CRS84"
+    }
+  },
+  "sourceSha256": "15c1c0b449c5be5bd639c3fd39febf188842d026ddf448f7194799835d6f59ca",
+  "sourceAdministrativeFeatures": 514,
+  "provinceFeatures": 38,
+  "sourceVertices": 3831360,
+  "simplifiedVertices": 730802,
+  "polygonParts": 8570,
+  "ringRepairs": [
+    "ID1407",
+    "ID1708",
+    "ID3305"
+  ],
+  "positiveAreaOverlaps": 0,
+  "coverageValid": true,
+  "provinceUnionEqualsDistrictUnion": true,
+  "excludedSourceFeatures": [
+    {
+      "pcode": "ID1388",
+      "name": "Danau",
+      "sourceParent": "ID13"
+    },
+    {
+      "pcode": "ID1688",
+      "name": "Danau",
+      "sourceParent": "ID16"
+    },
+    {
+      "pcode": "ID1888",
+      "name": "Danau",
+      "sourceParent": "ID18"
+    },
+    {
+      "pcode": "ID7188",
+      "name": "Danau",
+      "sourceParent": "ID71"
+    },
+    {
+      "pcode": "ID1288",
+      "name": "Danau Toba",
+      "sourceParent": "ID12"
+    },
+    {
+      "pcode": "ID3399",
+      "name": "Hutan",
+      "sourceParent": "ID33"
+    },
+    {
+      "pcode": "ID3288",
+      "name": "Waduk Cirata",
+      "sourceParent": "ID32"
+    },
+    {
+      "pcode": "ID3388",
+      "name": "Wadung Kedungombo",
+      "sourceParent": "ID33"
+    }
+  ],
+  "exclusionsNote": "Eight explicitly named nonadministrative water/forest features are not assigned to a district. Their footprint remains outside the derived administrative coverage; no missing area is guessed or filled.",
+  "simplification": {
+    "algorithm": "GEOS coverage Visvalingam-Whyatt per nearby connected coverage group, retaining every region and island; halve scalar tolerance until each administrative unit has <0.9% symmetric area difference and retained holes",
+    "maximumToleranceDegrees": 0.0005,
+    "roundingDecimals": 7,
+    "maximumDiscreteBoundaryHausdorffDegrees": 0.00918774708468817,
+    "maximumRelativeSymmetricDifference": 0.00843734852673227,
+    "allMultipartAndHoleCountsPreserved": true,
+    "perFeature": [
+      {
+        "pcode": "ID1103",
+        "discreteBoundaryHausdorffDegrees": 0.0030944009454776053,
+        "relativeSymmetricDifference": 0.0001674993682454545
+      },
+      {
+        "pcode": "ID1104",
+        "discreteBoundaryHausdorffDegrees": 0.0015728387779157086,
+        "relativeSymmetricDifference": 0.00010642553050025462
+      },
+      {
+        "pcode": "ID1105",
+        "discreteBoundaryHausdorffDegrees": 0.0012740326252379352,
+        "relativeSymmetricDifference": 0.0002660496369593502
+      },
+      {
+        "pcode": "ID1106",
+        "discreteBoundaryHausdorffDegrees": 0.0004002078170358183,
+        "relativeSymmetricDifference": 5.994328773714786e-05
+      },
+      {
+        "pcode": "ID1107",
+        "discreteBoundaryHausdorffDegrees": 0.00047791801426187356,
+        "relativeSymmetricDifference": 7.460731880450279e-05
+      },
+      {
+        "pcode": "ID1108",
+        "discreteBoundaryHausdorffDegrees": 0.0010838970892450602,
+        "relativeSymmetricDifference": 0.0007544236866306869
+      },
+      {
+        "pcode": "ID1109",
+        "discreteBoundaryHausdorffDegrees": 0.00047152116821400444,
+        "relativeSymmetricDifference": 0.00024665443792973844
+      },
+      {
+        "pcode": "ID1111",
+        "discreteBoundaryHausdorffDegrees": 0.0011548491481757094,
+        "relativeSymmetricDifference": 0.00032138315920038357
+      },
+      {
+        "pcode": "ID1101",
+        "discreteBoundaryHausdorffDegrees": 0.0017847419467635175,
+        "relativeSymmetricDifference": 0.0014546955716683684
+      },
+      {
+        "pcode": "ID1102",
+        "discreteBoundaryHausdorffDegrees": 0.0009378464694324947,
+        "relativeSymmetricDifference": 0.0009755610603404723
+      },
+      {
+        "pcode": "ID1110",
+        "discreteBoundaryHausdorffDegrees": 0.0010473192303554677,
+        "relativeSymmetricDifference": 0.0003037227239928754
+      },
+      {
+        "pcode": "ID1112",
+        "discreteBoundaryHausdorffDegrees": 0.0003274864180784938,
+        "relativeSymmetricDifference": 0.0002022660243767735
+      },
+      {
+        "pcode": "ID1113",
+        "discreteBoundaryHausdorffDegrees": 0.00029758750009794736,
+        "relativeSymmetricDifference": 6.3021258737222e-05
+      },
+      {
+        "pcode": "ID1116",
+        "discreteBoundaryHausdorffDegrees": 0.000553630019740026,
+        "relativeSymmetricDifference": 0.00015869387876193326
+      },
+      {
+        "pcode": "ID1115",
+        "discreteBoundaryHausdorffDegrees": 0.00032748641807849374,
+        "relativeSymmetricDifference": 9.415875110599988e-05
+      },
+      {
+        "pcode": "ID1114",
+        "discreteBoundaryHausdorffDegrees": 0.0014512138953667471,
+        "relativeSymmetricDifference": 0.00047190022545537397
+      },
+      {
+        "pcode": "ID1117",
+        "discreteBoundaryHausdorffDegrees": 0.0004002078170358184,
+        "relativeSymmetricDifference": 0.00013000340044002238
+      },
+      {
+        "pcode": "ID1118",
+        "discreteBoundaryHausdorffDegrees": 0.00038376515854312437,
+        "relativeSymmetricDifference": 0.0004749653768210159
+      },
+      {
+        "pcode": "ID1171",
+        "discreteBoundaryHausdorffDegrees": 0.001189140672862471,
+        "relativeSymmetricDifference": 0.004200566906046143
+      },
+      {
+        "pcode": "ID1172",
+        "discreteBoundaryHausdorffDegrees": 0.000834317010948089,
+        "relativeSymmetricDifference": 0.004545705651203774
+      },
+      {
+        "pcode": "ID1174",
+        "discreteBoundaryHausdorffDegrees": 0.00043163446986434976,
+        "relativeSymmetricDifference": 0.0013393773425818762
+      },
+      {
+        "pcode": "ID1173",
+        "discreteBoundaryHausdorffDegrees": 0.000660702088780297,
+        "relativeSymmetricDifference": 0.0019157366055674188
+      },
+      {
+        "pcode": "ID1175",
+        "discreteBoundaryHausdorffDegrees": 0.00036156398166899465,
+        "relativeSymmetricDifference": 0.00031347618286018314
+      },
+      {
+        "pcode": "ID1204",
+        "discreteBoundaryHausdorffDegrees": 0.0003465947817060424,
+        "relativeSymmetricDifference": 0.00023085078018615974
+      },
+      {
+        "pcode": "ID1205",
+        "discreteBoundaryHausdorffDegrees": 0.00041579673980469105,
+        "relativeSymmetricDifference": 9.010029426523918e-05
+      },
+      {
+        "pcode": "ID1203",
+        "discreteBoundaryHausdorffDegrees": 0.00076920045836933,
+        "relativeSymmetricDifference": 0.0004743051580719937
+      },
+      {
+        "pcode": "ID1201",
+        "discreteBoundaryHausdorffDegrees": 0.000572450871255263,
+        "relativeSymmetricDifference": 0.00039641387956308217
+      },
+      {
+        "pcode": "ID1213",
+        "discreteBoundaryHausdorffDegrees": 0.00202843498770149,
+        "relativeSymmetricDifference": 0.00027705804862793485
+      },
+      {
+        "pcode": "ID1211",
+        "discreteBoundaryHausdorffDegrees": 0.001572838777915709,
+        "relativeSymmetricDifference": 0.00033754050105933947
+      },
+      {
+        "pcode": "ID1212",
+        "discreteBoundaryHausdorffDegrees": 0.0012251300606908456,
+        "relativeSymmetricDifference": 0.0005809143635092629
+      },
+      {
+        "pcode": "ID1209",
+        "discreteBoundaryHausdorffDegrees": 0.0007785884984231373,
+        "relativeSymmetricDifference": 0.00027391828623835534
+      },
+      {
+        "pcode": "ID1208",
+        "discreteBoundaryHausdorffDegrees": 0.0008999168663240925,
+        "relativeSymmetricDifference": 0.00031544453925085573
+      },
+      {
+        "pcode": "ID1207",
+        "discreteBoundaryHausdorffDegrees": 0.0006796383171097184,
+        "relativeSymmetricDifference": 0.00015941379537898578
+      },
+      {
+        "pcode": "ID1210",
+        "discreteBoundaryHausdorffDegrees": 0.0003173272381456221,
+        "relativeSymmetricDifference": 0.000250924464455815
+      },
+      {
+        "pcode": "ID1206",
+        "discreteBoundaryHausdorffDegrees": 0.006828962629630136,
+        "relativeSymmetricDifference": 0.0003817620280159336
+      },
+      {
+        "pcode": "ID1202",
+        "discreteBoundaryHausdorffDegrees": 0.0008292505676972867,
+        "relativeSymmetricDifference": 0.0002667748133311997
+      },
+      {
+        "pcode": "ID1214",
+        "discreteBoundaryHausdorffDegrees": 0.0027568183999185933,
+        "relativeSymmetricDifference": 0.0008983409957184649
+      },
+      {
+        "pcode": "ID1216",
+        "discreteBoundaryHausdorffDegrees": 0.0001859280914777041,
+        "relativeSymmetricDifference": 0.00010726121996560212
+      },
+      {
+        "pcode": "ID1215",
+        "discreteBoundaryHausdorffDegrees": 0.0005082166313024882,
+        "relativeSymmetricDifference": 6.718605506747847e-05
+      },
+      {
+        "pcode": "ID1217",
+        "discreteBoundaryHausdorffDegrees": 0.0044304645291869315,
+        "relativeSymmetricDifference": 0.000731215969021445
+      },
+      {
+        "pcode": "ID1218",
+        "discreteBoundaryHausdorffDegrees": 0.0007799448208734922,
+        "relativeSymmetricDifference": 0.000525845252238076
+      },
+      {
+        "pcode": "ID1219",
+        "discreteBoundaryHausdorffDegrees": 0.0005135624596316605,
+        "relativeSymmetricDifference": 0.0006996762615699123
+      },
+      {
+        "pcode": "ID1220",
+        "discreteBoundaryHausdorffDegrees": 0.0004962491853000125,
+        "relativeSymmetricDifference": 0.00037360605113489397
+      },
+      {
+        "pcode": "ID1221",
+        "discreteBoundaryHausdorffDegrees": 0.0009118866691997125,
+        "relativeSymmetricDifference": 0.00024738059354096524
+      },
+      {
+        "pcode": "ID1222",
+        "discreteBoundaryHausdorffDegrees": 0.0003557835490744519,
+        "relativeSymmetricDifference": 0.00014751863056613977
+      },
+      {
+        "pcode": "ID1223",
+        "discreteBoundaryHausdorffDegrees": 0.000965076659918981,
+        "relativeSymmetricDifference": 0.00017395938849473636
+      },
+      {
+        "pcode": "ID1224",
+        "discreteBoundaryHausdorffDegrees": 0.0013565113186373066,
+        "relativeSymmetricDifference": 0.0008657817621602909
+      },
+      {
+        "pcode": "ID1225",
+        "discreteBoundaryHausdorffDegrees": 0.0006535153936136788,
+        "relativeSymmetricDifference": 0.0009511641874281894
+      },
+      {
+        "pcode": "ID1275",
+        "discreteBoundaryHausdorffDegrees": 0.0008527046439140161,
+        "relativeSymmetricDifference": 0.0024443062789251545
+      },
+      {
+        "pcode": "ID1273",
+        "discreteBoundaryHausdorffDegrees": 0.0007785884984231373,
+        "relativeSymmetricDifference": 0.004390244703460949
+      },
+      {
+        "pcode": "ID1271",
+        "discreteBoundaryHausdorffDegrees": 0.0003176543764072585,
+        "relativeSymmetricDifference": 0.007097156011316968
+      },
+      {
+        "pcode": "ID1272",
+        "discreteBoundaryHausdorffDegrees": 0.0003210664475418558,
+        "relativeSymmetricDifference": 0.0016347396432936222
+      },
+      {
+        "pcode": "ID1276",
+        "discreteBoundaryHausdorffDegrees": 0.0012251300606908456,
+        "relativeSymmetricDifference": 0.0020118041075056206
+      },
+      {
+        "pcode": "ID1274",
+        "discreteBoundaryHausdorffDegrees": 0.0006605180973265214,
+        "relativeSymmetricDifference": 0.005917194899352076
+      },
+      {
+        "pcode": "ID1277",
+        "discreteBoundaryHausdorffDegrees": 0.00076920045836933,
+        "relativeSymmetricDifference": 0.0011631211191940735
+      },
+      {
+        "pcode": "ID1278",
+        "discreteBoundaryHausdorffDegrees": 0.00039198396419122896,
+        "relativeSymmetricDifference": 0.0005358418499998635
+      },
+      {
+        "pcode": "ID1302",
+        "discreteBoundaryHausdorffDegrees": 0.0007152956451828146,
+        "relativeSymmetricDifference": 0.00019418459866813294
+      },
+      {
+        "pcode": "ID1303",
+        "discreteBoundaryHausdorffDegrees": 0.0031667649860876715,
+        "relativeSymmetricDifference": 0.00011631526932577024
+      },
+      {
+        "pcode": "ID1304",
+        "discreteBoundaryHausdorffDegrees": 0.0007783250542404497,
+        "relativeSymmetricDifference": 0.00013730065726954966
+      },
+      {
+        "pcode": "ID1305",
+        "discreteBoundaryHausdorffDegrees": 0.0005897379287488156,
+        "relativeSymmetricDifference": 0.0006260076020895785
+      },
+      {
+        "pcode": "ID1306",
+        "discreteBoundaryHausdorffDegrees": 0.0003457138211646043,
+        "relativeSymmetricDifference": 0.00032175649360152795
+      },
+      {
+        "pcode": "ID1307",
+        "discreteBoundaryHausdorffDegrees": 0.0014155930442064243,
+        "relativeSymmetricDifference": 0.0002109032962345214
+      },
+      {
+        "pcode": "ID1308",
+        "discreteBoundaryHausdorffDegrees": 0.00043522377867724713,
+        "relativeSymmetricDifference": 0.00018365205971208914
+      },
+      {
+        "pcode": "ID1309",
+        "discreteBoundaryHausdorffDegrees": 0.000829250567697287,
+        "relativeSymmetricDifference": 0.0001292946181975282
+      },
+      {
+        "pcode": "ID1301",
+        "discreteBoundaryHausdorffDegrees": 0.0018350343920380447,
+        "relativeSymmetricDifference": 0.0013082925690804854
+      },
+      {
+        "pcode": "ID1311",
+        "discreteBoundaryHausdorffDegrees": 0.00028687658435700564,
+        "relativeSymmetricDifference": 9.317977236777263e-05
+      },
+      {
+        "pcode": "ID1310",
+        "discreteBoundaryHausdorffDegrees": 0.0002487870915398619,
+        "relativeSymmetricDifference": 4.830248472213183e-05
+      },
+      {
+        "pcode": "ID1312",
+        "discreteBoundaryHausdorffDegrees": 0.0008450656759902097,
+        "relativeSymmetricDifference": 0.00020466046906476672
+      },
+      {
+        "pcode": "ID1371",
+        "discreteBoundaryHausdorffDegrees": 0.0031667649860876715,
+        "relativeSymmetricDifference": 0.0008369133926874347
+      },
+      {
+        "pcode": "ID1372",
+        "discreteBoundaryHausdorffDegrees": 0.00073840609492764,
+        "relativeSymmetricDifference": 0.0013266050965250354
+      },
+      {
+        "pcode": "ID1373",
+        "discreteBoundaryHausdorffDegrees": 0.0003938677941055705,
+        "relativeSymmetricDifference": 0.0006499419832127797
+      },
+      {
+        "pcode": "ID1374",
+        "discreteBoundaryHausdorffDegrees": 0.00048270815713783143,
+        "relativeSymmetricDifference": 0.005710197484599054
+      },
+      {
+        "pcode": "ID1375",
+        "discreteBoundaryHausdorffDegrees": 0.0014155930442064243,
+        "relativeSymmetricDifference": 0.004310025466231223
+      },
+      {
+        "pcode": "ID1376",
+        "discreteBoundaryHausdorffDegrees": 0.0003606000917333479,
+        "relativeSymmetricDifference": 0.0020730880569374385
+      },
+      {
+        "pcode": "ID1377",
+        "discreteBoundaryHausdorffDegrees": 0.0003457138211646043,
+        "relativeSymmetricDifference": 0.0028440862561269734
+      },
+      {
+        "pcode": "ID1406",
+        "discreteBoundaryHausdorffDegrees": 0.0006710302250177225,
+        "relativeSymmetricDifference": 8.646957780701606e-05
+      },
+      {
+        "pcode": "ID1402",
+        "discreteBoundaryHausdorffDegrees": 0.0002939089082498815,
+        "relativeSymmetricDifference": 3.846210529106932e-05
+      },
+      {
+        "pcode": "ID1408",
+        "discreteBoundaryHausdorffDegrees": 0.000567377700724164,
+        "relativeSymmetricDifference": 0.00013994501122985652
+      },
+      {
+        "pcode": "ID1403",
+        "discreteBoundaryHausdorffDegrees": 0.0011091878694509418,
+        "relativeSymmetricDifference": 1.6827494225561365e-05
+      },
+      {
+        "pcode": "ID1404",
+        "discreteBoundaryHausdorffDegrees": 0.00026467964559270677,
+        "relativeSymmetricDifference": 4.7672441026174565e-05
+      },
+      {
+        "pcode": "ID1407",
+        "discreteBoundaryHausdorffDegrees": 0.0009118866691997125,
+        "relativeSymmetricDifference": 7.317440659211256e-05
+      },
+      {
+        "pcode": "ID1409",
+        "discreteBoundaryHausdorffDegrees": 0.0009477656367958042,
+        "relativeSymmetricDifference": 0.00015578762966340822
+      },
+      {
+        "pcode": "ID1405",
+        "discreteBoundaryHausdorffDegrees": 0.0002475676039502711,
+        "relativeSymmetricDifference": 4.033157041876726e-05
+      },
+      {
+        "pcode": "ID1401",
+        "discreteBoundaryHausdorffDegrees": 0.0011451319781591684,
+        "relativeSymmetricDifference": 0.00021472704465524384
+      },
+      {
+        "pcode": "ID1410",
+        "discreteBoundaryHausdorffDegrees": 0.0005406999999024721,
+        "relativeSymmetricDifference": 0.0002814454373315753
+      },
+      {
+        "pcode": "ID1471",
+        "discreteBoundaryHausdorffDegrees": 0.0006710302250177225,
+        "relativeSymmetricDifference": 0.0003459507436132048
+      },
+      {
+        "pcode": "ID1473",
+        "discreteBoundaryHausdorffDegrees": 0.0005059287113007817,
+        "relativeSymmetricDifference": 0.0001430402548159734
+      },
+      {
+        "pcode": "ID1501",
+        "discreteBoundaryHausdorffDegrees": 0.00035845335073454287,
+        "relativeSymmetricDifference": 0.00016123117743804794
+      },
+      {
+        "pcode": "ID1502",
+        "discreteBoundaryHausdorffDegrees": 0.0003584533507345428,
+        "relativeSymmetricDifference": 8.137217849789698e-05
+      },
+      {
+        "pcode": "ID1503",
+        "discreteBoundaryHausdorffDegrees": 0.0006559809900949122,
+        "relativeSymmetricDifference": 7.174564465467958e-05
+      },
+      {
+        "pcode": "ID1504",
+        "discreteBoundaryHausdorffDegrees": 0.00036179560364946276,
+        "relativeSymmetricDifference": 0.00010440971419471768
+      },
+      {
+        "pcode": "ID1505",
+        "discreteBoundaryHausdorffDegrees": 0.0003398916079228688,
+        "relativeSymmetricDifference": 8.70722986166565e-05
+      },
+      {
+        "pcode": "ID1507",
+        "discreteBoundaryHausdorffDegrees": 0.00025826209051494703,
+        "relativeSymmetricDifference": 4.190283631558706e-05
+      },
+      {
+        "pcode": "ID1506",
+        "discreteBoundaryHausdorffDegrees": 0.0002992781517360441,
+        "relativeSymmetricDifference": 3.399937210814718e-05
+      },
+      {
+        "pcode": "ID1509",
+        "discreteBoundaryHausdorffDegrees": 0.0008008221495930464,
+        "relativeSymmetricDifference": 4.586224297170046e-05
+      },
+      {
+        "pcode": "ID1508",
+        "discreteBoundaryHausdorffDegrees": 0.0011451319781591684,
+        "relativeSymmetricDifference": 4.8992021992205747e-05
+      },
+      {
+        "pcode": "ID1571",
+        "discreteBoundaryHausdorffDegrees": 0.0003398916079228688,
+        "relativeSymmetricDifference": 0.0007236750606587778
+      },
+      {
+        "pcode": "ID1572",
+        "discreteBoundaryHausdorffDegrees": 0.0002264904253503062,
+        "relativeSymmetricDifference": 2.8917712629687602e-05
+      },
+      {
+        "pcode": "ID1601",
+        "discreteBoundaryHausdorffDegrees": 0.002464044193979699,
+        "relativeSymmetricDifference": 5.2487414247081144e-05
+      },
+      {
+        "pcode": "ID1602",
+        "discreteBoundaryHausdorffDegrees": 0.002432827523598625,
+        "relativeSymmetricDifference": 5.4333125414969516e-05
+      },
+      {
+        "pcode": "ID1603",
+        "discreteBoundaryHausdorffDegrees": 0.002464044193979699,
+        "relativeSymmetricDifference": 6.865769925679036e-05
+      },
+      {
+        "pcode": "ID1604",
+        "discreteBoundaryHausdorffDegrees": 0.0006290977239256308,
+        "relativeSymmetricDifference": 0.0002049559646076081
+      },
+      {
+        "pcode": "ID1605",
+        "discreteBoundaryHausdorffDegrees": 0.0020506781804200277,
+        "relativeSymmetricDifference": 5.9682643136832265e-05
+      },
+      {
+        "pcode": "ID1606",
+        "discreteBoundaryHausdorffDegrees": 0.0007875793118159496,
+        "relativeSymmetricDifference": 4.215638769080042e-05
+      },
+      {
+        "pcode": "ID1607",
+        "discreteBoundaryHausdorffDegrees": 0.00044639150990547264,
+        "relativeSymmetricDifference": 5.286926643766481e-05
+      },
+      {
+        "pcode": "ID1609",
+        "discreteBoundaryHausdorffDegrees": 0.0005945007933288234,
+        "relativeSymmetricDifference": 0.0002130199990316894
+      },
+      {
+        "pcode": "ID1608",
+        "discreteBoundaryHausdorffDegrees": 0.0003869116740416221,
+        "relativeSymmetricDifference": 0.0001259111048225687
+      },
+      {
+        "pcode": "ID1610",
+        "discreteBoundaryHausdorffDegrees": 0.002432827523598625,
+        "relativeSymmetricDifference": 0.00011185714440709057
+      },
+      {
+        "pcode": "ID1611",
+        "discreteBoundaryHausdorffDegrees": 0.0007974855114856667,
+        "relativeSymmetricDifference": 0.00012691798328412718
+      },
+      {
+        "pcode": "ID1612",
+        "discreteBoundaryHausdorffDegrees": 0.00022228563030277868,
+        "relativeSymmetricDifference": 4.1454209247611344e-05
+      },
+      {
+        "pcode": "ID1613",
+        "discreteBoundaryHausdorffDegrees": 0.0020506781804200277,
+        "relativeSymmetricDifference": 7.75096606365767e-05
+      },
+      {
+        "pcode": "ID1671",
+        "discreteBoundaryHausdorffDegrees": 0.00048543381080679883,
+        "relativeSymmetricDifference": 0.0005170959241395156
+      },
+      {
+        "pcode": "ID1673",
+        "discreteBoundaryHausdorffDegrees": 0.00038310646673829377,
+        "relativeSymmetricDifference": 0.0006760566610822127
+      },
+      {
+        "pcode": "ID1674",
+        "discreteBoundaryHausdorffDegrees": 0.0006210245167075898,
+        "relativeSymmetricDifference": 0.00047368205572631544
+      },
+      {
+        "pcode": "ID1672",
+        "discreteBoundaryHausdorffDegrees": 0.0006428973765020679,
+        "relativeSymmetricDifference": 0.00031846354392363855
+      },
+      {
+        "pcode": "ID1701",
+        "discreteBoundaryHausdorffDegrees": 0.0003161077949040768,
+        "relativeSymmetricDifference": 0.000256353575243962
+      },
+      {
+        "pcode": "ID1702",
+        "discreteBoundaryHausdorffDegrees": 0.0004570448321911076,
+        "relativeSymmetricDifference": 0.00014365211174744309
+      },
+      {
+        "pcode": "ID1703",
+        "discreteBoundaryHausdorffDegrees": 0.0007112876154130519,
+        "relativeSymmetricDifference": 0.00017057002002692306
+      },
+      {
+        "pcode": "ID1704",
+        "discreteBoundaryHausdorffDegrees": 0.00033269212333930464,
+        "relativeSymmetricDifference": 0.00021798331900652876
+      },
+      {
+        "pcode": "ID1705",
+        "discreteBoundaryHausdorffDegrees": 0.00042461513848190616,
+        "relativeSymmetricDifference": 0.00013622128508025658
+      },
+      {
+        "pcode": "ID1706",
+        "discreteBoundaryHausdorffDegrees": 0.00024069985616278743,
+        "relativeSymmetricDifference": 4.937687265621207e-05
+      },
+      {
+        "pcode": "ID1707",
+        "discreteBoundaryHausdorffDegrees": 0.0002095430111358315,
+        "relativeSymmetricDifference": 6.296706103356867e-05
+      },
+      {
+        "pcode": "ID1708",
+        "discreteBoundaryHausdorffDegrees": 0.0004146312450997869,
+        "relativeSymmetricDifference": 0.00014487615660958777
+      },
+      {
+        "pcode": "ID1709",
+        "discreteBoundaryHausdorffDegrees": 0.00035180702792728374,
+        "relativeSymmetricDifference": 7.491778834035808e-05
+      },
+      {
+        "pcode": "ID1771",
+        "discreteBoundaryHausdorffDegrees": 0.000287448986882608,
+        "relativeSymmetricDifference": 0.0006448443092657679
+      },
+      {
+        "pcode": "ID1803",
+        "discreteBoundaryHausdorffDegrees": 0.0004807807630222169,
+        "relativeSymmetricDifference": 0.0006571801759603909
+      },
+      {
+        "pcode": "ID1805",
+        "discreteBoundaryHausdorffDegrees": 0.0015454416716217249,
+        "relativeSymmetricDifference": 0.00035953119370376723
+      },
+      {
+        "pcode": "ID1806",
+        "discreteBoundaryHausdorffDegrees": 0.0005815397444391044,
+        "relativeSymmetricDifference": 0.00028806862981867046
+      },
+      {
+        "pcode": "ID1801",
+        "discreteBoundaryHausdorffDegrees": 0.0004108119290390442,
+        "relativeSymmetricDifference": 0.0002154067252237729
+      },
+      {
+        "pcode": "ID1808",
+        "discreteBoundaryHausdorffDegrees": 0.000589315781301522,
+        "relativeSymmetricDifference": 0.00027005994510681335
+      },
+      {
+        "pcode": "ID1802",
+        "discreteBoundaryHausdorffDegrees": 0.005628705220463596,
+        "relativeSymmetricDifference": 0.0003179833310593006
+      },
+      {
+        "pcode": "ID1804",
+        "discreteBoundaryHausdorffDegrees": 0.000827230585384185,
+        "relativeSymmetricDifference": 0.00021487114775019044
+      },
+      {
+        "pcode": "ID1807",
+        "discreteBoundaryHausdorffDegrees": 0.0005945007933288233,
+        "relativeSymmetricDifference": 0.0003125623944264524
+      },
+      {
+        "pcode": "ID1809",
+        "discreteBoundaryHausdorffDegrees": 0.0015454416716217249,
+        "relativeSymmetricDifference": 0.0007404931132910897
+      },
+      {
+        "pcode": "ID1810",
+        "discreteBoundaryHausdorffDegrees": 0.00030639641568795835,
+        "relativeSymmetricDifference": 0.0006558148474050057
+      },
+      {
+        "pcode": "ID1811",
+        "discreteBoundaryHausdorffDegrees": 0.00048065569358876143,
+        "relativeSymmetricDifference": 0.00010028174420052705
+      },
+      {
+        "pcode": "ID1812",
+        "discreteBoundaryHausdorffDegrees": 0.000589315781301522,
+        "relativeSymmetricDifference": 0.00023771964376472017
+      },
+      {
+        "pcode": "ID1813",
+        "discreteBoundaryHausdorffDegrees": 0.0008949656584790962,
+        "relativeSymmetricDifference": 0.0004807336369076226
+      },
+      {
+        "pcode": "ID1871",
+        "discreteBoundaryHausdorffDegrees": 0.0007533857480428236,
+        "relativeSymmetricDifference": 0.0030622517677206707
+      },
+      {
+        "pcode": "ID1872",
+        "discreteBoundaryHausdorffDegrees": 0.000827230585384185,
+        "relativeSymmetricDifference": 0.0028159985020435687
+      },
+      {
+        "pcode": "ID1901",
+        "discreteBoundaryHausdorffDegrees": 0.0011483394530185194,
+        "relativeSymmetricDifference": 0.0004210123895099444
+      },
+      {
+        "pcode": "ID1902",
+        "discreteBoundaryHausdorffDegrees": 0.0017428808252093865,
+        "relativeSymmetricDifference": 0.0010161851503684926
+      },
+      {
+        "pcode": "ID1905",
+        "discreteBoundaryHausdorffDegrees": 0.0012899049459112347,
+        "relativeSymmetricDifference": 0.0007194673981157432
+      },
+      {
+        "pcode": "ID1904",
+        "discreteBoundaryHausdorffDegrees": 0.0005935894373164467,
+        "relativeSymmetricDifference": 0.0004926792970260211
+      },
+      {
+        "pcode": "ID1903",
+        "discreteBoundaryHausdorffDegrees": 0.0007578395995395713,
+        "relativeSymmetricDifference": 0.00023578512297677288
+      },
+      {
+        "pcode": "ID1906",
+        "discreteBoundaryHausdorffDegrees": 0.001407900000081952,
+        "relativeSymmetricDifference": 0.0009200458078820978
+      },
+      {
+        "pcode": "ID1971",
+        "discreteBoundaryHausdorffDegrees": 0.00034458927614173986,
+        "relativeSymmetricDifference": 0.0016828691419861796
+      },
+      {
+        "pcode": "ID2102",
+        "discreteBoundaryHausdorffDegrees": 0.001196414043895949,
+        "relativeSymmetricDifference": 0.0034358336874613007
+      },
+      {
+        "pcode": "ID2101",
+        "discreteBoundaryHausdorffDegrees": 0.0003591998214740737,
+        "relativeSymmetricDifference": 0.001733096146069789
+      },
+      {
+        "pcode": "ID2103",
+        "discreteBoundaryHausdorffDegrees": 0.0014946163788856289,
+        "relativeSymmetricDifference": 0.0023860273254574234
+      },
+      {
+        "pcode": "ID2104",
+        "discreteBoundaryHausdorffDegrees": 0.0021522854133880914,
+        "relativeSymmetricDifference": 0.0031607806204447847
+      },
+      {
+        "pcode": "ID2105",
+        "discreteBoundaryHausdorffDegrees": 0.0002828504682570536,
+        "relativeSymmetricDifference": 0.00504867425239833
+      },
+      {
+        "pcode": "ID2171",
+        "discreteBoundaryHausdorffDegrees": 0.001264948555241302,
+        "relativeSymmetricDifference": 0.0034505752031800093
+      },
+      {
+        "pcode": "ID2172",
+        "discreteBoundaryHausdorffDegrees": 0.0013173486745179771,
+        "relativeSymmetricDifference": 0.003457823418582587
+      },
+      {
+        "pcode": "ID3101",
+        "discreteBoundaryHausdorffDegrees": 4.06964370681868e-05,
+        "relativeSymmetricDifference": 0.002141477439509132
+      },
+      {
+        "pcode": "ID3173",
+        "discreteBoundaryHausdorffDegrees": 0.001451647770671276,
+        "relativeSymmetricDifference": 0.0027739649399457986
+      },
+      {
+        "pcode": "ID3175",
+        "discreteBoundaryHausdorffDegrees": 0.001451647770671276,
+        "relativeSymmetricDifference": 0.003209363015359345
+      },
+      {
+        "pcode": "ID3174",
+        "discreteBoundaryHausdorffDegrees": 0.0004463394909371234,
+        "relativeSymmetricDifference": 0.001850475996907873
+      },
+      {
+        "pcode": "ID3171",
+        "discreteBoundaryHausdorffDegrees": 0.0005152880567990408,
+        "relativeSymmetricDifference": 0.0037050838025974894
+      },
+      {
+        "pcode": "ID3172",
+        "discreteBoundaryHausdorffDegrees": 0.000675560686005952,
+        "relativeSymmetricDifference": 0.0034670376774692006
+      },
+      {
+        "pcode": "ID3201",
+        "discreteBoundaryHausdorffDegrees": 0.0008164704024447892,
+        "relativeSymmetricDifference": 0.0008430166719731625
+      },
+      {
+        "pcode": "ID3202",
+        "discreteBoundaryHausdorffDegrees": 0.0008451224982362244,
+        "relativeSymmetricDifference": 0.0005504550610016264
+      },
+      {
+        "pcode": "ID3203",
+        "discreteBoundaryHausdorffDegrees": 0.0009719054315986223,
+        "relativeSymmetricDifference": 0.0007185483719246114
+      },
+      {
+        "pcode": "ID3204",
+        "discreteBoundaryHausdorffDegrees": 0.0005679749017897704,
+        "relativeSymmetricDifference": 0.0008896644900876829
+      },
+      {
+        "pcode": "ID3205",
+        "discreteBoundaryHausdorffDegrees": 0.0006780223945165347,
+        "relativeSymmetricDifference": 0.0005562934623164194
+      },
+      {
+        "pcode": "ID3206",
+        "discreteBoundaryHausdorffDegrees": 0.0009570950316814393,
+        "relativeSymmetricDifference": 0.0007675371040726721
+      },
+      {
+        "pcode": "ID3207",
+        "discreteBoundaryHausdorffDegrees": 0.0008418115999486252,
+        "relativeSymmetricDifference": 0.000994665827995256
+      },
+      {
+        "pcode": "ID3208",
+        "discreteBoundaryHausdorffDegrees": 0.0006413616140078251,
+        "relativeSymmetricDifference": 0.0008503476144207163
+      },
+      {
+        "pcode": "ID3209",
+        "discreteBoundaryHausdorffDegrees": 0.0016999918641825015,
+        "relativeSymmetricDifference": 0.0012307020105776772
+      },
+      {
+        "pcode": "ID3210",
+        "discreteBoundaryHausdorffDegrees": 0.0008418115999486252,
+        "relativeSymmetricDifference": 0.001070434823731501
+      },
+      {
+        "pcode": "ID3211",
+        "discreteBoundaryHausdorffDegrees": 0.0007014813112655497,
+        "relativeSymmetricDifference": 0.0009488612055234017
+      },
+      {
+        "pcode": "ID3212",
+        "discreteBoundaryHausdorffDegrees": 0.0016999918641825013,
+        "relativeSymmetricDifference": 0.000702979315952227
+      },
+      {
+        "pcode": "ID3213",
+        "discreteBoundaryHausdorffDegrees": 0.0011517106061319535,
+        "relativeSymmetricDifference": 0.0007338837050138275
+      },
+      {
+        "pcode": "ID3214",
+        "discreteBoundaryHausdorffDegrees": 0.0006630824079297091,
+        "relativeSymmetricDifference": 0.001168061122639443
+      },
+      {
+        "pcode": "ID3215",
+        "discreteBoundaryHausdorffDegrees": 0.0003816129672985246,
+        "relativeSymmetricDifference": 0.0006730823412478519
+      },
+      {
+        "pcode": "ID3216",
+        "discreteBoundaryHausdorffDegrees": 0.0021269321775434376,
+        "relativeSymmetricDifference": 0.0009810052118223512
+      },
+      {
+        "pcode": "ID3217",
+        "discreteBoundaryHausdorffDegrees": 0.0019476872566954835,
+        "relativeSymmetricDifference": 0.001574527676922328
+      },
+      {
+        "pcode": "ID3218",
+        "discreteBoundaryHausdorffDegrees": 0.0010290310975224295,
+        "relativeSymmetricDifference": 0.0010843672397302345
+      },
+      {
+        "pcode": "ID3271",
+        "discreteBoundaryHausdorffDegrees": 0.0005780916313712855,
+        "relativeSymmetricDifference": 0.0035513209737636415
+      },
+      {
+        "pcode": "ID3272",
+        "discreteBoundaryHausdorffDegrees": 0.0005187734107814316,
+        "relativeSymmetricDifference": 0.006277464414181326
+      },
+      {
+        "pcode": "ID3273",
+        "discreteBoundaryHausdorffDegrees": 0.0005671297030381783,
+        "relativeSymmetricDifference": 0.0027503243631016743
+      },
+      {
+        "pcode": "ID3274",
+        "discreteBoundaryHausdorffDegrees": 0.0008191154920268221,
+        "relativeSymmetricDifference": 0.005149532935557297
+      },
+      {
+        "pcode": "ID3275",
+        "discreteBoundaryHausdorffDegrees": 0.002126932177543437,
+        "relativeSymmetricDifference": 0.003494755231234043
+      },
+      {
+        "pcode": "ID3276",
+        "discreteBoundaryHausdorffDegrees": 0.0004949024649375545,
+        "relativeSymmetricDifference": 0.0036499984159105952
+      },
+      {
+        "pcode": "ID3277",
+        "discreteBoundaryHausdorffDegrees": 0.00042932048698828213,
+        "relativeSymmetricDifference": 0.005178033988572928
+      },
+      {
+        "pcode": "ID3278",
+        "discreteBoundaryHausdorffDegrees": 0.0009570950316814393,
+        "relativeSymmetricDifference": 0.002978704761452168
+      },
+      {
+        "pcode": "ID3279",
+        "discreteBoundaryHausdorffDegrees": 0.0004910908054861944,
+        "relativeSymmetricDifference": 0.003000612584777302
+      },
+      {
+        "pcode": "ID3301",
+        "discreteBoundaryHausdorffDegrees": 0.0008917350918400042,
+        "relativeSymmetricDifference": 0.0007205749426790869
+      },
+      {
+        "pcode": "ID3302",
+        "discreteBoundaryHausdorffDegrees": 0.0006239498200749111,
+        "relativeSymmetricDifference": 0.0007690471777016424
+      },
+      {
+        "pcode": "ID3303",
+        "discreteBoundaryHausdorffDegrees": 0.0006239498200749112,
+        "relativeSymmetricDifference": 0.0010215188326503197
+      },
+      {
+        "pcode": "ID3304",
+        "discreteBoundaryHausdorffDegrees": 0.00043750063546306255,
+        "relativeSymmetricDifference": 0.0010788600881396146
+      },
+      {
+        "pcode": "ID3305",
+        "discreteBoundaryHausdorffDegrees": 0.0005359345690672566,
+        "relativeSymmetricDifference": 0.0007033322960130731
+      },
+      {
+        "pcode": "ID3306",
+        "discreteBoundaryHausdorffDegrees": 0.0006253870801143898,
+        "relativeSymmetricDifference": 0.0006956807688575994
+      },
+      {
+        "pcode": "ID3307",
+        "discreteBoundaryHausdorffDegrees": 0.0009269904669110177,
+        "relativeSymmetricDifference": 0.0009621110303557666
+      },
+      {
+        "pcode": "ID3308",
+        "discreteBoundaryHausdorffDegrees": 0.0008357399416819036,
+        "relativeSymmetricDifference": 0.001024265892349255
+      },
+      {
+        "pcode": "ID3309",
+        "discreteBoundaryHausdorffDegrees": 0.0012491924405902877,
+        "relativeSymmetricDifference": 0.0019840774654002495
+      },
+      {
+        "pcode": "ID3310",
+        "discreteBoundaryHausdorffDegrees": 0.0006593682259936127,
+        "relativeSymmetricDifference": 0.0011927392967573595
+      },
+      {
+        "pcode": "ID3311",
+        "discreteBoundaryHausdorffDegrees": 0.002584631973129469,
+        "relativeSymmetricDifference": 0.0017004692535545593
+      },
+      {
+        "pcode": "ID3312",
+        "discreteBoundaryHausdorffDegrees": 0.0007064169942673492,
+        "relativeSymmetricDifference": 0.0007695554409243761
+      },
+      {
+        "pcode": "ID3313",
+        "discreteBoundaryHausdorffDegrees": 0.002584631973129468,
+        "relativeSymmetricDifference": 0.0012571914283692504
+      },
+      {
+        "pcode": "ID3314",
+        "discreteBoundaryHausdorffDegrees": 0.002008350161292926,
+        "relativeSymmetricDifference": 0.0023090045121958217
+      },
+      {
+        "pcode": "ID3315",
+        "discreteBoundaryHausdorffDegrees": 0.001154034943197412,
+        "relativeSymmetricDifference": 0.0008980988508630625
+      },
+      {
+        "pcode": "ID3316",
+        "discreteBoundaryHausdorffDegrees": 0.0006555223044960276,
+        "relativeSymmetricDifference": 0.0007364587489250645
+      },
+      {
+        "pcode": "ID3317",
+        "discreteBoundaryHausdorffDegrees": 0.0011235224921901667,
+        "relativeSymmetricDifference": 0.0010395448905901005
+      },
+      {
+        "pcode": "ID3318",
+        "discreteBoundaryHausdorffDegrees": 0.001323591391581476,
+        "relativeSymmetricDifference": 0.0008198689949072024
+      },
+      {
+        "pcode": "ID3319",
+        "discreteBoundaryHausdorffDegrees": 0.001323591391581476,
+        "relativeSymmetricDifference": 0.00141392387274437
+      },
+      {
+        "pcode": "ID3320",
+        "discreteBoundaryHausdorffDegrees": 0.0006998893128258019,
+        "relativeSymmetricDifference": 0.0017061158317018196
+      },
+      {
+        "pcode": "ID3321",
+        "discreteBoundaryHausdorffDegrees": 0.0010388896188938941,
+        "relativeSymmetricDifference": 0.0011590509155306491
+      },
+      {
+        "pcode": "ID3322",
+        "discreteBoundaryHausdorffDegrees": 0.0018644417744724847,
+        "relativeSymmetricDifference": 0.0016367908410415389
+      },
+      {
+        "pcode": "ID3323",
+        "discreteBoundaryHausdorffDegrees": 0.0009269904669110177,
+        "relativeSymmetricDifference": 0.001102377359073777
+      },
+      {
+        "pcode": "ID3324",
+        "discreteBoundaryHausdorffDegrees": 0.0011430601472118295,
+        "relativeSymmetricDifference": 0.0013322102288112658
+      },
+      {
+        "pcode": "ID3325",
+        "discreteBoundaryHausdorffDegrees": 0.00044919226059038635,
+        "relativeSymmetricDifference": 0.0010196212243395357
+      },
+      {
+        "pcode": "ID3326",
+        "discreteBoundaryHausdorffDegrees": 0.0006021297616610484,
+        "relativeSymmetricDifference": 0.001114422061514859
+      },
+      {
+        "pcode": "ID3327",
+        "discreteBoundaryHausdorffDegrees": 0.000561288947172436,
+        "relativeSymmetricDifference": 0.0010107233467838077
+      },
+      {
+        "pcode": "ID3328",
+        "discreteBoundaryHausdorffDegrees": 0.0006063900627845839,
+        "relativeSymmetricDifference": 0.0010574163129180223
+      },
+      {
+        "pcode": "ID3329",
+        "discreteBoundaryHausdorffDegrees": 0.000834338676394055,
+        "relativeSymmetricDifference": 0.0007623531332568983
+      },
+      {
+        "pcode": "ID3371",
+        "discreteBoundaryHausdorffDegrees": 0.0007266237677664288,
+        "relativeSymmetricDifference": 0.00843734852673227
+      },
+      {
+        "pcode": "ID3372",
+        "discreteBoundaryHausdorffDegrees": 0.0005920047070794779,
+        "relativeSymmetricDifference": 0.003982564931546719
+      },
+      {
+        "pcode": "ID3373",
+        "discreteBoundaryHausdorffDegrees": 0.0018644417744724847,
+        "relativeSymmetricDifference": 0.004173127083659356
+      },
+      {
+        "pcode": "ID3374",
+        "discreteBoundaryHausdorffDegrees": 0.0009660350726453971,
+        "relativeSymmetricDifference": 0.0017926790571329949
+      },
+      {
+        "pcode": "ID3375",
+        "discreteBoundaryHausdorffDegrees": 0.0006021297616610484,
+        "relativeSymmetricDifference": 0.004169005107506769
+      },
+      {
+        "pcode": "ID3376",
+        "discreteBoundaryHausdorffDegrees": 0.0006063900627845839,
+        "relativeSymmetricDifference": 0.002803244851994572
+      },
+      {
+        "pcode": "ID3401",
+        "discreteBoundaryHausdorffDegrees": 0.0008357399416819036,
+        "relativeSymmetricDifference": 0.000982468962757455
+      },
+      {
+        "pcode": "ID3402",
+        "discreteBoundaryHausdorffDegrees": 0.0010000225797498214,
+        "relativeSymmetricDifference": 0.0017278381160239053
+      },
+      {
+        "pcode": "ID3403",
+        "discreteBoundaryHausdorffDegrees": 0.0010000225797498214,
+        "relativeSymmetricDifference": 0.0009893342651752465
+      },
+      {
+        "pcode": "ID3404",
+        "discreteBoundaryHausdorffDegrees": 0.0011068495335205047,
+        "relativeSymmetricDifference": 0.0013862030036668705
+      },
+      {
+        "pcode": "ID3471",
+        "discreteBoundaryHausdorffDegrees": 0.0011068495335205047,
+        "relativeSymmetricDifference": 0.0056232552491075035
+      },
+      {
+        "pcode": "ID3501",
+        "discreteBoundaryHausdorffDegrees": 0.000838689453845957,
+        "relativeSymmetricDifference": 0.0011956793168779105
+      },
+      {
+        "pcode": "ID3502",
+        "discreteBoundaryHausdorffDegrees": 0.0006962657209905542,
+        "relativeSymmetricDifference": 0.0008064067657835829
+      },
+      {
+        "pcode": "ID3503",
+        "discreteBoundaryHausdorffDegrees": 0.0013101526629355304,
+        "relativeSymmetricDifference": 0.0016397960274361436
+      },
+      {
+        "pcode": "ID3504",
+        "discreteBoundaryHausdorffDegrees": 0.0007399999999950299,
+        "relativeSymmetricDifference": 0.0011846639312928751
+      },
+      {
+        "pcode": "ID3505",
+        "discreteBoundaryHausdorffDegrees": 0.0009454673265982047,
+        "relativeSymmetricDifference": 0.0008429623381351637
+      },
+      {
+        "pcode": "ID3506",
+        "discreteBoundaryHausdorffDegrees": 0.0007165487996526022,
+        "relativeSymmetricDifference": 0.0007822963223053427
+      },
+      {
+        "pcode": "ID3507",
+        "discreteBoundaryHausdorffDegrees": 0.0009373862828229082,
+        "relativeSymmetricDifference": 0.0008822996122501719
+      },
+      {
+        "pcode": "ID3508",
+        "discreteBoundaryHausdorffDegrees": 0.0005702817021371189,
+        "relativeSymmetricDifference": 0.0005372065182878897
+      },
+      {
+        "pcode": "ID3509",
+        "discreteBoundaryHausdorffDegrees": 0.0013851603588904671,
+        "relativeSymmetricDifference": 0.0007837482797122935
+      },
+      {
+        "pcode": "ID3510",
+        "discreteBoundaryHausdorffDegrees": 0.0012897503605856506,
+        "relativeSymmetricDifference": 0.0005604882562940623
+      },
+      {
+        "pcode": "ID3511",
+        "discreteBoundaryHausdorffDegrees": 0.0005624871165373196,
+        "relativeSymmetricDifference": 0.0007653625103501462
+      },
+      {
+        "pcode": "ID3512",
+        "discreteBoundaryHausdorffDegrees": 0.0008025964266614915,
+        "relativeSymmetricDifference": 0.0009835038810419945
+      },
+      {
+        "pcode": "ID3513",
+        "discreteBoundaryHausdorffDegrees": 0.0007315999997103972,
+        "relativeSymmetricDifference": 0.0009331084256698139
+      },
+      {
+        "pcode": "ID3514",
+        "discreteBoundaryHausdorffDegrees": 0.0006004736946265724,
+        "relativeSymmetricDifference": 0.0006433568688515343
+      },
+      {
+        "pcode": "ID3515",
+        "discreteBoundaryHausdorffDegrees": 0.00045908015925243036,
+        "relativeSymmetricDifference": 0.0007489532940204362
+      },
+      {
+        "pcode": "ID3516",
+        "discreteBoundaryHausdorffDegrees": 0.0004750692140582807,
+        "relativeSymmetricDifference": 0.0008895997502008169
+      },
+      {
+        "pcode": "ID3517",
+        "discreteBoundaryHausdorffDegrees": 0.0006822325485301065,
+        "relativeSymmetricDifference": 0.0009232304409545496
+      },
+      {
+        "pcode": "ID3518",
+        "discreteBoundaryHausdorffDegrees": 0.0006454640694354657,
+        "relativeSymmetricDifference": 0.0008555076620257689
+      },
+      {
+        "pcode": "ID3519",
+        "discreteBoundaryHausdorffDegrees": 0.000557345671137709,
+        "relativeSymmetricDifference": 0.001025718074967661
+      },
+      {
+        "pcode": "ID3520",
+        "discreteBoundaryHausdorffDegrees": 0.0007064169942673492,
+        "relativeSymmetricDifference": 0.0008420261751880515
+      },
+      {
+        "pcode": "ID3521",
+        "discreteBoundaryHausdorffDegrees": 0.0006555223044960276,
+        "relativeSymmetricDifference": 0.0009747183573063267
+      },
+      {
+        "pcode": "ID3522",
+        "discreteBoundaryHausdorffDegrees": 0.0006665171275078466,
+        "relativeSymmetricDifference": 0.0006908076191613087
+      },
+      {
+        "pcode": "ID3523",
+        "discreteBoundaryHausdorffDegrees": 0.0007631296188802145,
+        "relativeSymmetricDifference": 0.0005657127056855855
+      },
+      {
+        "pcode": "ID3524",
+        "discreteBoundaryHausdorffDegrees": 0.0010654829747931904,
+        "relativeSymmetricDifference": 0.000755817700565159
+      },
+      {
+        "pcode": "ID3525",
+        "discreteBoundaryHausdorffDegrees": 0.0008755116789342039,
+        "relativeSymmetricDifference": 0.000970107626205544
+      },
+      {
+        "pcode": "ID3526",
+        "discreteBoundaryHausdorffDegrees": 0.0017538605793183972,
+        "relativeSymmetricDifference": 0.0008272087110563752
+      },
+      {
+        "pcode": "ID3527",
+        "discreteBoundaryHausdorffDegrees": 0.0006521422405457282,
+        "relativeSymmetricDifference": 0.0009504546547183304
+      },
+      {
+        "pcode": "ID3528",
+        "discreteBoundaryHausdorffDegrees": 0.001539359308287769,
+        "relativeSymmetricDifference": 0.0011603555476121588
+      },
+      {
+        "pcode": "ID3529",
+        "discreteBoundaryHausdorffDegrees": 0.002459083296656258,
+        "relativeSymmetricDifference": 0.002643450833556134
+      },
+      {
+        "pcode": "ID3571",
+        "discreteBoundaryHausdorffDegrees": 0.0004005187706796756,
+        "relativeSymmetricDifference": 0.0018975744869530078
+      },
+      {
+        "pcode": "ID3572",
+        "discreteBoundaryHausdorffDegrees": 0.0003920910427004474,
+        "relativeSymmetricDifference": 0.005156557291875484
+      },
+      {
+        "pcode": "ID3573",
+        "discreteBoundaryHausdorffDegrees": 0.0009373862828229082,
+        "relativeSymmetricDifference": 0.0028737155176363953
+      },
+      {
+        "pcode": "ID3574",
+        "discreteBoundaryHausdorffDegrees": 0.0016206763804443801,
+        "relativeSymmetricDifference": 0.003881511235377507
+      },
+      {
+        "pcode": "ID3575",
+        "discreteBoundaryHausdorffDegrees": 0.0006004736946265724,
+        "relativeSymmetricDifference": 0.004796719583188668
+      },
+      {
+        "pcode": "ID3576",
+        "discreteBoundaryHausdorffDegrees": 0.00031473439746486874,
+        "relativeSymmetricDifference": 0.004111629347298408
+      },
+      {
+        "pcode": "ID3577",
+        "discreteBoundaryHausdorffDegrees": 0.0004937256218181524,
+        "relativeSymmetricDifference": 0.005383185320847235
+      },
+      {
+        "pcode": "ID3578",
+        "discreteBoundaryHausdorffDegrees": 0.0008181859807987749,
+        "relativeSymmetricDifference": 0.0014153824260604096
+      },
+      {
+        "pcode": "ID3579",
+        "discreteBoundaryHausdorffDegrees": 0.00043357158937471754,
+        "relativeSymmetricDifference": 0.0015094203765342673
+      },
+      {
+        "pcode": "ID3601",
+        "discreteBoundaryHausdorffDegrees": 0.0014811144452672865,
+        "relativeSymmetricDifference": 0.0011626415372043928
+      },
+      {
+        "pcode": "ID3602",
+        "discreteBoundaryHausdorffDegrees": 0.0014811144452672865,
+        "relativeSymmetricDifference": 0.0005875844140121436
+      },
+      {
+        "pcode": "ID3603",
+        "discreteBoundaryHausdorffDegrees": 0.0012523693227662462,
+        "relativeSymmetricDifference": 0.0011901070089571065
+      },
+      {
+        "pcode": "ID3604",
+        "discreteBoundaryHausdorffDegrees": 0.0014892938528256675,
+        "relativeSymmetricDifference": 0.0016716449832309306
+      },
+      {
+        "pcode": "ID3671",
+        "discreteBoundaryHausdorffDegrees": 0.0009447073827165466,
+        "relativeSymmetricDifference": 0.0021590408561235164
+      },
+      {
+        "pcode": "ID3672",
+        "discreteBoundaryHausdorffDegrees": 0.0014023563014980546,
+        "relativeSymmetricDifference": 0.0035503178038039387
+      },
+      {
+        "pcode": "ID3673",
+        "discreteBoundaryHausdorffDegrees": 0.0005511496960460408,
+        "relativeSymmetricDifference": 0.0019216647240451958
+      },
+      {
+        "pcode": "ID3674",
+        "discreteBoundaryHausdorffDegrees": 0.0009447073827165466,
+        "relativeSymmetricDifference": 0.0017938399062265161
+      },
+      {
+        "pcode": "ID5101",
+        "discreteBoundaryHausdorffDegrees": 0.0015144312892782664,
+        "relativeSymmetricDifference": 0.0007494311316047615
+      },
+      {
+        "pcode": "ID5102",
+        "discreteBoundaryHausdorffDegrees": 0.0011352193886441644,
+        "relativeSymmetricDifference": 0.0011656816577220131
+      },
+      {
+        "pcode": "ID5103",
+        "discreteBoundaryHausdorffDegrees": 0.0019107153530236226,
+        "relativeSymmetricDifference": 0.0037010440701206087
+      },
+      {
+        "pcode": "ID5104",
+        "discreteBoundaryHausdorffDegrees": 0.0006404773272866986,
+        "relativeSymmetricDifference": 0.0020108262382311564
+      },
+      {
+        "pcode": "ID5105",
+        "discreteBoundaryHausdorffDegrees": 0.0010593274666439406,
+        "relativeSymmetricDifference": 0.003611093624674084
+      },
+      {
+        "pcode": "ID5106",
+        "discreteBoundaryHausdorffDegrees": 0.0006404773272866985,
+        "relativeSymmetricDifference": 0.0018658446213352224
+      },
+      {
+        "pcode": "ID5107",
+        "discreteBoundaryHausdorffDegrees": 0.0006337893824896924,
+        "relativeSymmetricDifference": 0.0010300612761546329
+      },
+      {
+        "pcode": "ID5108",
+        "discreteBoundaryHausdorffDegrees": 0.0009267229415857315,
+        "relativeSymmetricDifference": 0.0012753353960135445
+      },
+      {
+        "pcode": "ID5171",
+        "discreteBoundaryHausdorffDegrees": 0.0022558220785845106,
+        "relativeSymmetricDifference": 0.003953737986956637
+      },
+      {
+        "pcode": "ID5201",
+        "discreteBoundaryHausdorffDegrees": 0.0010816720849912446,
+        "relativeSymmetricDifference": 0.0023726761319422716
+      },
+      {
+        "pcode": "ID5202",
+        "discreteBoundaryHausdorffDegrees": 0.0008895835501427833,
+        "relativeSymmetricDifference": 0.0012025223364140203
+      },
+      {
+        "pcode": "ID5203",
+        "discreteBoundaryHausdorffDegrees": 0.002782432268695759,
+        "relativeSymmetricDifference": 0.0012895918632202586
+      },
+      {
+        "pcode": "ID5204",
+        "discreteBoundaryHausdorffDegrees": 0.00112731650365256,
+        "relativeSymmetricDifference": 0.0007831587509367087
+      },
+      {
+        "pcode": "ID5205",
+        "discreteBoundaryHausdorffDegrees": 0.0005213315978597884,
+        "relativeSymmetricDifference": 0.0009176325488611015
+      },
+      {
+        "pcode": "ID5206",
+        "discreteBoundaryHausdorffDegrees": 0.001246123789899107,
+        "relativeSymmetricDifference": 0.0012093348646942737
+      },
+      {
+        "pcode": "ID5207",
+        "discreteBoundaryHausdorffDegrees": 0.0012285502560530602,
+        "relativeSymmetricDifference": 0.0008221196108313532
+      },
+      {
+        "pcode": "ID5208",
+        "discreteBoundaryHausdorffDegrees": 0.0005837870083328207,
+        "relativeSymmetricDifference": 0.0009271847210822625
+      },
+      {
+        "pcode": "ID5271",
+        "discreteBoundaryHausdorffDegrees": 0.00046710676859401906,
+        "relativeSymmetricDifference": 0.0034656798169711463
+      },
+      {
+        "pcode": "ID5272",
+        "discreteBoundaryHausdorffDegrees": 0.001020742337770849,
+        "relativeSymmetricDifference": 0.0018091994046042633
+      },
+      {
+        "pcode": "ID5303",
+        "discreteBoundaryHausdorffDegrees": 0.0018220733026296755,
+        "relativeSymmetricDifference": 0.0005795393113981337
+      },
+      {
+        "pcode": "ID5304",
+        "discreteBoundaryHausdorffDegrees": 0.0010695049546824553,
+        "relativeSymmetricDifference": 0.00034155086093388346
+      },
+      {
+        "pcode": "ID5305",
+        "discreteBoundaryHausdorffDegrees": 0.0011434503660855502,
+        "relativeSymmetricDifference": 0.0007145101410330958
+      },
+      {
+        "pcode": "ID5306",
+        "discreteBoundaryHausdorffDegrees": 0.0008837073837663539,
+        "relativeSymmetricDifference": 0.0011514413396590281
+      },
+      {
+        "pcode": "ID5307",
+        "discreteBoundaryHausdorffDegrees": 0.002327639991607512,
+        "relativeSymmetricDifference": 0.000310648730277815
+      },
+      {
+        "pcode": "ID5309",
+        "discreteBoundaryHausdorffDegrees": 0.0005647461896528245,
+        "relativeSymmetricDifference": 0.0013936557613233717
+      },
+      {
+        "pcode": "ID5310",
+        "discreteBoundaryHausdorffDegrees": 0.0007879741722886441,
+        "relativeSymmetricDifference": 0.001169354918676847
+      },
+      {
+        "pcode": "ID5311",
+        "discreteBoundaryHausdorffDegrees": 0.0008316709763445321,
+        "relativeSymmetricDifference": 0.0007838847372262029
+      },
+      {
+        "pcode": "ID5312",
+        "discreteBoundaryHausdorffDegrees": 0.0007126938331732319,
+        "relativeSymmetricDifference": 0.0007877858083834039
+      },
+      {
+        "pcode": "ID5313",
+        "discreteBoundaryHausdorffDegrees": 0.0008270087716842909,
+        "relativeSymmetricDifference": 0.0010151837923634201
+      },
+      {
+        "pcode": "ID5302",
+        "discreteBoundaryHausdorffDegrees": 0.0013809714208497307,
+        "relativeSymmetricDifference": 0.00033865569742326675
+      },
+      {
+        "pcode": "ID5301",
+        "discreteBoundaryHausdorffDegrees": 0.0009202620019464395,
+        "relativeSymmetricDifference": 0.0013621803313694524
+      },
+      {
+        "pcode": "ID5308",
+        "discreteBoundaryHausdorffDegrees": 0.00019509762056571606,
+        "relativeSymmetricDifference": 0.00022789438516278052
+      },
+      {
+        "pcode": "ID5314",
+        "discreteBoundaryHausdorffDegrees": 0.0012318830138938008,
+        "relativeSymmetricDifference": 0.002136420086019583
+      },
+      {
+        "pcode": "ID5315",
+        "discreteBoundaryHausdorffDegrees": 0.0011701058115601325,
+        "relativeSymmetricDifference": 0.002265653272172612
+      },
+      {
+        "pcode": "ID5318",
+        "discreteBoundaryHausdorffDegrees": 0.0005238320022742591,
+        "relativeSymmetricDifference": 0.0007492588783348517
+      },
+      {
+        "pcode": "ID5316",
+        "discreteBoundaryHausdorffDegrees": 0.0009641053988272369,
+        "relativeSymmetricDifference": 0.0006627742282815216
+      },
+      {
+        "pcode": "ID5317",
+        "discreteBoundaryHausdorffDegrees": 0.0008539004270752229,
+        "relativeSymmetricDifference": 0.0004962647587848319
+      },
+      {
+        "pcode": "ID5319",
+        "discreteBoundaryHausdorffDegrees": 0.0006873755782890766,
+        "relativeSymmetricDifference": 0.0005813416924152967
+      },
+      {
+        "pcode": "ID5320",
+        "discreteBoundaryHausdorffDegrees": 0.0006484594897329982,
+        "relativeSymmetricDifference": 0.0011326003484360637
+      },
+      {
+        "pcode": "ID5321",
+        "discreteBoundaryHausdorffDegrees": 0.0010695049546824553,
+        "relativeSymmetricDifference": 0.0009858983025070722
+      },
+      {
+        "pcode": "ID5371",
+        "discreteBoundaryHausdorffDegrees": 0.00043785387965596145,
+        "relativeSymmetricDifference": 0.002461825008484122
+      },
+      {
+        "pcode": "ID6101",
+        "discreteBoundaryHausdorffDegrees": 0.0005566245593211822,
+        "relativeSymmetricDifference": 0.00022075141942398427
+      },
+      {
+        "pcode": "ID6104",
+        "discreteBoundaryHausdorffDegrees": 0.0004466190137291416,
+        "relativeSymmetricDifference": 0.0003881957112762704
+      },
+      {
+        "pcode": "ID6105",
+        "discreteBoundaryHausdorffDegrees": 0.0003500584593040262,
+        "relativeSymmetricDifference": 7.06549866281017e-05
+      },
+      {
+        "pcode": "ID6106",
+        "discreteBoundaryHausdorffDegrees": 0.0011643260092862638,
+        "relativeSymmetricDifference": 9.034181987007639e-05
+      },
+      {
+        "pcode": "ID6107",
+        "discreteBoundaryHausdorffDegrees": 0.0004285269808305013,
+        "relativeSymmetricDifference": 4.6275981881687556e-05
+      },
+      {
+        "pcode": "ID6108",
+        "discreteBoundaryHausdorffDegrees": 0.0005376626880902633,
+        "relativeSymmetricDifference": 7.302130846805725e-05
+      },
+      {
+        "pcode": "ID6102",
+        "discreteBoundaryHausdorffDegrees": 0.0010003360084184956,
+        "relativeSymmetricDifference": 0.0002562591071243207
+      },
+      {
+        "pcode": "ID6103",
+        "discreteBoundaryHausdorffDegrees": 0.00034383385030942393,
+        "relativeSymmetricDifference": 0.0001188952854888286
+      },
+      {
+        "pcode": "ID6109",
+        "discreteBoundaryHausdorffDegrees": 0.00042360099043422145,
+        "relativeSymmetricDifference": 6.414823053517664e-05
+      },
+      {
+        "pcode": "ID6110",
+        "discreteBoundaryHausdorffDegrees": 0.00013369897353420108,
+        "relativeSymmetricDifference": 1.0142814635949839e-05
+      },
+      {
+        "pcode": "ID6111",
+        "discreteBoundaryHausdorffDegrees": 0.0005625916360057691,
+        "relativeSymmetricDifference": 0.0007112009955980006
+      },
+      {
+        "pcode": "ID6112",
+        "discreteBoundaryHausdorffDegrees": 0.0007662739457163651,
+        "relativeSymmetricDifference": 0.0005359605071580332
+      },
+      {
+        "pcode": "ID6171",
+        "discreteBoundaryHausdorffDegrees": 0.0004952941882304543,
+        "relativeSymmetricDifference": 0.002034567803268848
+      },
+      {
+        "pcode": "ID6172",
+        "discreteBoundaryHausdorffDegrees": 0.0004722897017052944,
+        "relativeSymmetricDifference": 0.0005777610084356876
+      },
+      {
+        "pcode": "ID6201",
+        "discreteBoundaryHausdorffDegrees": 0.0011302598587434186,
+        "relativeSymmetricDifference": 8.425639109335731e-05
+      },
+      {
+        "pcode": "ID6202",
+        "discreteBoundaryHausdorffDegrees": 0.0005514812473362564,
+        "relativeSymmetricDifference": 1.8632336628646593e-05
+      },
+      {
+        "pcode": "ID6203",
+        "discreteBoundaryHausdorffDegrees": 0.001003662294103789,
+        "relativeSymmetricDifference": 2.2934544931284556e-05
+      },
+      {
+        "pcode": "ID6204",
+        "discreteBoundaryHausdorffDegrees": 0.00018970420536879303,
+        "relativeSymmetricDifference": 1.3457977873250985e-05
+      },
+      {
+        "pcode": "ID6205",
+        "discreteBoundaryHausdorffDegrees": 0.0005246197861658707,
+        "relativeSymmetricDifference": 4.708189603405877e-05
+      },
+      {
+        "pcode": "ID6209",
+        "discreteBoundaryHausdorffDegrees": 0.0006743383726390537,
+        "relativeSymmetricDifference": 3.305833337639904e-05
+      },
+      {
+        "pcode": "ID6208",
+        "discreteBoundaryHausdorffDegrees": 0.0004926881975646284,
+        "relativeSymmetricDifference": 2.7989342424668525e-05
+      },
+      {
+        "pcode": "ID6206",
+        "discreteBoundaryHausdorffDegrees": 0.00037577902306002337,
+        "relativeSymmetricDifference": 8.068954382295935e-05
+      },
+      {
+        "pcode": "ID6207",
+        "discreteBoundaryHausdorffDegrees": 9.498398317463344e-05,
+        "relativeSymmetricDifference": 8.345299455656097e-06
+      },
+      {
+        "pcode": "ID6211",
+        "discreteBoundaryHausdorffDegrees": 0.0010036622941037884,
+        "relativeSymmetricDifference": 8.111416319406265e-06
+      },
+      {
+        "pcode": "ID6210",
+        "discreteBoundaryHausdorffDegrees": 0.0008611985372475923,
+        "relativeSymmetricDifference": 5.713901576770666e-05
+      },
+      {
+        "pcode": "ID6213",
+        "discreteBoundaryHausdorffDegrees": 0.0002948765633585316,
+        "relativeSymmetricDifference": 3.106460782436546e-05
+      },
+      {
+        "pcode": "ID6212",
+        "discreteBoundaryHausdorffDegrees": 0.0003882727240870332,
+        "relativeSymmetricDifference": 9.944032895585012e-05
+      },
+      {
+        "pcode": "ID6271",
+        "discreteBoundaryHausdorffDegrees": 0.00020899125133895806,
+        "relativeSymmetricDifference": 9.991348928866564e-06
+      },
+      {
+        "pcode": "ID6301",
+        "discreteBoundaryHausdorffDegrees": 0.0006850237108364617,
+        "relativeSymmetricDifference": 0.00016441773639604227
+      },
+      {
+        "pcode": "ID6302",
+        "discreteBoundaryHausdorffDegrees": 0.003803964517398481,
+        "relativeSymmetricDifference": 0.0010618255367596632
+      },
+      {
+        "pcode": "ID6303",
+        "discreteBoundaryHausdorffDegrees": 0.00035883069736714437,
+        "relativeSymmetricDifference": 6.340186318027582e-05
+      },
+      {
+        "pcode": "ID6304",
+        "discreteBoundaryHausdorffDegrees": 0.0006009484109735668,
+        "relativeSymmetricDifference": 0.00016379280015615705
+      },
+      {
+        "pcode": "ID6305",
+        "discreteBoundaryHausdorffDegrees": 0.00027119816965394904,
+        "relativeSymmetricDifference": 2.8403863921330062e-05
+      },
+      {
+        "pcode": "ID6306",
+        "discreteBoundaryHausdorffDegrees": 0.0003236201706580779,
+        "relativeSymmetricDifference": 5.379588561249486e-05
+      },
+      {
+        "pcode": "ID6307",
+        "discreteBoundaryHausdorffDegrees": 0.0003236201706580779,
+        "relativeSymmetricDifference": 4.079158251244213e-05
+      },
+      {
+        "pcode": "ID6308",
+        "discreteBoundaryHausdorffDegrees": 0.00017802308762981952,
+        "relativeSymmetricDifference": 6.440349606579543e-05
+      },
+      {
+        "pcode": "ID6309",
+        "discreteBoundaryHausdorffDegrees": 0.0003882727240870332,
+        "relativeSymmetricDifference": 0.00029812952948895713
+      },
+      {
+        "pcode": "ID6310",
+        "discreteBoundaryHausdorffDegrees": 0.0011976124715258054,
+        "relativeSymmetricDifference": 0.00019109181974481356
+      },
+      {
+        "pcode": "ID6311",
+        "discreteBoundaryHausdorffDegrees": 0.0002987918524133468,
+        "relativeSymmetricDifference": 0.00013066545583860904
+      },
+      {
+        "pcode": "ID6371",
+        "discreteBoundaryHausdorffDegrees": 0.00035883069736714437,
+        "relativeSymmetricDifference": 0.0013632000360891462
+      },
+      {
+        "pcode": "ID6372",
+        "discreteBoundaryHausdorffDegrees": 0.0002945904890390771,
+        "relativeSymmetricDifference": 0.000657978736217151
+      },
+      {
+        "pcode": "ID6401",
+        "discreteBoundaryHausdorffDegrees": 0.0005591200804199194,
+        "relativeSymmetricDifference": 0.00013470799624072663
+      },
+      {
+        "pcode": "ID6403",
+        "discreteBoundaryHausdorffDegrees": 0.006978431082425336,
+        "relativeSymmetricDifference": 0.000533517304916589
+      },
+      {
+        "pcode": "ID6405",
+        "discreteBoundaryHausdorffDegrees": 0.0017265327378162426,
+        "relativeSymmetricDifference": 0.00024781810730924734
+      },
+      {
+        "pcode": "ID6402",
+        "discreteBoundaryHausdorffDegrees": 0.0005246197861658707,
+        "relativeSymmetricDifference": 2.6215899613797287e-05
+      },
+      {
+        "pcode": "ID6404",
+        "discreteBoundaryHausdorffDegrees": 0.002173372167936475,
+        "relativeSymmetricDifference": 7.625420750825286e-05
+      },
+      {
+        "pcode": "ID6409",
+        "discreteBoundaryHausdorffDegrees": 0.00246067541291248,
+        "relativeSymmetricDifference": 9.34515880505422e-05
+      },
+      {
+        "pcode": "ID6411",
+        "discreteBoundaryHausdorffDegrees": 0.0004231288849409622,
+        "relativeSymmetricDifference": 5.857141701014821e-05
+      },
+      {
+        "pcode": "ID6471",
+        "discreteBoundaryHausdorffDegrees": 0.002559574937966035,
+        "relativeSymmetricDifference": 0.0004990968029905256
+      },
+      {
+        "pcode": "ID6472",
+        "discreteBoundaryHausdorffDegrees": 0.0006443255794649487,
+        "relativeSymmetricDifference": 0.0004345471242395944
+      },
+      {
+        "pcode": "ID6474",
+        "discreteBoundaryHausdorffDegrees": 0.0007882087926068292,
+        "relativeSymmetricDifference": 0.004098502966282602
+      },
+      {
+        "pcode": "ID6502",
+        "discreteBoundaryHausdorffDegrees": 0.005737321172176586,
+        "relativeSymmetricDifference": 0.00032761856352506483
+      },
+      {
+        "pcode": "ID6501",
+        "discreteBoundaryHausdorffDegrees": 0.005737321172176586,
+        "relativeSymmetricDifference": 6.360930075546908e-05
+      },
+      {
+        "pcode": "ID6504",
+        "discreteBoundaryHausdorffDegrees": 0.0017891706597248566,
+        "relativeSymmetricDifference": 0.00033833053259581876
+      },
+      {
+        "pcode": "ID6503",
+        "discreteBoundaryHausdorffDegrees": 0.004188979003842162,
+        "relativeSymmetricDifference": 0.0008110614463938416
+      },
+      {
+        "pcode": "ID6571",
+        "discreteBoundaryHausdorffDegrees": 0.0012023040981313056,
+        "relativeSymmetricDifference": 0.0015146117875271762
+      },
+      {
+        "pcode": "ID7101",
+        "discreteBoundaryHausdorffDegrees": 0.0008631046110190786,
+        "relativeSymmetricDifference": 0.0004595457176059665
+      },
+      {
+        "pcode": "ID7102",
+        "discreteBoundaryHausdorffDegrees": 0.0012342033489851326,
+        "relativeSymmetricDifference": 0.0013232408219622004
+      },
+      {
+        "pcode": "ID7103",
+        "discreteBoundaryHausdorffDegrees": 0.0009015405128571449,
+        "relativeSymmetricDifference": 0.004365392178604663
+      },
+      {
+        "pcode": "ID7104",
+        "discreteBoundaryHausdorffDegrees": 0.0008978996287757869,
+        "relativeSymmetricDifference": 0.0016030371799232181
+      },
+      {
+        "pcode": "ID7105",
+        "discreteBoundaryHausdorffDegrees": 0.0014643051935128556,
+        "relativeSymmetricDifference": 0.0009303699621771218
+      },
+      {
+        "pcode": "ID7106",
+        "discreteBoundaryHausdorffDegrees": 0.001818745790203844,
+        "relativeSymmetricDifference": 0.0020295278076982444
+      },
+      {
+        "pcode": "ID7109",
+        "discreteBoundaryHausdorffDegrees": 0.0009251702648046619,
+        "relativeSymmetricDifference": 0.0014374642567646435
+      },
+      {
+        "pcode": "ID7107",
+        "discreteBoundaryHausdorffDegrees": 0.0010131829154567526,
+        "relativeSymmetricDifference": 0.0006604473044476037
+      },
+      {
+        "pcode": "ID7108",
+        "discreteBoundaryHausdorffDegrees": 0.0006309971251965661,
+        "relativeSymmetricDifference": 0.002973381142874542
+      },
+      {
+        "pcode": "ID7111",
+        "discreteBoundaryHausdorffDegrees": 0.0007208346220964665,
+        "relativeSymmetricDifference": 0.0011431888067065371
+      },
+      {
+        "pcode": "ID7110",
+        "discreteBoundaryHausdorffDegrees": 0.0009558766080703983,
+        "relativeSymmetricDifference": 0.0009808577839279242
+      },
+      {
+        "pcode": "ID7171",
+        "discreteBoundaryHausdorffDegrees": 0.0018926506348123514,
+        "relativeSymmetricDifference": 0.004488002585296526
+      },
+      {
+        "pcode": "ID7172",
+        "discreteBoundaryHausdorffDegrees": 0.0019203669626359685,
+        "relativeSymmetricDifference": 0.0038982814361175388
+      },
+      {
+        "pcode": "ID7173",
+        "discreteBoundaryHausdorffDegrees": 0.00023401299208644313,
+        "relativeSymmetricDifference": 0.0012018050755142257
+      },
+      {
+        "pcode": "ID7174",
+        "discreteBoundaryHausdorffDegrees": 0.0002629776003813369,
+        "relativeSymmetricDifference": 0.0012949734305247095
+      },
+      {
+        "pcode": "ID7202",
+        "discreteBoundaryHausdorffDegrees": 0.006932040600632244,
+        "relativeSymmetricDifference": 0.00012242712829849936
+      },
+      {
+        "pcode": "ID7204",
+        "discreteBoundaryHausdorffDegrees": 0.003723457207235118,
+        "relativeSymmetricDifference": 0.0001600535032558807
+      },
+      {
+        "pcode": "ID7205",
+        "discreteBoundaryHausdorffDegrees": 0.0019097094595575872,
+        "relativeSymmetricDifference": 0.0006360397065059126
+      },
+      {
+        "pcode": "ID7206",
+        "discreteBoundaryHausdorffDegrees": 0.0011993862137780924,
+        "relativeSymmetricDifference": 0.0002541396605408938
+      },
+      {
+        "pcode": "ID7207",
+        "discreteBoundaryHausdorffDegrees": 0.0005635434926725902,
+        "relativeSymmetricDifference": 0.00031073722600911133
+      },
+      {
+        "pcode": "ID7203",
+        "discreteBoundaryHausdorffDegrees": 0.0010647805641602962,
+        "relativeSymmetricDifference": 0.0006671828407358841
+      },
+      {
+        "pcode": "ID7201",
+        "discreteBoundaryHausdorffDegrees": 0.0014833999999655431,
+        "relativeSymmetricDifference": 0.0016734527781924716
+      },
+      {
+        "pcode": "ID7208",
+        "discreteBoundaryHausdorffDegrees": 0.0008717710523406828,
+        "relativeSymmetricDifference": 0.0004957449880889107
+      },
+      {
+        "pcode": "ID7209",
+        "discreteBoundaryHausdorffDegrees": 0.0032720528660896437,
+        "relativeSymmetricDifference": 0.0008417978750220029
+      },
+      {
+        "pcode": "ID7210",
+        "discreteBoundaryHausdorffDegrees": 0.001852176787912854,
+        "relativeSymmetricDifference": 0.00021845774317855925
+      },
+      {
+        "pcode": "ID7211",
+        "discreteBoundaryHausdorffDegrees": 0.0013528115352938713,
+        "relativeSymmetricDifference": 0.006976777289712975
+      },
+      {
+        "pcode": "ID7212",
+        "discreteBoundaryHausdorffDegrees": 0.0019013863303522936,
+        "relativeSymmetricDifference": 0.00023101586880202842
+      },
+      {
+        "pcode": "ID7271",
+        "discreteBoundaryHausdorffDegrees": 0.0019097094595575872,
+        "relativeSymmetricDifference": 0.0009832700054803482
+      },
+      {
+        "pcode": "ID7301",
+        "discreteBoundaryHausdorffDegrees": 0.0024683293013121254,
+        "relativeSymmetricDifference": 0.003805198298316157
+      },
+      {
+        "pcode": "ID7302",
+        "discreteBoundaryHausdorffDegrees": 0.001574799812639018,
+        "relativeSymmetricDifference": 0.0009748846176019054
+      },
+      {
+        "pcode": "ID7303",
+        "discreteBoundaryHausdorffDegrees": 0.0007125238555311477,
+        "relativeSymmetricDifference": 0.0015697248590487605
+      },
+      {
+        "pcode": "ID7304",
+        "discreteBoundaryHausdorffDegrees": 0.0017547316806099601,
+        "relativeSymmetricDifference": 0.0014389787646991012
+      },
+      {
+        "pcode": "ID7305",
+        "discreteBoundaryHausdorffDegrees": 0.0015983903715917126,
+        "relativeSymmetricDifference": 0.001740946911043832
+      },
+      {
+        "pcode": "ID7306",
+        "discreteBoundaryHausdorffDegrees": 0.0015983903715917126,
+        "relativeSymmetricDifference": 0.0007489611346624269
+      },
+      {
+        "pcode": "ID7307",
+        "discreteBoundaryHausdorffDegrees": 0.0006338331416606939,
+        "relativeSymmetricDifference": 0.0012259658676076679
+      },
+      {
+        "pcode": "ID7311",
+        "discreteBoundaryHausdorffDegrees": 0.0031676077156205075,
+        "relativeSymmetricDifference": 0.0004652081867784358
+      },
+      {
+        "pcode": "ID7308",
+        "discreteBoundaryHausdorffDegrees": 0.0007768635136886614,
+        "relativeSymmetricDifference": 0.000748829241079386
+      },
+      {
+        "pcode": "ID7309",
+        "discreteBoundaryHausdorffDegrees": 0.0013620397222077452,
+        "relativeSymmetricDifference": 0.0032234342615522467
+      },
+      {
+        "pcode": "ID7310",
+        "discreteBoundaryHausdorffDegrees": 0.0004086608969115461,
+        "relativeSymmetricDifference": 0.0008087064656070961
+      },
+      {
+        "pcode": "ID7312",
+        "discreteBoundaryHausdorffDegrees": 0.00047932408728857887,
+        "relativeSymmetricDifference": 0.0005353100923952492
+      },
+      {
+        "pcode": "ID7313",
+        "discreteBoundaryHausdorffDegrees": 0.0009599701475952723,
+        "relativeSymmetricDifference": 0.0004716569332274906
+      },
+      {
+        "pcode": "ID7314",
+        "discreteBoundaryHausdorffDegrees": 0.00039756975012786327,
+        "relativeSymmetricDifference": 0.0004601208296945144
+      },
+      {
+        "pcode": "ID7315",
+        "discreteBoundaryHausdorffDegrees": 0.0012546052629894174,
+        "relativeSymmetricDifference": 0.0004345920376254989
+      },
+      {
+        "pcode": "ID7316",
+        "discreteBoundaryHausdorffDegrees": 0.005760475154135176,
+        "relativeSymmetricDifference": 0.00039500968484126463
+      },
+      {
+        "pcode": "ID7317",
+        "discreteBoundaryHausdorffDegrees": 0.0008250907281953298,
+        "relativeSymmetricDifference": 0.0005015504615906008
+      },
+      {
+        "pcode": "ID7318",
+        "discreteBoundaryHausdorffDegrees": 0.005760475154135176,
+        "relativeSymmetricDifference": 0.0005823889954644926
+      },
+      {
+        "pcode": "ID7322",
+        "discreteBoundaryHausdorffDegrees": 0.0008678575286349331,
+        "relativeSymmetricDifference": 0.00018442055853129812
+      },
+      {
+        "pcode": "ID7325",
+        "discreteBoundaryHausdorffDegrees": 0.0013416669434366093,
+        "relativeSymmetricDifference": 0.00018662665370827123
+      },
+      {
+        "pcode": "ID7326",
+        "discreteBoundaryHausdorffDegrees": 0.0004155235590095934,
+        "relativeSymmetricDifference": 0.0003947820879914221
+      },
+      {
+        "pcode": "ID7371",
+        "discreteBoundaryHausdorffDegrees": 0.0028303860888009525,
+        "relativeSymmetricDifference": 0.004599209555833752
+      },
+      {
+        "pcode": "ID7372",
+        "discreteBoundaryHausdorffDegrees": 0.0018659880643269746,
+        "relativeSymmetricDifference": 0.00233852681310299
+      },
+      {
+        "pcode": "ID7373",
+        "discreteBoundaryHausdorffDegrees": 0.000627132083428027,
+        "relativeSymmetricDifference": 0.001490268483732246
+      },
+      {
+        "pcode": "ID7404",
+        "discreteBoundaryHausdorffDegrees": 0.008798812580223064,
+        "relativeSymmetricDifference": 0.0005134134649343527
+      },
+      {
+        "pcode": "ID7403",
+        "discreteBoundaryHausdorffDegrees": 0.0004227183865151264,
+        "relativeSymmetricDifference": 0.0002151037627487598
+      },
+      {
+        "pcode": "ID7402",
+        "discreteBoundaryHausdorffDegrees": 0.0016856596396572312,
+        "relativeSymmetricDifference": 0.0011239343889351734
+      },
+      {
+        "pcode": "ID7401",
+        "discreteBoundaryHausdorffDegrees": 0.0021411161668903164,
+        "relativeSymmetricDifference": 0.0008422149310423785
+      },
+      {
+        "pcode": "ID7405",
+        "discreteBoundaryHausdorffDegrees": 0.0014000576142715506,
+        "relativeSymmetricDifference": 0.0006329236043158016
+      },
+      {
+        "pcode": "ID7406",
+        "discreteBoundaryHausdorffDegrees": 0.0010744224443883326,
+        "relativeSymmetricDifference": 0.0005827196396441328
+      },
+      {
+        "pcode": "ID7407",
+        "discreteBoundaryHausdorffDegrees": 0.0015731319610700876,
+        "relativeSymmetricDifference": 0.0013699705873593154
+      },
+      {
+        "pcode": "ID7408",
+        "discreteBoundaryHausdorffDegrees": 0.0011034050951883882,
+        "relativeSymmetricDifference": 0.00040832125693109956
+      },
+      {
+        "pcode": "ID7410",
+        "discreteBoundaryHausdorffDegrees": 0.001242756102298838,
+        "relativeSymmetricDifference": 0.00021942080303196114
+      },
+      {
+        "pcode": "ID7409",
+        "discreteBoundaryHausdorffDegrees": 0.0017463758844473585,
+        "relativeSymmetricDifference": 0.001479317242985087
+      },
+      {
+        "pcode": "ID7411",
+        "discreteBoundaryHausdorffDegrees": 0.00035511800666689867,
+        "relativeSymmetricDifference": 0.00012831037621731012
+      },
+      {
+        "pcode": "ID7412",
+        "discreteBoundaryHausdorffDegrees": 0.0002525330694222918,
+        "relativeSymmetricDifference": 0.00028707350067710903
+      },
+      {
+        "pcode": "ID7413",
+        "discreteBoundaryHausdorffDegrees": 0.0011630783004851313,
+        "relativeSymmetricDifference": 0.0012977286685691798
+      },
+      {
+        "pcode": "ID7414",
+        "discreteBoundaryHausdorffDegrees": 0.00095061677350559,
+        "relativeSymmetricDifference": 0.0013846282766982506
+      },
+      {
+        "pcode": "ID7415",
+        "discreteBoundaryHausdorffDegrees": 0.00040726996347975776,
+        "relativeSymmetricDifference": 0.0010602046610500024
+      },
+      {
+        "pcode": "ID7471",
+        "discreteBoundaryHausdorffDegrees": 0.0010955778436647886,
+        "relativeSymmetricDifference": 0.0015269496212675974
+      },
+      {
+        "pcode": "ID7472",
+        "discreteBoundaryHausdorffDegrees": 0.0021475352936605207,
+        "relativeSymmetricDifference": 0.001735159070050155
+      },
+      {
+        "pcode": "ID7502",
+        "discreteBoundaryHausdorffDegrees": 0.0008141447656034223,
+        "relativeSymmetricDifference": 0.0006723222566057028
+      },
+      {
+        "pcode": "ID7501",
+        "discreteBoundaryHausdorffDegrees": 0.0015848183918718034,
+        "relativeSymmetricDifference": 0.0011599223130984331
+      },
+      {
+        "pcode": "ID7504",
+        "discreteBoundaryHausdorffDegrees": 0.0008141447656034223,
+        "relativeSymmetricDifference": 0.0004475766458878249
+      },
+      {
+        "pcode": "ID7503",
+        "discreteBoundaryHausdorffDegrees": 0.0009725011566772605,
+        "relativeSymmetricDifference": 0.0004479284024682229
+      },
+      {
+        "pcode": "ID7505",
+        "discreteBoundaryHausdorffDegrees": 0.0010957355223818238,
+        "relativeSymmetricDifference": 0.0013583713706062097
+      },
+      {
+        "pcode": "ID7571",
+        "discreteBoundaryHausdorffDegrees": 0.001012124467823869,
+        "relativeSymmetricDifference": 0.003886864278434626
+      },
+      {
+        "pcode": "ID7605",
+        "discreteBoundaryHausdorffDegrees": 0.0010353464396870556,
+        "relativeSymmetricDifference": 0.00040448954348444447
+      },
+      {
+        "pcode": "ID7604",
+        "discreteBoundaryHausdorffDegrees": 0.0012019120932962538,
+        "relativeSymmetricDifference": 0.0001477626677210944
+      },
+      {
+        "pcode": "ID7603",
+        "discreteBoundaryHausdorffDegrees": 0.0003939603660214628,
+        "relativeSymmetricDifference": 0.00026064230206057827
+      },
+      {
+        "pcode": "ID7602",
+        "discreteBoundaryHausdorffDegrees": 0.0009303203399497189,
+        "relativeSymmetricDifference": 0.000389931109474115
+      },
+      {
+        "pcode": "ID7601",
+        "discreteBoundaryHausdorffDegrees": 0.0003846539703040265,
+        "relativeSymmetricDifference": 0.0006030305614209459
+      },
+      {
+        "pcode": "ID7606",
+        "discreteBoundaryHausdorffDegrees": 0.0006633434528084529,
+        "relativeSymmetricDifference": 0.00021012834792742972
+      },
+      {
+        "pcode": "ID8103",
+        "discreteBoundaryHausdorffDegrees": 0.0006922119998514077,
+        "relativeSymmetricDifference": 0.000349106843924377
+      },
+      {
+        "pcode": "ID8102",
+        "discreteBoundaryHausdorffDegrees": 0.0017612736313158712,
+        "relativeSymmetricDifference": 0.0021410470459881574
+      },
+      {
+        "pcode": "ID8101",
+        "discreteBoundaryHausdorffDegrees": 0.002842106466934119,
+        "relativeSymmetricDifference": 0.001666966540665061
+      },
+      {
+        "pcode": "ID8104",
+        "discreteBoundaryHausdorffDegrees": 0.00045133477724081306,
+        "relativeSymmetricDifference": 4.9414134216037825e-05
+      },
+      {
+        "pcode": "ID8107",
+        "discreteBoundaryHausdorffDegrees": 0.0011338149143885006,
+        "relativeSymmetricDifference": 0.0004191191942312982
+      },
+      {
+        "pcode": "ID8106",
+        "discreteBoundaryHausdorffDegrees": 0.0007267765520444521,
+        "relativeSymmetricDifference": 0.0007489928012243585
+      },
+      {
+        "pcode": "ID8105",
+        "discreteBoundaryHausdorffDegrees": 0.0036981848318537853,
+        "relativeSymmetricDifference": 0.0007615309072059917
+      },
+      {
+        "pcode": "ID8108",
+        "discreteBoundaryHausdorffDegrees": 0.0018087211119376496,
+        "relativeSymmetricDifference": 0.0010276885735284406
+      },
+      {
+        "pcode": "ID8109",
+        "discreteBoundaryHausdorffDegrees": 0.0005274977023022363,
+        "relativeSymmetricDifference": 0.00015134132720681247
+      },
+      {
+        "pcode": "ID8171",
+        "discreteBoundaryHausdorffDegrees": 0.0009294727644889993,
+        "relativeSymmetricDifference": 0.002871019415937103
+      },
+      {
+        "pcode": "ID8172",
+        "discreteBoundaryHausdorffDegrees": 0.0020687096097525134,
+        "relativeSymmetricDifference": 0.0059728989013048215
+      },
+      {
+        "pcode": "ID8201",
+        "discreteBoundaryHausdorffDegrees": 0.0013192339634549054,
+        "relativeSymmetricDifference": 0.0013296093295683496
+      },
+      {
+        "pcode": "ID8202",
+        "discreteBoundaryHausdorffDegrees": 0.0012092637957502904,
+        "relativeSymmetricDifference": 0.0015900153883730366
+      },
+      {
+        "pcode": "ID8205",
+        "discreteBoundaryHausdorffDegrees": 0.0010354286068146295,
+        "relativeSymmetricDifference": 0.0009809709872708715
+      },
+      {
+        "pcode": "ID8204",
+        "discreteBoundaryHausdorffDegrees": 0.0010841397743628866,
+        "relativeSymmetricDifference": 0.001881583850924024
+      },
+      {
+        "pcode": "ID8203",
+        "discreteBoundaryHausdorffDegrees": 0.0009331547841688133,
+        "relativeSymmetricDifference": 0.001497836264391735
+      },
+      {
+        "pcode": "ID8206",
+        "discreteBoundaryHausdorffDegrees": 0.0011490191275184945,
+        "relativeSymmetricDifference": 0.00053248882659782
+      },
+      {
+        "pcode": "ID8207",
+        "discreteBoundaryHausdorffDegrees": 0.0018934968801954696,
+        "relativeSymmetricDifference": 0.0007545967663916019
+      },
+      {
+        "pcode": "ID8208",
+        "discreteBoundaryHausdorffDegrees": 0.0009069469001189228,
+        "relativeSymmetricDifference": 0.0010982331267869307
+      },
+      {
+        "pcode": "ID8271",
+        "discreteBoundaryHausdorffDegrees": 0.001211640053172763,
+        "relativeSymmetricDifference": 0.004254938053215053
+      },
+      {
+        "pcode": "ID8272",
+        "discreteBoundaryHausdorffDegrees": 0.0006670357711920942,
+        "relativeSymmetricDifference": 0.0010817115872844563
+      },
+      {
+        "pcode": "ID9403",
+        "discreteBoundaryHausdorffDegrees": 0.0010375171949850868,
+        "relativeSymmetricDifference": 0.00016328681274397028
+      },
+      {
+        "pcode": "ID9408",
+        "discreteBoundaryHausdorffDegrees": 0.0008527667968502752,
+        "relativeSymmetricDifference": 0.0019278043032652746
+      },
+      {
+        "pcode": "ID9409",
+        "discreteBoundaryHausdorffDegrees": 0.0019094775856824074,
+        "relativeSymmetricDifference": 0.0009740057162488783
+      },
+      {
+        "pcode": "ID9419",
+        "discreteBoundaryHausdorffDegrees": 0.0005421361654736069,
+        "relativeSymmetricDifference": 9.553105327446664e-05
+      },
+      {
+        "pcode": "ID9420",
+        "discreteBoundaryHausdorffDegrees": 0.0003759011565890084,
+        "relativeSymmetricDifference": 0.00010475525059715794
+      },
+      {
+        "pcode": "ID9426",
+        "discreteBoundaryHausdorffDegrees": 0.0012717182080022643,
+        "relativeSymmetricDifference": 0.00010293320002035374
+      },
+      {
+        "pcode": "ID9427",
+        "discreteBoundaryHausdorffDegrees": 0.0009981556226598349,
+        "relativeSymmetricDifference": 0.0023741561521929016
+      },
+      {
+        "pcode": "ID9428",
+        "discreteBoundaryHausdorffDegrees": 0.0014173492477167803,
+        "relativeSymmetricDifference": 4.323122624953517e-05
+      },
+      {
+        "pcode": "ID9471",
+        "discreteBoundaryHausdorffDegrees": 0.0019148441458847942,
+        "relativeSymmetricDifference": 0.0008448665157443527
+      },
+      {
+        "pcode": "ID9105",
+        "discreteBoundaryHausdorffDegrees": 0.0007189126511041112,
+        "relativeSymmetricDifference": 8.980993598688929e-05
+      },
+      {
+        "pcode": "ID9101",
+        "discreteBoundaryHausdorffDegrees": 0.00918774708468817,
+        "relativeSymmetricDifference": 3.114172132388498e-05
+      },
+      {
+        "pcode": "ID9104",
+        "discreteBoundaryHausdorffDegrees": 0.00015741474445094388,
+        "relativeSymmetricDifference": 2.218755255977535e-05
+      },
+      {
+        "pcode": "ID9103",
+        "discreteBoundaryHausdorffDegrees": 0.00019034437711433776,
+        "relativeSymmetricDifference": 4.779632982993499e-05
+      },
+      {
+        "pcode": "ID9102",
+        "discreteBoundaryHausdorffDegrees": 0.0015083768353529685,
+        "relativeSymmetricDifference": 4.056602489917862e-05
+      },
+      {
+        "pcode": "ID9111",
+        "discreteBoundaryHausdorffDegrees": 0.00016700383378978902,
+        "relativeSymmetricDifference": 2.6727095038479213e-05
+      },
+      {
+        "pcode": "ID9112",
+        "discreteBoundaryHausdorffDegrees": 0.0001506135613684604,
+        "relativeSymmetricDifference": 4.616380587747522e-06
+      },
+      {
+        "pcode": "ID9401",
+        "discreteBoundaryHausdorffDegrees": 0.004057519688326394,
+        "relativeSymmetricDifference": 0.00012445563535668546
+      },
+      {
+        "pcode": "ID9413",
+        "discreteBoundaryHausdorffDegrees": 0.00039050792930439944,
+        "relativeSymmetricDifference": 5.278716458938022e-06
+      },
+      {
+        "pcode": "ID9414",
+        "discreteBoundaryHausdorffDegrees": 0.0010683043806860653,
+        "relativeSymmetricDifference": 2.833071404696341e-05
+      },
+      {
+        "pcode": "ID9415",
+        "discreteBoundaryHausdorffDegrees": 0.0004346595214611882,
+        "relativeSymmetricDifference": 3.407320541611049e-05
+      },
+      {
+        "pcode": "ID9404",
+        "discreteBoundaryHausdorffDegrees": 0.0008699637290954609,
+        "relativeSymmetricDifference": 0.00022506465132591757
+      },
+      {
+        "pcode": "ID9411",
+        "discreteBoundaryHausdorffDegrees": 7.341231148905519e-07,
+        "relativeSymmetricDifference": 5.852164665033487e-07
+      },
+      {
+        "pcode": "ID9410",
+        "discreteBoundaryHausdorffDegrees": 4.860078787684911e-05,
+        "relativeSymmetricDifference": 3.2367277500013954e-06
+      },
+      {
+        "pcode": "ID9412",
+        "discreteBoundaryHausdorffDegrees": 0.0005371903193721791,
+        "relativeSymmetricDifference": 8.746858593292422e-05
+      },
+      {
+        "pcode": "ID9433",
+        "discreteBoundaryHausdorffDegrees": 0.00013489099058866668,
+        "relativeSymmetricDifference": 4.065727675115156e-06
+      },
+      {
+        "pcode": "ID9434",
+        "discreteBoundaryHausdorffDegrees": 0.0001910670907293298,
+        "relativeSymmetricDifference": 1.791415005522111e-05
+      },
+      {
+        "pcode": "ID9435",
+        "discreteBoundaryHausdorffDegrees": 0.00023126492356877236,
+        "relativeSymmetricDifference": 3.196135571978795e-05
+      },
+      {
+        "pcode": "ID9436",
+        "discreteBoundaryHausdorffDegrees": 0.0002531775515473267,
+        "relativeSymmetricDifference": 8.08438743995315e-05
+      },
+      {
+        "pcode": "ID9402",
+        "discreteBoundaryHausdorffDegrees": 5.179174635017695e-06,
+        "relativeSymmetricDifference": 3.016312433348535e-06
+      },
+      {
+        "pcode": "ID9417",
+        "discreteBoundaryHausdorffDegrees": 0.0004276587621644625,
+        "relativeSymmetricDifference": 2.165622152828564e-05
+      },
+      {
+        "pcode": "ID9416",
+        "discreteBoundaryHausdorffDegrees": 0.0004276587621644625,
+        "relativeSymmetricDifference": 3.027989288183782e-05
+      },
+      {
+        "pcode": "ID9418",
+        "discreteBoundaryHausdorffDegrees": 9.375419953998138e-07,
+        "relativeSymmetricDifference": 8.176270885944958e-07
+      },
+      {
+        "pcode": "ID9431",
+        "discreteBoundaryHausdorffDegrees": 2.4844180920680835e-06,
+        "relativeSymmetricDifference": 1.2142420667711725e-06
+      },
+      {
+        "pcode": "ID9432",
+        "discreteBoundaryHausdorffDegrees": 0.00018608090277684092,
+        "relativeSymmetricDifference": 5.825937684203964e-06
+      },
+      {
+        "pcode": "ID9430",
+        "discreteBoundaryHausdorffDegrees": 1.0125853046748704e-06,
+        "relativeSymmetricDifference": 1.640477933408412e-06
+      },
+      {
+        "pcode": "ID9429",
+        "discreteBoundaryHausdorffDegrees": 5.179174635018264e-06,
+        "relativeSymmetricDifference": 1.4259106053956658e-06
+      },
+      {
+        "pcode": "ID9107",
+        "discreteBoundaryHausdorffDegrees": 0.003842043411546403,
+        "relativeSymmetricDifference": 4.68858319747825e-05
+      },
+      {
+        "pcode": "ID9106",
+        "discreteBoundaryHausdorffDegrees": 0.00020065345863709138,
+        "relativeSymmetricDifference": 2.855012985062977e-05
+      },
+      {
+        "pcode": "ID9108",
+        "discreteBoundaryHausdorffDegrees": 0.00031875885478031113,
+        "relativeSymmetricDifference": 0.00016413982298752863
+      },
+      {
+        "pcode": "ID9109",
+        "discreteBoundaryHausdorffDegrees": 0.00019165493112265698,
+        "relativeSymmetricDifference": 4.260696446240186e-06
+      },
+      {
+        "pcode": "ID9110",
+        "discreteBoundaryHausdorffDegrees": 3.1152474326809176e-05,
+        "relativeSymmetricDifference": 2.9445784103942925e-06
+      },
+      {
+        "pcode": "ID9171",
+        "discreteBoundaryHausdorffDegrees": 0.0008351485773940558,
+        "relativeSymmetricDifference": 0.002214920897374065
+      }
+    ]
+  },
+  "assets": [
+    {
+      "file": "11.topo.json",
+      "bytes": 329060,
+      "gzipBytes": 137716,
+      "sha256": "91c4702d9e6fa712632f629f9fa0992920eafb44e1984f2ba6ca5ecb692259f6"
+    },
+    {
+      "file": "12.topo.json",
+      "bytes": 440717,
+      "gzipBytes": 179199,
+      "sha256": "4f93ac292296b74c498e5a142e24498783a2f3d828d391eb2d7aebbf27315dd1"
+    },
+    {
+      "file": "13.topo.json",
+      "bytes": 285302,
+      "gzipBytes": 117490,
+      "sha256": "9eb32a49680e7e50da79fd7279f77fafa6bbf9fe92731743037c006e3e988461"
+    },
+    {
+      "file": "14.topo.json",
+      "bytes": 205015,
+      "gzipBytes": 84147,
+      "sha256": "ea9445a2b73bba2ab75a63829bc93a23354792133da8d75d38c0bc1e9882322d"
+    },
+    {
+      "file": "15.topo.json",
+      "bytes": 117611,
+      "gzipBytes": 49256,
+      "sha256": "02eb431de02088da1ddcea144692ff24459f1f40897d4a8525a07b5dd6a9afdb"
+    },
+    {
+      "file": "16.topo.json",
+      "bytes": 229796,
+      "gzipBytes": 95037,
+      "sha256": "4f2f5c0d4766d650fe16a57d133c605ce358768a3ae9dc278ad23e9540210ebd"
+    },
+    {
+      "file": "17.topo.json",
+      "bytes": 72783,
+      "gzipBytes": 30670,
+      "sha256": "52e728261216c934859204cd1ea935f29f342f5f7dd9373adb03c741f6415eb6"
+    },
+    {
+      "file": "18.topo.json",
+      "bytes": 238489,
+      "gzipBytes": 97946,
+      "sha256": "270423e0d73f0a4cae3b60073f5192d46ac6ae1d68f992ec44f94da4c9824dc5"
+    },
+    {
+      "file": "19.topo.json",
+      "bytes": 178493,
+      "gzipBytes": 73156,
+      "sha256": "b28c9981d472355243e201509d216387314c313d8c4f56d90b18afc20bda7ef6"
+    },
+    {
+      "file": "21.topo.json",
+      "bytes": 713720,
+      "gzipBytes": 292181,
+      "sha256": "6b3eb909020d81c2dea541536b0b1ee73da9488f608bc173a25116e048ed5c32"
+    },
+    {
+      "file": "31.topo.json",
+      "bytes": 68266,
+      "gzipBytes": 27624,
+      "sha256": "71883fb771fc9d4661da9597fec0825eeddc5015eb5645e9e33ba2d4cc35e949"
+    },
+    {
+      "file": "32.topo.json",
+      "bytes": 423710,
+      "gzipBytes": 167026,
+      "sha256": "f1ab2896d766119390c046f354b2fd2c38d42ac8029ff4d1dd871b609b7e66d6"
+    },
+    {
+      "file": "33.topo.json",
+      "bytes": 474634,
+      "gzipBytes": 184045,
+      "sha256": "7a70941d80b15add7892e5b418b0fd7954f409534c622973558d2a117d7025d4"
+    },
+    {
+      "file": "34.topo.json",
+      "bytes": 50664,
+      "gzipBytes": 20315,
+      "sha256": "81cd6ab8a1e31db5b73baf65347a05585c1f2a3d36b75c34a78a368c686333c7"
+    },
+    {
+      "file": "35.topo.json",
+      "bytes": 607731,
+      "gzipBytes": 233051,
+      "sha256": "a16a0f1144fce04fcaa61b052b4bd304de8a1f4dff5b9bb7e45bf934145852d5"
+    },
+    {
+      "file": "36.topo.json",
+      "bytes": 131866,
+      "gzipBytes": 50727,
+      "sha256": "49132454d302f870720c99be9487b754c77d3c6343f1675d1896717d9fd18428"
+    },
+    {
+      "file": "51.topo.json",
+      "bytes": 111505,
+      "gzipBytes": 45832,
+      "sha256": "56bc8a8c8fade9ead213884babdeeaf7bc10ff1ddba590b2b2629ff009190008"
+    },
+    {
+      "file": "52.topo.json",
+      "bytes": 271838,
+      "gzipBytes": 106070,
+      "sha256": "73053d38b84adfd824f82b9ab2b44650003db54c0da8507059e5b5d28b53a6be"
+    },
+    {
+      "file": "53.topo.json",
+      "bytes": 496255,
+      "gzipBytes": 194878,
+      "sha256": "2f15596dd75c467bd2147e324d4e0ea078b6e6a52a4b5f0cd2390e859d2c9cf9"
+    },
+    {
+      "file": "61.topo.json",
+      "bytes": 382049,
+      "gzipBytes": 158098,
+      "sha256": "32ad4431d12eaa5bb6467e51548899df13db39e39f96c7526eeeec949d722b09"
+    },
+    {
+      "file": "62.topo.json",
+      "bytes": 131294,
+      "gzipBytes": 56337,
+      "sha256": "8c12321675412e677006379ed2dbac0388a61316f7aa2bd00f2a8204c276df99"
+    },
+    {
+      "file": "63.topo.json",
+      "bytes": 219212,
+      "gzipBytes": 91284,
+      "sha256": "1da4d6b94ef688c104f317f39564ea1d83031099ed4dd8b8a8537784ebbbee0a"
+    },
+    {
+      "file": "64.topo.json",
+      "bytes": 378613,
+      "gzipBytes": 155839,
+      "sha256": "a475b2b4f1cb52cc504932071758b7ff315aeea3fa80b98b4fa23897ba374eaf"
+    },
+    {
+      "file": "65.topo.json",
+      "bytes": 246396,
+      "gzipBytes": 102689,
+      "sha256": "5ff9ce69a22225c0f2e3bb07807d82996c1d2694e33081fce97cb848c47a887d"
+    },
+    {
+      "file": "71.topo.json",
+      "bytes": 241710,
+      "gzipBytes": 100111,
+      "sha256": "7e2f3aadcda3855c12c9da31ff670814074dc387e9439ecbc932f6ae1b5a119f"
+    },
+    {
+      "file": "72.topo.json",
+      "bytes": 511903,
+      "gzipBytes": 212019,
+      "sha256": "b3e78659aba51d887e62141df4e75757d996e00c548bc3c247cfc9a466c6a4ea"
+    },
+    {
+      "file": "73.topo.json",
+      "bytes": 413961,
+      "gzipBytes": 169901,
+      "sha256": "aa3ae92e738f5c75e84125875d4c7c9ad5ab00282e1d49d27ce520c62ad8b186"
+    },
+    {
+      "file": "74.topo.json",
+      "bytes": 319380,
+      "gzipBytes": 132451,
+      "sha256": "9952714121486db6f4a64254b49bbfc8eef4238a0b9f02b294f2588162c4a7f8"
+    },
+    {
+      "file": "75.topo.json",
+      "bytes": 118098,
+      "gzipBytes": 50256,
+      "sha256": "8004de0f93607b020911adecf6da7e57102dc274e09aa92d877a14e675bd8b53"
+    },
+    {
+      "file": "76.topo.json",
+      "bytes": 104188,
+      "gzipBytes": 44021,
+      "sha256": "9f0f0cd060dbb51d5d83241e7851fdff3fe213e993d94a58584af07fa6e5c799"
+    },
+    {
+      "file": "81.topo.json",
+      "bytes": 550731,
+      "gzipBytes": 221668,
+      "sha256": "3d9de5578e85ea11ec44b9c315c896205e556d8040e530eaed27f6af93f6caca"
+    },
+    {
+      "file": "82.topo.json",
+      "bytes": 491888,
+      "gzipBytes": 203024,
+      "sha256": "62ca728a35d1998271fa96cab8d79ec72cc02c40c0d72c70f5c1122e1035edb7"
+    },
+    {
+      "file": "91.topo.json",
+      "bytes": 296797,
+      "gzipBytes": 110150,
+      "sha256": "eee7cd7826e4dec916040f1fb0f277a7ac0ec03b31d9259018eddba51e0cc920"
+    },
+    {
+      "file": "92.topo.json",
+      "bytes": 165805,
+      "gzipBytes": 58312,
+      "sha256": "26149b02631962ce77c2f49a88da8474f2d5c2ce3ce6c420e0119c3559be91b1"
+    },
+    {
+      "file": "93.topo.json",
+      "bytes": 116510,
+      "gzipBytes": 41077,
+      "sha256": "45db9e3d6f84950ca5ff67f36e4c1303e78fcd57728ae72870daeeff044a878b"
+    },
+    {
+      "file": "94.topo.json",
+      "bytes": 104811,
+      "gzipBytes": 39954,
+      "sha256": "44d1f222e21a212ef452223b03f2427cf7922d6bc9b8aad58db14321f775e2e2"
+    },
+    {
+      "file": "95.topo.json",
+      "bytes": 35618,
+      "gzipBytes": 13365,
+      "sha256": "e0793b20dbdc8ec3dfab5969a73e64e9c045e4a1470c06339a4ce003fcb4091f"
+    },
+    {
+      "file": "96.topo.json",
+      "bytes": 183302,
+      "gzipBytes": 62500,
+      "sha256": "96c2a4871c3df94d5b8cc9238d516e157a463937001d00a5a19ba840e5fa1f8a"
+    },
+    {
+      "file": "provinces.topo.json",
+      "bytes": 4954342,
+      "gzipBytes": 2000488,
+      "sha256": "50e21ba7cbed08952c3fcaadd102bcfa4f6b138355d4d2bdb0865a985a5668c1"
+    }
+  ],
+  "elapsedSeconds": 93.0,
+  "ringCount": 8617,
+  "catalogueVersion": "KEMENDAGRI_2025_2138_AMENDED_2430",
+  "mappingSha256": "36596ac14bc0ee0126921aad598b71014c5b43309b8895b3351f6cfa08730b59",
+  "countryCoverage": {
+    "exactUnionEqualsSourceCountry": true,
+    "missingAreaDegrees2": 0,
+    "outsideAreaDegrees2": 0,
+    "knownExcludedFeatureCount": 8,
+    "sourceSha256": "f28232ab0d0161f46b58e2ca93c61732658459067f92bef7a721fce2a1b03b83",
+    "note": "All 522 source features equal the source national outline; the eight named exclusions remain unassigned. Angular-coordinate measures are not land-area claims."
+  },
+  "nationalDisplay": {
+    "toleranceDegrees": 0.00075,
+    "maximumDiscreteBoundaryHausdorffDegrees": 0.010945977442428178,
+    "maximumRelativeSymmetricDifference": 0.006136016768986721,
+    "allPartAndHoleCountsPreserved": true,
+    "vertices": 335465,
+    "coverageValid": true,
+    "note": "Province reconstruction exactly equals the district union BEFORE this separately measured national-display generalization. All 38 identities are retained."
+  },
+  "encoding": {
+    "format": "TopoJSON",
+    "scale": [
+      1e-07,
+      1e-07
+    ],
+    "translate": [
+      0,
+      0
+    ],
+    "losslessAfterValidatedRounding": true,
+    "arcLayout": "one closed ring per arc; fixed-point delta encoding, no further coordinate loss",
+    "specification": "https://github.com/topojson/topojson-specification"
+  }
+}

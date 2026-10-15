@@ -1,0 +1,19 @@
+Indonesia indicative administrative boundaries
+
+Source: Badan Pusat Statistik; OCHA ROAP/FIS/HDX, COD-AB v01, valid 1 April 2020.
+Dataset: https://data.humdata.org/dataset/cod-ab-idn
+License: Creative Commons Attribution 3.0 IGO (CC BY 3.0 IGO)
+Terms: https://creativecommons.org/licenses/by/3.0/igo/legalcode
+
+Modified by TBCall: explicit code mapping, zero-displacement ring repairs,
+coverage simplification, current-parent province reconstruction, national-display
+generalization, fixed-point TopoJSON encoding. See provenance.json for details.
+
+No endorsement by the source organizations is implied. Boundaries and names
+do not imply official endorsement, acceptance, or a position concerning legal
+status or demarcation. This is an indicative synthetic prototype visualization,
+not an authoritative legal map or production boundary certification.
+
+The CC BY 3.0 IGO license applies to the geographic data. TBCall application
+code is governed separately by the repository terms. No patient or clinical
+aggregate data are included in these public assets.

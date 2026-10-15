@@ -1,0 +1,2 @@
+# Preserve qualified geographic bytes and their public checksums on every OS.
+*.json -text
