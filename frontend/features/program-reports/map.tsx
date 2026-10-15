@@ -7,6 +7,7 @@ import { Button } from "@/components/ui/button";
 import type { Geography, Indicator, ReportBundle } from "./api";
 import catalogue from "./geometry-index.json";
 import { decodeGeometry, type MapFeature as Feature } from "./topology";
+import { geometryAssetUrl } from "@/lib/public-geography";
 
 const emptyFeatures: Feature[] = [];
 const format = (n: number) => n.toLocaleString("id-ID");
@@ -47,7 +48,7 @@ export function ReportingMap({ report, metric, label, unit, onDrill, parent, onB
     async function load() {
       try {
         if (!file || report.metadata.catalogueVersion !== catalogue.catalogueVersion) throw new Error("Geometry identity unavailable");
-        const response = await fetch(`/geography/hdx-2020/${encodeURIComponent(file)}.topo.json`, { signal: controller.signal });
+        const response = await fetch(geometryAssetUrl(file), { signal: controller.signal });
         if (!response.ok) throw new Error("Geometry unavailable");
         const parsed = decodeGeometry(await response.json());
         const seen = new Set<string>();

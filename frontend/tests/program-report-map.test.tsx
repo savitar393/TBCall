@@ -133,4 +133,34 @@ describe("indicative geographic reporting map", () => {
     expect(screen.queryByRole("region", { name: "Peta wilayah" })).not.toBeInTheDocument();
     expect(screen.queryByRole("status", { name: "Wilayah dipilih" })).not.toBeInTheDocument();
   });
+  it("keeps real zero, unavailable cells, colors and legend labels distinct for every indicator", async () => {
+    render(<ProgramReports />);
+    const positive = await screen.findByRole("button", { name: /Jawa Tengah.*60/ });
+    const zero = screen.getByRole("button", { name: /Daerah Istimewa Yogyakarta.*0/ });
+    expect(positive).toHaveAttribute("fill", "#006d5b");
+    expect(zero).toHaveAttribute("fill", "#f5f8fa");
+    const legend = screen.getByLabelText("Legenda peta");
+    expect(legend).toHaveTextContent("49–60");
+    expect(legend).toHaveTextContent("Tidak tersedia");
+    for (const metric of ["activeCaseEpisodes", "completedCaseEpisodes", "activeTreatmentEpisodes", "recordedTreatmentOutcomes", "representedFacilities"]) {
+      fireEvent.change(screen.getByRole("combobox", { name: "Indikator" }), { target: { value: metric } });
+      expect(positive).toHaveAttribute("fill", metric === "representedFacilities" ? "#ccece6" : "#006d5b");
+      expect(positive.querySelector("title")).toHaveTextContent("Jawa Tengah");
+    }
+    expect(fetch).toHaveBeenCalledTimes(1);
+  });
+  it("clears selection from an older publication and renders only the new snapshot's values", async () => {
+    render(<ProgramReports />);
+    fireEvent.focus(await screen.findByRole("button", { name: /Jawa Tengah.*60/ }));
+    expect(screen.getByRole("status", { name: "Wilayah dipilih" })).toHaveTextContent("60");
+    const next = bundle(national);
+    for (const part of [next.summary, next.breakdown, next.metadata]) part.snapshotId = "new-publication";
+    next.summary.summary.indicators = counts(200);
+    next.breakdown.rows[0].indicators = counts(120);
+    vi.mocked(reportApi.bundle).mockResolvedValue(next as never);
+    fireEvent.click(screen.getByRole("button", { name: "Perbarui" }));
+    await screen.findByRole("button", { name: /Jawa Tengah.*120/ });
+    expect(screen.getByRole("status", { name: "Wilayah dipilih" })).toHaveTextContent("Indonesia");
+    expect(screen.queryByRole("button", { name: /Jawa Tengah.*60/ })).not.toBeInTheDocument();
+  });
 });

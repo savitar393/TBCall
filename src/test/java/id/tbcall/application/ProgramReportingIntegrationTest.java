@@ -291,6 +291,62 @@ class ProgramReportingIntegrationTest {
         assertThat(read(cookie,"summary","?scope=PROVINCE&regionCode=31",200).path("summary").path("indicators").path("caseEpisodes").asLong()).isZero();
         assertThat(read(cookie,"summary","?scope=PROVINCE&regionCode=33",200).path("summary").path("indicators").path("caseEpisodes").asLong()).isEqualTo(10);
     }
+    @Test void allSixPublishedIndicatorsReconcileAcrossExplicitProvinceAndRegencyParents() throws Exception {
+        cohort(facility("33","33.01"),10,true);
+        cohort(facility("33","33.02"),10,true);
+        cohort(facility("34","34.01"),10,true);
+        UUID monitor=user("monitor@example.invalid","PROGRAM_MONITOR");
+        grant(monitor,"NATIONAL",null); Cookie cookie=login("monitor@example.invalid");
+        UUID snapshot=capture(); publish(snapshot,200);
+        List<String> indicators=List.of("caseEpisodes","activeCaseEpisodes","completedCaseEpisodes",
+                "activeTreatmentEpisodes","recordedTreatmentOutcomes","representedFacilities");
+        JsonNode national=read(cookie,"summary","",200),provinces=read(cookie,"breakdown","",200);
+        assertThat(national.path("snapshotId").asText()).isEqualTo(snapshot.toString());
+        Map<String,Long> totals=new HashMap<>(); indicators.forEach(name->totals.put(name,0L));
+        for(JsonNode province:provinces.path("rows")) {
+            String code=province.path("geography").path("code").asText();
+            String query="?scope=PROVINCE&regionCode="+code;
+            JsonNode summary=read(cookie,"summary",query,200),children=read(cookie,"breakdown",query,200);
+            assertThat(summary.path("snapshotId").asText()).isEqualTo(snapshot.toString());
+            assertThat(children.path("snapshotId").asText()).isEqualTo(snapshot.toString());
+            assertThat(read(cookie,"metadata",query,200).path("snapshotId").asText()).isEqualTo(snapshot.toString());
+            for(String name:indicators) {
+                long sum=0;
+                for(JsonNode child:children.path("rows")) {
+                    String childCode=child.path("geography").path("code").asText();
+                    assertThat(jdbc.queryForObject("select parent_code from reporting_regions where code=?",String.class,childCode)).isEqualTo(code);
+                    sum+=child.path("indicators").path(name).asLong();
+                }
+                long value=province.path("indicators").path(name).asLong();
+                assertThat(sum).as("%s children of %s",name,code).isEqualTo(value);
+                assertThat(summary.path("summary").path("indicators").path(name).asLong()).isEqualTo(value);
+                totals.merge(name,value,Long::sum);
+            }
+        }
+        for(String name:indicators)
+            assertThat(totals.get(name)).as("national %s",name).isEqualTo(national.path("summary").path("indicators").path(name).asLong());
+        assertThat(totals).containsEntry("caseEpisodes",60L).containsEntry("activeCaseEpisodes",30L)
+                .containsEntry("completedCaseEpisodes",30L).containsEntry("activeTreatmentEpisodes",30L)
+                .containsEntry("recordedTreatmentOutcomes",30L).containsEntry("representedFacilities",3L);
+    }
+    @Test void multipleAssignmentsCannotExpandAnyReadEndpointOrBypassPublishedDataImmutability() throws Exception {
+        UUID monitor=user("monitor@example.invalid","PROGRAM_MONITOR");
+        grant(monitor,"PROVINCE","33"); grant(monitor,"REGENCY","34.01");
+        Cookie cookie=login("monitor@example.invalid"); UUID snapshot=capture(); publish(snapshot,200);
+        for(String endpoint:List.of("summary","breakdown","metadata")) {
+            read(cookie,endpoint,"?scope=PROVINCE&regionCode=33",200);
+            read(cookie,endpoint,"?scope=REGENCY&regionCode=34.01",200);
+            read(cookie,endpoint,"?scope=PROVINCE&regionCode=34",403);
+            read(cookie,endpoint,"?scope=REGENCY&regionCode=34.02",403);
+            read(cookie,endpoint,"?scope=NATIONAL",403);
+            read(admin,endpoint,"?scope=NATIONAL",403);
+        }
+        String before=jdbc.queryForObject("select public_data::text from reporting_snapshots where id=?",String.class,snapshot);
+        for(String assignment:List.of("public_data='{}'::jsonb","private_contributions='{}'::jsonb","version=version+1","state='DRAFT'","capture_sequence=capture_sequence+1"))
+            assertThatThrownBy(()->jdbc.update("update reporting_snapshots set "+assignment+" where id=?",snapshot))
+                    .as("published %s is immutable",assignment).isInstanceOf(org.springframework.dao.DataAccessException.class);
+        assertThat(jdbc.queryForObject("select public_data::text from reporting_snapshots where id=?",String.class,snapshot)).isEqualTo(before);
+    }
     @Test void concurrentAssignmentsAndApprovalsNeverDuplicateWrites() throws Exception {
         UUID monitor=user("monitor@example.invalid","PROGRAM_MONITOR"); Cookie second=login("administrator@example.invalid");
         List<Integer> assigned=race(()->mvc.perform(post(grantPath(monitor)).cookie(admin).with(csrf()).contentType("application/json").content("{\"scope\":\"NATIONAL\"}")).andReturn().getResponse().getStatus(),

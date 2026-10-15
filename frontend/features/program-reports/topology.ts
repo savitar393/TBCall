@@ -1,7 +1,15 @@
 import { z } from "@/lib/validation";
 
-const point = z.tuple([z.number().min(-180).max(180), z.number().min(-90).max(90)]);
-const rings = z.array(z.array(point).min(4).max(100_000)).min(1).max(10_000);
+type Point = [number, number];
+// Validate hot coordinate arrays without Zod deep-copying hundreds of thousands
+// of tuples. Object keys, reference arrays and properties remain strict schemas.
+const finite = (v: unknown): v is number => typeof v === "number" && Number.isFinite(v);
+function isRings(value: unknown): value is Point[][] {
+  return Array.isArray(value) && value.length >= 1 && value.length <= 10_000 && value.every(ring =>
+    Array.isArray(ring) && ring.length >= 4 && ring.length <= 100_000 && ring.every(p =>
+      Array.isArray(p) && p.length === 2 && finite(p[0]) && finite(p[1]) && Math.abs(p[0]) <= 180 && Math.abs(p[1]) <= 90));
+}
+const rings = z.custom<Point[][]>(isRings, "Invalid geometry coordinates");
 const properties = z.object({ code: z.string(), name: z.string(), parent: z.string().nullable() }).strict();
 const geometry = z.discriminatedUnion("type", [z.object({ type: z.literal("Polygon"), coordinates: rings }).strict(), z.object({ type: z.literal("MultiPolygon"), coordinates: z.array(rings).min(1).max(10_000) }).strict()]);
 const feature = z.object({ type: z.literal("Feature"), properties, geometry }).strict();
@@ -15,7 +23,9 @@ const topology = z.object({
   // This reader intentionally accepts only the fixed precision of our qualified assets.
   transform: z.object({ scale: z.tuple([z.literal(1e-7), z.literal(1e-7)]), translate: z.tuple([z.literal(0), z.literal(0)]) }).strict(),
   objects: z.object({ regions: z.object({ type: z.literal("GeometryCollection"), geometries: z.array(encodedGeometry).min(1).max(514) }).strict() }).strict(),
-  arcs: z.array(z.array(z.tuple([integer, integer])).min(2).max(100_000)).max(20_000),
+  arcs: z.custom<Point[][]>(value => Array.isArray(value) && value.length <= 20_000 && value.every(arc =>
+    Array.isArray(arc) && arc.length >= 2 && arc.length <= 100_000 && arc.every(p =>
+      Array.isArray(p) && p.length === 2 && p.every(n => typeof n === "number" && Number.isInteger(n) && n >= -2_147_483_648 && n <= 2_147_483_647))), "Invalid geometry deltas"),
 }).strict();
 
 /** TopoJSON delta arcs, per the published specification. No external runtime or map requests. */

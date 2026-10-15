@@ -28,6 +28,17 @@ describe("qualified TopoJSON decoding", () => {
     const data = input(); Object.assign(data.objects.regions.geometries[0].properties, { patients: 10 });
     expect(() => decodeGeometry(data)).toThrow();
   });
+  it.each([NaN, Infinity, 1.5, "10", null, 2_147_483_648])("rejects invalid deltas: %s", delta => {
+    const data = input();
+    (data.arcs[0][1] as unknown[])[0] = delta;
+    expect(() => decodeGeometry(data)).toThrow();
+  });
+  it("rejects oversized tuples and decoded coordinates outside the geographic bounds", () => {
+    const data = input(); data.arcs[0][1].push(0);
+    expect(() => decodeGeometry(data)).toThrow();
+    const outside = input(); outside.arcs[0][0][0] = 1_810_000_000;
+    expect(() => decodeGeometry(outside)).toThrow();
+  });
   it("reads the actual shipped national geometry, including multipart islands", () => {
     const data = JSON.parse(readFileSync("public/geography/hdx-2020/provinces.topo.json", "utf8"));
     const decoded = decodeGeometry(data);
