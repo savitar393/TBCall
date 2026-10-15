@@ -232,6 +232,9 @@
 .app-disclosure { border-top: 1px solid var(--border); }
 .app-disclosure > summary { min-height: 44px; cursor: pointer; padding: .8rem 0; color: var(--primary); font-size: .875rem; font-weight: 600; }
 .app-form-section { min-width: 0; display: grid; gap: 1rem; padding: 1.25rem; border: 1px solid var(--border); border-radius: 1rem; }
+.app-input { min-width: 0; max-width: 100%; min-height: 2.5rem; padding: .5rem .75rem; border: 1px solid var(--border); border-radius: .75rem; background: white; font-size: .875rem; }
+.app-input:focus-visible { outline: 2px solid var(--ring); outline-offset: 2px; }
+.reporting-workspace .app-table td { padding: .45rem 1rem; vertical-align: middle; }
 .app-table-scroll { min-width: 0; max-width: 100%; overflow-x: auto; border: 1px solid var(--border); border-radius: 1rem; }
 .app-table { width: 100%; border-collapse: collapse; text-align: left; font-size: .875rem; overflow-wrap: normal; }
 .app-table th { padding: .85rem 1rem; background: #f3f7f4; font-weight: 600; }

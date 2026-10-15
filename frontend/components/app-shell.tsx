@@ -34,7 +34,7 @@ export function AppShell({ children }: { children: ReactNode }) {
     "/intake/new": ClipboardPlus, "/cases/history": History, "/referrals": ArrowLeftRight,
     "/contact-investigations": Search, "/alerts": ShieldAlert, "/notifications": Bell,
     "/supporting-cases": HeartHandshake, "/admin/users": UsersRound, "/admin/facilities": Building2,
-    "/integrations": Network, "/#akun": Settings2,
+    "/integrations": Network, "/#akun": Settings2, "/program-reports": LayoutDashboard, "/admin/program-reports": ShieldCheck,
   };
   const navigation = (mobile = false) => {
     return <nav id={mobile ? "mobile-nav" : "desktop-nav"} aria-label={`Navigasi utama ${mobile ? "seluler" : "desktop"}`} className="app-navigation space-y-5">

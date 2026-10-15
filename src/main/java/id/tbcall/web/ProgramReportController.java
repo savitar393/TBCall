@@ -14,6 +14,11 @@ import static id.tbcall.application.reporting.ReportingDtos.*;
 public class ProgramReportController {
     private final ProgramReportService reports;
     public ProgramReportController(ProgramReportService reports) { this.reports=reports; }
+    @GetMapping("/scopes") ResponseEntity<Scopes> scopes(@AuthenticationPrincipal CurrentActor actor,@RequestParam MultiValueMap<String,String> params) {
+        if(!Set.of("_csrf").containsAll(params.keySet()) || params.values().stream().anyMatch(values -> values.size()!=1))
+            throw ApplicationFailure.invalid("Filter penugasan tidak dikenal atau berulang.");
+        return response(reports.scopes(actor));
+    }
     @GetMapping("/summary") ResponseEntity<Summary> summary(@AuthenticationPrincipal CurrentActor actor,@RequestParam MultiValueMap<String,String> params) {
         validate(params); return response(reports.summary(actor,params.getFirst("scope"),params.getFirst("regionCode")));
     }

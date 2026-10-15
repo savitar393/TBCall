@@ -67,7 +67,7 @@ class ProgramReportingIntegrationTest {
     void legacyPermissionsAndRolesDoNotGrantReporting(String role) throws Exception {
         user("fictional@example.invalid",role);
         Cookie cookie=login("fictional@example.invalid");
-        for(String endpoint:List.of("summary","breakdown","metadata"))
+        for(String endpoint:List.of("summary","breakdown","metadata","scopes"))
             mvc.perform(get("/api/v1/program-reports/"+endpoint).cookie(cookie)).andExpect(status().isForbidden());
     }
     @Test void catalogueHasExactDottedCodesAndVerifiedParentRelationships() {
@@ -82,6 +82,38 @@ class ProgramReportingIntegrationTest {
         user("monitor@example.invalid","PROGRAM_MONITOR"); Cookie monitor=login("monitor@example.invalid");
         for(String endpoint:List.of("summary","breakdown","metadata")) read(monitor,endpoint,"",403);
         assertThat(jdbc.queryForObject("select count(*) from audit_logs where action='REPORT_ACCESS_DENIED'",Integer.class)).isEqualTo(3);
+    }
+    @Test void ownScopeDiscoveryIsBoundedLabelledAndNeverIncludesOtherUsersOrFacilityScope() throws Exception {
+        UUID monitor=user("monitor@example.invalid","PROGRAM_MONITOR"),other=user("other@example.invalid","PROGRAM_MONITOR");
+        UUID clinicalFacility=facility("34","34.01");
+        jdbc.update("insert into user_facilities(user_id,facility_id) values (?,?)",monitor,clinicalFacility);
+        grant(monitor,"PROVINCE","33"); grant(monitor,"REGENCY","31.71"); grant(other,"NATIONAL",null);
+        Cookie cookie=login("monitor@example.invalid");
+        var response=mvc.perform(get("/api/v1/program-reports/scopes").cookie(cookie)).andExpect(status().isOk())
+                .andExpect(header().string("Cache-Control","no-store")).andReturn().getResponse();
+        JsonNode body=node(response.getContentAsString());
+        assertThat(body.path("catalogueVersion").asText()).isEqualTo(ReportingCatalogue.VERSION);
+        assertThat(body.path("scopes").size()).isEqualTo(2);
+        assertThat(body.path("scopes").toString()).contains("33","31.71").doesNotContain("NATIONAL","34.01",other.toString(),monitor.toString(),"grantId","patient");
+        for(JsonNode scope:body.path("scopes")) {
+            assertThat(scope.path("name").asText()).isEqualTo(jdbc.queryForObject("select name from reporting_regions where code=?",String.class,scope.path("code").asText()));
+            assertThat(scope.properties().stream().map(Map.Entry::getKey).toList()).containsExactlyInAnyOrder("scope","code","name");
+        }
+        mvc.perform(get("/api/v1/program-reports/scopes").cookie(cookie).param("userId",other.toString())).andExpect(status().isBadRequest());
+        mvc.perform(get("/api/v1/program-reports/scopes").cookie(admin)).andExpect(status().isForbidden());
+        mvc.perform(get("/api/v1/program-reports/scopes")).andExpect(status().isUnauthorized());
+    }
+    @Test void scopeDiscoveryReflectsGrantRoleAndPermissionRevocationInExistingSession() throws Exception {
+        UUID monitor=user("monitor@example.invalid","PROGRAM_MONITOR"); UUID g=grant(monitor,"NATIONAL",null); Cookie cookie=login("monitor@example.invalid");
+        mvc.perform(get("/api/v1/program-reports/scopes").cookie(cookie)).andExpect(status().isOk()).andExpect(jsonPath("$.scopes[0].name").isNotEmpty());
+        jdbc.update("update reporting_grants set revoked_at=now(),revoked_by=?,version=version+1 where id=?",administrator,g);
+        mvc.perform(get("/api/v1/program-reports/scopes").cookie(cookie)).andExpect(status().isOk()).andExpect(jsonPath("$.scopes").isEmpty());
+        jdbc.update("delete from user_roles where user_id=?",monitor);
+        mvc.perform(get("/api/v1/program-reports/scopes").cookie(cookie)).andExpect(status().isForbidden());
+        jdbc.update("insert into user_roles(user_id,role_id) select ?,id from roles where code='PROGRAM_MONITOR'",monitor);
+        jdbc.update("delete from role_permissions where role_id=(select id from roles where code='PROGRAM_MONITOR') and permission_id=(select id from permissions where code='REPORT_READ')");
+        try { mvc.perform(get("/api/v1/program-reports/scopes").cookie(cookie)).andExpect(status().isForbidden()); }
+        finally { jdbc.update("insert into role_permissions(role_id,permission_id) select r.id,p.id from roles r,permissions p where r.code='PROGRAM_MONITOR' and p.code='REPORT_READ'"); }
     }
     @Test void unpublishedIsUnavailableAndEmptyPublishedSnapshotIsAnObservedZero() throws Exception {
         UUID monitor=user("monitor@example.invalid","PROGRAM_MONITOR"); grant(monitor,"NATIONAL",null); Cookie cookie=login("monitor@example.invalid");
@@ -174,7 +206,7 @@ class ProgramReportingIntegrationTest {
         UUID monitor=user("monitor@example.invalid","PROGRAM_MONITOR"); grant(monitor,"NATIONAL",null); Cookie cookie=login("monitor@example.invalid"); UUID candidate=capture();
         String name=jdbc.queryForObject("select name from reporting_regions where code='31'",String.class);
         jdbc.update("update reporting_regions set name='UNVERIFIED' where code='31'");
-        try { read(cookie,"metadata","",503);
+        try { read(cookie,"metadata","",503); read(cookie,"scopes","",503);
             mvc.perform(post("/api/v1/admin/reporting-snapshots").cookie(admin).with(csrf())).andExpect(status().isServiceUnavailable());
             publish(candidate,503);
         } finally { jdbc.update("update reporting_regions set name=? where code='31'",name); }

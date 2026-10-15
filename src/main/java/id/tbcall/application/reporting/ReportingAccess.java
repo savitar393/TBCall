@@ -66,6 +66,17 @@ public class ReportingAccess {
         }
         denied(actor); throw ApplicationFailure.forbidden();
     }
+    /** Own assignments only; an empty list is a verified absence of reporting access. */
+    public Scopes ownScopes(CurrentActor actor) {
+        require(actor,"PROGRAM_MONITOR","REPORT_READ");
+        var grants=jdbc.queryForList("""
+                select scope,region_code from reporting_grants where user_id=? and catalogue_version=?
+                and revoked_at is null order by id for share
+                """,actor.userId(),ReportingCatalogue.VERSION);
+        catalogue.requireVerified();
+        return new Scopes(ReportingCatalogue.VERSION,grants.stream().map(g ->
+                catalogue.geography((String)g.get("scope"),(String)g.get("region_code"))).toList());
+    }
     private void denied(CurrentActor actor) {
         audit.reportingDenied(actor==null?null:actor.userId(),"REPORT_ACCESS_DENIED",null);
         throw ApplicationFailure.forbidden();

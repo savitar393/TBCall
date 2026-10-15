@@ -7,6 +7,7 @@ import java.util.*;
 public final class ReportingDtos {
     private ReportingDtos() {}
     public record Geography(String scope,String code,String name) {}
+    public record Scopes(String catalogueVersion,List<Geography> scopes) {}
     public record Indicators(long caseEpisodes,long activeCaseEpisodes,long completedCaseEpisodes,
             long activeTreatmentEpisodes,long recordedTreatmentOutcomes,long representedFacilities) {}
     public record Cell(Geography geography,Indicators indicators) {}

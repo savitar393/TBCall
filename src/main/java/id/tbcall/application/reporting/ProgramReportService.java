@@ -11,6 +11,7 @@ import static id.tbcall.application.reporting.ReportingDtos.*;
 public class ProgramReportService {
     private final ReportingAccess access; private final ReportingStore store;
     public ProgramReportService(ReportingAccess access,ReportingStore store) { this.access=access; this.store=store; }
+    public Scopes scopes(CurrentActor actor) { return access.ownScopes(actor); }
     public Summary summary(CurrentActor actor,String scope,String code) {
         Geography geography=access.readScope(actor,scope,code); Candidate latest=store.latest();
         return new Summary(latest.id(),latest.dataAsOf(),"AVAILABLE",store.summary(latest.id(),geography));

@@ -7,6 +7,7 @@ import { monitoringNavigation } from "@/features/monitoring/permissions";
 import { patientNavigation, portalNavigation } from "@/features/portal/permissions";
 import { administrationNavigation } from "@/features/administration/permissions";
 import { integrationNavigation } from "@/features/integration/permissions";
+import { canMonitor, canManageScopes, canPublish } from "@/features/program-reports/permissions";
 
 export type NavigationGroup = { title: string; links: NavigationItem[] };
 export const patientOnly = (user: Me) => user.roles.length > 0 && user.roles.every(role => role.code === "PATIENT");
@@ -27,8 +28,9 @@ export function applicationNavigation(user: Me): NavigationGroup[] {
     { title: "Ruang kerja", links: [...foundation.filter(link => !link.href.includes("#")), ...clinical.filter(link => link.href === "/dashboard")] },
     { title: "Pelayanan TBC", links: [...clinical.filter(link => link.href !== "/dashboard"), ...laboratoryNavigation(user), ...continuityNavigation(user)] },
     { title: "Pemantauan", links: monitoringNavigation(user) },
+    { title: "Pelaporan program", links: canMonitor(user) ? [{ href: "/program-reports", label: "Pemantauan program" }] : [] },
     { title: "Pendampingan", links: portalNavigation(user) },
-    { title: "Administrasi", links: [...administrationNavigation(user), ...integrationNavigation(user)] },
+    { title: "Administrasi", links: [...administrationNavigation(user), ...integrationNavigation(user), ...(canManageScopes(user) || canPublish(user) ? [{ href: "/admin/program-reports", label: "Administrasi pelaporan" }] : [])] },
     { title: "Akun", links: foundation.filter(link => link.href.includes("#")) },
   ].filter(group => group.links.length);
 }
