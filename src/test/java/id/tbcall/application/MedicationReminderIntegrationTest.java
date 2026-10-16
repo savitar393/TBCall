@@ -414,7 +414,7 @@ class MedicationReminderIntegrationTest {
     }
 
     @ParameterizedTest @ValueSource(strings={"SMS","EMAIL"})
-    void databaseRejectsUnsupportedChannelsInConsentJobsAndAttempts(String channel) throws Exception {
+    void databaseRejectsUnsupportedOrMismatchedChannelBindingsInConsentJobsAndAttempts(String channel) throws Exception {
         enroll(true); createSchedule(); planner.plan();
         assertThatThrownBy(()->jdbc.update("""
                 insert into reminder_consent_events(id,user_id,patient_link_id,link_generation,phone_binding,

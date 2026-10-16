@@ -70,7 +70,7 @@ class RuntimePersistenceIntegrationTest {
     void versionColumnsAndJpaVersionsCoverExactlyTheApprovedTables() {
         // JDBC reporting/reminder resources use explicit ETag versions; JPA coverage is unchanged.
         Set<String> databaseVersioned = new java.util.HashSet<>(VERSIONED.values());
-        databaseVersioned.addAll(Set.of("reporting_grants", "reporting_snapshots", "reminder_preferences"));
+        databaseVersioned.addAll(Set.of("reporting_grants", "reporting_snapshots", "reminder_preferences", "reminder_telegram_links"));
         assertThat(jdbc.queryForList("""
                 select table_name from information_schema.columns
                 where table_schema='public' and column_name='version' and data_type='bigint' and table_name<>'flyway_schema_history'

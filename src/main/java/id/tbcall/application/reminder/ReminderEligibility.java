@@ -12,7 +12,8 @@ import static id.tbcall.application.reminder.ReminderStore.*;
 public class ReminderEligibility {
     private final ReminderStore store;private final ReminderIdentity identities;private final EntityManager em;
     private final MedicationOccurrenceService occurrences;private final ReminderProperties properties;
-    public ReminderEligibility(ReminderStore store,ReminderIdentity identities,EntityManager em,MedicationOccurrenceService occurrences,ReminderProperties properties){this.store=store;this.identities=identities;this.em=em;this.occurrences=occurrences;this.properties=properties;}
+    private final ReminderDestinations destinations;
+    public ReminderEligibility(ReminderStore store,ReminderIdentity identities,EntityManager em,MedicationOccurrenceService occurrences,ReminderProperties properties,ReminderDestinations destinations){this.store=store;this.identities=identities;this.em=em;this.occurrences=occurrences;this.properties=properties;this.destinations=destinations;}
     /** Consistent with clinical case/treatment locks and account-link patient/user order. Job locks come last. */
     public ReminderIdentity.Identity lock(UUID treatment,UUID user,UUID schedule){
         var cases=store.jdbc().queryForList("select case_id from treatments where id=?",UUID.class,treatment);
@@ -27,8 +28,9 @@ public class ReminderEligibility {
         if(id==null || !id.linkId().equals(job.linkId()) || !id.generation().equals(job.generation()))return "LINK_CHANGED";
         if(!id.active())return "ACCOUNT_RESTRICTED";
         if(!id.patientRole())return "NO_PATIENT_ROLE";
-        if(!id.verifiedPhone() || !java.util.Objects.equals(id.phoneBinding(),job.phoneBinding()))return "PHONE_CHANGED";
-        if(!bound(p,id) || p.version()!=job.preferenceVersion() || !consent(p,job.channel()))return "CONSENT_CHANGED";
+        var destination=destinations.current(id,job.channel(),false);
+        if(destination==null || !java.util.Objects.equals(destination.binding(),job.destinationBinding()))return switch(job.channel()){case "WHATSAPP"->"PHONE_CHANGED";case "EMAIL"->"EMAIL_CHANGED";default->"TELEGRAM_CHANGED";};
+        if(!destinations.bound(p,id,job.channel()) || p.enrollmentVersion(job.channel())!=job.preferenceVersion() || !consent(p,job.channel()))return "CONSENT_CHANGED";
         Treatment treatment=em.find(Treatment.class,job.treatmentId());
         if(treatment==null || !"ACTIVE".equals(treatment.getStatus()))return "TREATMENT_INACTIVE";
         if(!"ACTIVE".equals(treatment.getTbCase().getStatus()))return "CASE_INACTIVE";

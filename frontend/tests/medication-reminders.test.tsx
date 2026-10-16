@@ -10,7 +10,7 @@ import { patient, supporter, id } from "./portal-fixtures";
 
 const session = vi.hoisted(() => ({ user: null as Me | null, handleFailure: vi.fn() }));
 vi.mock("@/lib/auth/session", () => ({ ME_QUERY_KEY: ["session", "me"], useSession: () => session }));
-const defaults: ReminderPreferences = { version: 0, whatsappConsent: false, timeZone: null, permittedFrom: null, permittedUntil: null, allDay: false, verifiedPhone: true, maskedPhone: "+62••••1234", bindingCurrent: true, mode: "SIMULATED", policyVersion: "MEDICATION_REMINDERS_V1" };
+const defaults: ReminderPreferences = { version: 0, emailConsent: false, telegramConsent: false, verifiedEmail: true, maskedEmail: "s•••@example.test", emailBindingCurrent: false, telegramBindingCurrent: false, telegramLinked: false, maskedTelegram: null, emailAvailable: false, telegramAvailable: false, whatsappConsent: false, timeZone: null, permittedFrom: null, permittedUntil: null, allDay: false, verifiedPhone: true, maskedPhone: "+62••••1234", bindingCurrent: true, mode: "SIMULATED", policyVersion: "MEDICATION_REMINDERS_V1" };
 type Call = { path: string; options: RequestInit; body: Record<string, unknown> | null };
 function backend(preferences = defaults, override?: (call: Call) => Response | Promise<Response> | undefined) {
   const calls: Call[] = [];
@@ -18,6 +18,7 @@ function backend(preferences = defaults, override?: (call: Call) => Response | P
     const call = { path: String(url), options, body: typeof options.body === "string" ? JSON.parse(options.body) : null };
     calls.push(call);
     const custom = override?.(call); if (custom) return custom;
+    if (call.path.endsWith("/telegram")) return Response.json({ version: 0, linked: false, maskedChat: null, botUsername: "tbcall_fictitious_bot", available: true }, { headers: { ETag: '"telegram-zero"' } });
     if (call.path.includes("/history")) return Response.json({ content: [], page: 0, size: 10, totalElements: 0 });
     if (options.method === "PATCH") return Response.json({ ...preferences, ...call.body, version: preferences.version + 1 }, { headers: { ETag: '"next"' } });
     return Response.json(preferences, { headers: { ETag: '"initial-zero"' } });
@@ -105,7 +106,7 @@ it.each(["SIMULATED", "CLOUD_TEST"] as const)("requires explicit privacy acknowl
   const request = calls.find(c => c.options.method === "PATCH")!;
   expect(new Headers(request.options.headers).get("If-Match")).toBe('"initial-zero"');
   expect(new Headers(request.options.headers).get("X-XSRF-TOKEN")).toBe("reminder-test");
-  expect(request.body).toEqual({ whatsappConsent: true, timeZone: "Asia/Jakarta", permittedFrom: null, permittedUntil: null, allDay: true, policyVersion: "MEDICATION_REMINDERS_V1", riskAcknowledged: true });
+  expect(request.body).toEqual({ whatsappConsent: true, timeZone: "Asia/Jakarta", permittedFrom: null, permittedUntil: null, allDay: true, policyVersion: "MEDICATION_REMINDERS_V1", riskAcknowledged: true, emailConsent: false, telegramConsent: false, emailRiskAcknowledged: false, telegramRiskAcknowledged: false });
 });
 it("prevents enabling without verified phone while allowing consent withdrawal", async () => {
   const calls = backend({ ...defaults, whatsappConsent: true, verifiedPhone: false, maskedPhone: null }); setup();
@@ -257,4 +258,117 @@ it.each([401, 403])("clears controls after save denial %i without replay", async
   expect(screen.queryByText("+62••••1234")).not.toBeInTheDocument();
   expect(screen.queryByRole("checkbox", { name: "Izinkan WhatsApp" })).not.toBeInTheDocument();
   expect(calls.filter(c => c.options.method === "PATCH")).toHaveLength(1);
+});
+
+it("requires separate Email and Telegram acknowledgements and permits Email without a phone", async () => {
+  const calls = backend({ ...defaults, mode: "CHANNEL_TEST", verifiedPhone: false, emailAvailable: true, telegramAvailable: true, telegramLinked: true, telegramBindingCurrent: true, maskedTelegram: "•••1234" }); setup();
+  await userEvent.click(await screen.findByRole("checkbox", { name: "Izinkan Email" }));
+  await userEvent.click(screen.getByRole("checkbox", { name: "Izinkan Telegram" }));
+  await userEvent.type(screen.getByLabelText("Zona waktu (IANA)"), "Asia/Jakarta");
+  await userEvent.click(screen.getByRole("checkbox", { name: "Izinkan sepanjang hari" }));
+  const save = screen.getByRole("button", { name: "Simpan pengingat" });
+  expect(save).toBeDisabled();
+  await userEvent.click(screen.getByRole("checkbox", { name: /Saya memahami.*pengingat Email/i }));
+  expect(save).toBeDisabled();
+  await userEvent.click(screen.getByRole("checkbox", { name: /Saya memahami.*pengingat Telegram/i }));
+  await userEvent.click(save);
+  await screen.findByText("Pengaturan pengingat disimpan.");
+  expect(calls.find(c => c.options.method === "PATCH")?.body).toMatchObject({ whatsappConsent: false, emailConsent: true, telegramConsent: true, riskAcknowledged: false, emailRiskAcknowledged: true, telegramRiskAcknowledged: true });
+  expect(screen.queryByRole("textbox", { name: /email|chat|penerima/i })).not.toBeInTheDocument();
+});
+it.each(["EMAIL", "TELEGRAM"])("shows %s provider acceptance without claiming delivery or adherence", async channel => {
+  backend({ ...defaults, bindingCurrent: false, emailBindingCurrent: true, mode: "CHANNEL_TEST" }, c => c.path.includes("/history") ? Response.json({ content: [{ id, scheduledAt: "2026-10-16T01:00:00Z", channel, state: "ACCEPTED", attemptCount: 1, classification: null, mode: "CHANNEL_TEST", createdAt: "2026-10-16T00:00:00Z" }], page: 0, size: 10, totalElements: 1 }) : undefined);
+  setup();
+  expect(await screen.findByText(/Diterima penyedia, belum dikonfirmasi terkirim/)).toHaveTextContent(/uji Email|uji Telegram/);
+  expect(screen.getByText(/tidak membuktikan obat diminum/)).toBeInTheDocument();
+});
+it("creates only one Telegram link with the authoritative ETag and clears it on explicit recheck", async () => {
+  let finish!: (response: Response) => void;
+  const calls = backend(defaults, c => c.path.endsWith("/telegram/link") ? new Promise<Response>(resolve => { finish = resolve; }) : undefined);
+  setup();
+  const button = await screen.findByRole("button", { name: "Hubungkan Telegram" });
+  await userEvent.dblClick(button);
+  expect(calls.filter(c => c.options.method === "POST")).toHaveLength(1);
+  const request = calls.find(c => c.options.method === "POST")!;
+  expect(new Headers(request.options.headers).get("If-Match")).toBe('"telegram-zero"');
+  expect(new Headers(request.options.headers).get("X-XSRF-TOKEN")).toBe("reminder-test");
+  expect(request.body).toEqual({});
+  const deepLink = `https://t.me/tbcall_fictitious_bot?start=${"a".repeat(43)}`;
+  await act(async () => finish(Response.json({ deepLink, expiresAt: new Date(Date.now() + 300000).toISOString() })));
+  const link = await screen.findByRole("link", { name: "Buka bot Telegram" });
+  expect(link).toHaveAttribute("href", deepLink);
+  expect(link).toHaveAttribute("rel", "noreferrer noopener");
+  await userEvent.click(screen.getByRole("button", { name: "Periksa tautan" }));
+  expect(screen.queryByRole("link", { name: "Buka bot Telegram" })).not.toBeInTheDocument();
+  expect(calls.filter(c => c.options.method === "POST")).toHaveLength(1);
+});
+it("requires a Telegram unlink confirmation and refreshes preference and Telegram ETags after unlink", async () => {
+  let linked = true;
+  const calls = backend({ ...defaults, mode: "CHANNEL_TEST", telegramLinked: true, telegramBindingCurrent: true }, c => {
+    if (!c.path.endsWith("/telegram")) return;
+    if (c.options.method === "DELETE") linked = false;
+    return Response.json({ version: linked ? 0 : 1, linked, maskedChat: linked ? "•••1234" : null, botUsername: "tbcall_fictitious_bot", available: true }, { headers: { ETag: linked ? '"tg-linked"' : '"tg-unlinked"' } });
+  });
+  setup();
+  await userEvent.click(await screen.findByRole("button", { name: "Putuskan tautan Telegram" }));
+  expect(calls.filter(c => c.options.method === "DELETE")).toHaveLength(0);
+  const dialog = screen.getByRole("dialog");
+  await userEvent.click(within(dialog).getByRole("button", { name: /Ya, putuskan tautan Telegram/i }));
+  await screen.findByRole("button", { name: "Hubungkan Telegram" });
+  const request = calls.find(c => c.options.method === "DELETE")!;
+  expect(new Headers(request.options.headers).get("If-Match")).toBe('"tg-linked"');
+  expect(new Headers(request.options.headers).get("X-XSRF-TOKEN")).toBe("reminder-test");
+  expect(calls.filter(c => c.path.endsWith("/preferences") && c.options.method !== "PATCH").length).toBeGreaterThan(1);
+});
+it("clears a transient Telegram token on save and never places it in the query cache", async () => {
+  const deepLink = `https://t.me/tbcall_fictitious_bot?start=${"a".repeat(43)}`;
+  backend(defaults, c => c.path.endsWith("/telegram/link") ? Response.json({ deepLink, expiresAt: new Date(Date.now() + 300000).toISOString() }) : undefined);
+  const view = setup();
+  await userEvent.click(await screen.findByRole("button", { name: "Hubungkan Telegram" }));
+  await screen.findByRole("link", { name: "Buka bot Telegram" });
+  expect(JSON.stringify(view.client.getQueryCache().getAll().map(query => query.state.data))).not.toContain(deepLink);
+  await userEvent.click(screen.getByRole("button", { name: "Simpan pengingat" }));
+  await screen.findByText("Pengaturan pengingat disimpan.");
+  expect(screen.queryByRole("link", { name: "Buka bot Telegram" })).not.toBeInTheDocument();
+});
+it("aborts pending Telegram linking and suppresses late links after account change", async () => {
+  let finish!: (response: Response) => void, signal: AbortSignal | null | undefined;
+  const calls = backend(defaults, c => c.path.endsWith("/telegram/link") ? (signal = c.options.signal, new Promise<Response>(resolve => { finish = resolve; })) : undefined);
+  const view = setup();
+  await userEvent.click(await screen.findByRole("button", { name: "Hubungkan Telegram" }));
+  act(() => view.client.setQueryData(["session", "me"], { ...patient, id: "other-account" }));
+  expect(signal?.aborted).toBe(true);
+  await act(async () => finish(Response.json({ deepLink: `https://t.me/tbcall_fictitious_bot?start=${"a".repeat(43)}`, expiresAt: new Date(Date.now() + 300000).toISOString() })));
+  expect(screen.queryByRole("link", { name: "Buka bot Telegram" })).not.toBeInTheDocument();
+  expect(calls.filter(c => c.options.method === "POST")).toHaveLength(1);
+});
+it("requires a fresh read after Telegram conflict without replaying link creation", async () => {
+  const calls = backend(defaults, c => c.path.endsWith("/telegram/link") ? Response.json({ title: "Stale", status: 412 }, { status: 412 }) : undefined);
+  setup();
+  await userEvent.click(await screen.findByRole("button", { name: "Hubungkan Telegram" }));
+  await screen.findByText(/Pengaturan telah berubah/);
+  expect(screen.queryByRole("link", { name: "Buka bot Telegram" })).not.toBeInTheDocument();
+  await userEvent.click(screen.getByRole("button", { name: "Muat ulang pengingat" }));
+  await screen.findByRole("button", { name: "Hubungkan Telegram" });
+  expect(calls.filter(c => c.options.method === "POST")).toHaveLength(1);
+  expect(calls.filter(c => c.path.endsWith("/telegram")).length).toBeGreaterThan(1);
+});
+it("hides an expired Telegram deep link", async () => {
+  backend(defaults, c => c.path.endsWith("/telegram/link") ? Response.json({ deepLink: `https://t.me/tbcall_fictitious_bot?start=${"a".repeat(43)}`, expiresAt: new Date(Date.now() + 400).toISOString() }) : undefined);
+  setup();
+  await userEvent.click(await screen.findByRole("button", { name: "Hubungkan Telegram" }));
+  await screen.findByRole("link", { name: "Buka bot Telegram" });
+  await waitFor(() => expect(screen.queryByRole("link", { name: "Buka bot Telegram" })).not.toBeInTheDocument());
+});
+it("refreshes preference bindings when retrying a failed Telegram status read", async () => {
+  let first = true;
+  const calls = backend(defaults, c => {
+    if (!c.path.endsWith("/telegram")) return;
+    if (first) { first = false; return Response.json({ title: "Unavailable", status: 503 }, { status: 503 }); }
+    return Response.json({ version: 1, linked: true, maskedChat: "•••1234", botUsername: "tbcall_fictitious_bot", available: true }, { headers: { ETag: '"tg-after-retry"' } });
+  });
+  setup();
+  await userEvent.click(await screen.findByRole("button", { name: "Muat ulang tautan Telegram" }));
+  await screen.findByText(/Telegram terhubung: •••1234/);
+  expect(calls.filter(c => c.path.endsWith("/preferences")).length).toBeGreaterThan(1);
 });

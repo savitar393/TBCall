@@ -12,7 +12,7 @@ import org.springframework.stereotype.Component;
 @Component
 public class ReminderIdentity {
     public record Identity(UUID userId,UUID patientId,UUID linkId,String generation,String phone,String phoneBinding,
-            boolean verifiedPhone,boolean active,boolean patientRole){
+            boolean verifiedPhone,boolean active,boolean patientRole,String email,String emailBinding,boolean verifiedEmail){
         @Override public String toString(){return "ReminderIdentity[contact=redacted]";}
     }
     private final JdbcTemplate jdbc;private final AuditService audit;
@@ -33,7 +33,7 @@ public class ReminderIdentity {
             jdbc.queryForList("select id from users where id=? for no key update",user);
         }
         var rows=jdbc.query("""
-                select u.id,u.status,u.phone,u.phone_verified_at,l.id link_id,l.patient_id,l.version,l.verified_at,
+                select u.id,u.status,u.phone,u.phone_verified_at,u.email,u.email_verified_at,l.id link_id,l.patient_id,l.version,l.verified_at,
                     (exists(select 1 from user_roles ur join roles r on r.id=ur.role_id where ur.user_id=u.id and r.code='PATIENT')
                      and not exists(select 1 from user_roles ur join roles r on r.id=ur.role_id where ur.user_id=u.id and r.code<>'PATIENT')) patient_role
                 from users u join patient_user_links l on l.user_id=u.id
@@ -42,10 +42,14 @@ public class ReminderIdentity {
             UUID link=rs.getObject("link_id",UUID.class);OffsetDateTime verified=rs.getObject("verified_at",OffsetDateTime.class);
             String phone=rs.getString("phone");OffsetDateTime phoneAt=rs.getObject("phone_verified_at",OffsetDateTime.class);
             boolean phoneVerified=phone!=null && phoneAt!=null;
+            String email=ChannelProviderProperties.canonicalEmail(rs.getString("email"));
+            OffsetDateTime emailAt=rs.getObject("email_verified_at",OffsetDateTime.class);
+            boolean emailVerified=email!=null && emailAt!=null;
             return new Identity(user,rs.getObject("patient_id",UUID.class),link,
                     digest(link+"/"+rs.getLong("version")+"/"+(verified==null?"":verified.toInstant())),phone,
                     phoneVerified?digest(user+"/"+phone+"/"+phoneAt.toInstant()):null,
-                    phoneVerified,"ACTIVE".equals(rs.getString("status")),rs.getBoolean("patient_role"));
+                    phoneVerified,"ACTIVE".equals(rs.getString("status")),rs.getBoolean("patient_role"),email,
+                    emailVerified?digest(user+"/email/"+email+"/"+emailAt.toInstant()):null,emailVerified);
         },user,links.getFirst());
         return rows.size()==1?rows.getFirst():null;
     }

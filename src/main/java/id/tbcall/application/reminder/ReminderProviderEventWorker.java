@@ -97,14 +97,14 @@ public class ReminderProviderEventWorker {
                 """,OffsetDateTime.class,p.userId(),p.generation(),p.phoneBinding());
         if(grant==null || event.occurredAt().isBefore(grant.toInstant().truncatedTo(ChronoUnit.SECONDS)))return "STALE";
         long version=p.version()+1;
-        store.jdbc().update("update reminder_preferences set whatsapp_consent=false,version=?,updated_at=?,last_planned_at=null where user_id=?",version,at(received),p.userId());
+        store.jdbc().update("update reminder_preferences set whatsapp_consent=false,version=?,whatsapp_version=?,updated_at=?,last_planned_at=null where user_id=?",version,version,at(received),p.userId());
         store.jdbc().update("""
                 insert into reminder_consent_events(id,user_id,patient_link_id,link_generation,phone_binding,channel,action,purpose,policy_version,method,actor_user_id,preferences_version,recorded_at,withdrawn_at)
                 values (?,?,?,?,?,'WHATSAPP','WITHDRAWN','MEDICATION_REMINDER',?,'PROVIDER_OPT_OUT',null,?,?,?)
                 """,UUID.randomUUID(),p.userId(),p.linkId(),p.generation(),p.phoneBinding(),ReminderDtos.POLICY,version,at(received),at(received));
         store.jdbc().update("""
                 update reminder_jobs set state='CANCELLED',classification='PROVIDER_OPT_OUT',lease_token=null,lease_until=null,updated_at=?
-                where user_id=? and state in ('SCHEDULED','ELIGIBLE')
+                where user_id=? and channel='WHATSAPP' and state in ('SCHEDULED','ELIGIBLE')
                 """,at(received),p.userId());
         audit.record(null,"MEDICATION_REMINDER_PROVIDER_OPT_OUT","USER",p.userId());
         return "APPLIED";

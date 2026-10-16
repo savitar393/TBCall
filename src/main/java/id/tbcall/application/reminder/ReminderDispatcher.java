@@ -12,7 +12,7 @@ public class ReminderDispatcher {
     public ReminderDispatcher(ReminderDispatchWorker worker,ReminderTransports transports,ReminderProperties properties){this.worker=worker;this.transports=transports;this.properties=properties;}
     @Transactional(propagation=Propagation.NOT_SUPPORTED)
     public int dispatch(){
-        if(properties.getMode()==ReminderProperties.Mode.CLOUD_TEST)return 0;
+        if(properties.getMode()==ReminderProperties.Mode.CLOUD_TEST || properties.getMode()==ReminderProperties.Mode.CHANNEL_TEST)return 0;
         worker.recover();
         int dispatched=0;
         for(var claim:worker.claim()){
@@ -30,6 +30,14 @@ public class ReminderDispatcher {
     @Transactional(propagation=Propagation.NOT_SUPPORTED)
     public boolean dispatchTest(UUID job){
         if(properties.getMode()!=ReminderProperties.Mode.CLOUD_TEST)throw new IllegalStateException("Explicit Meta test mode required");
+        return dispatchOne(job);
+    }
+    @Transactional(propagation=Propagation.NOT_SUPPORTED)
+    public boolean dispatchChannelTest(UUID job){
+        if(properties.getMode()!=ReminderProperties.Mode.CHANNEL_TEST)throw new IllegalStateException("Explicit channel test mode required");
+        return dispatchOne(job);
+    }
+    private boolean dispatchOne(UUID job){
         var claim=worker.claimOne(job);
         if(claim==null)return false;
         var handoff=worker.admit(claim);

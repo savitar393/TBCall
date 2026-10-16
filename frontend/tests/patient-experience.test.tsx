@@ -18,7 +18,8 @@ it('calendar is read-only and makes paginated coverage explicit', async()=> { co
 it('calendar unlinked state suppresses all clinical reads', async()=> { const calls=portalBackend({...f.patient,patientLink:null, permissions:[]}); render(<AppProviders><PortalBoundary mode="patient" context="calendar"><PatientCalendar/></PortalBoundary></AppProviders>); await screen.findByText(/Izin baca catatan kalender belum/); expect(calls.filter(c=>!c.url.endsWith('/me'))).toHaveLength(0); });
 it('profile protects demographic access while permitting self reminder privacy controls', async()=> {
   const calls=portalBackend({...f.patient,permissions:[]}, c=>{
-    if(c.url.endsWith('/medication-reminders/preferences')) return Response.json({version:0,whatsappConsent:false,timeZone:null,permittedFrom:null,permittedUntil:null,allDay:false,verifiedPhone:true,maskedPhone:'+62••••1234',bindingCurrent:true,mode:'DISABLED',policyVersion:'MEDICATION_REMINDERS_V1'},{headers:{ETag:'"0-identity-binding-58e2"'}});
+    if(c.url.endsWith('/medication-reminders/preferences')) return Response.json({version:0,whatsappConsent:false,emailConsent:false,telegramConsent:false,verifiedEmail:true,maskedEmail:'s•••@example.test',emailBindingCurrent:false,telegramBindingCurrent:false,telegramLinked:false,maskedTelegram:null,emailAvailable:false,telegramAvailable:false,timeZone:null,permittedFrom:null,permittedUntil:null,allDay:false,verifiedPhone:true,maskedPhone:'+62••••1234',bindingCurrent:true,mode:'DISABLED',policyVersion:'MEDICATION_REMINDERS_V1'},{headers:{ETag:'"0-identity-binding-58e2"'}});
+    if(c.url.endsWith('/medication-reminders/telegram')) return Response.json({version:0,linked:false,maskedChat:null,botUsername:null,available:false},{headers:{ETag:'"telegram-zero"'}});
     if(c.url.includes('/medication-reminders/history?')) return Response.json({content:[],page:0,size:10,totalElements:0});
     return undefined;
   });
@@ -28,7 +29,7 @@ it('profile protects demographic access while permitting self reminder privacy c
   expect(screen.queryByRole('checkbox',{name:/SMS/})).not.toBeInTheDocument();
   expect(screen.queryByText(f.selfPatient.fullName)).not.toBeInTheDocument();
   expect(calls.some(c=>c.url.split('?')[0].endsWith('/me/patient'))).toBe(false);
-  expect(calls.every(c=>(!c.options.method||c.options.method==='GET')&&/^\/api\/tbcall\/v1\/me(?:\/medication-reminders\/(?:preferences|history))?$/.test(c.url.split('?')[0]))).toBe(true);
+  expect(calls.every(c=>(!c.options.method||c.options.method==='GET')&&/^\/api\/tbcall\/v1\/me(?:\/medication-reminders\/(?:preferences|history|telegram))?$/.test(c.url.split('?')[0]))).toBe(true);
 });
 it('calendar wrong-role users cannot mount resource reads', async()=> { const calls=portalBackend({...f.patient,roles:[{code:'TB_OFFICER',name:'Petugas'}]}); render(<AppProviders><PortalBoundary mode="patient" context="calendar"><PatientCalendar/></PortalBoundary></AppProviders>); await screen.findByText('Akses tidak diizinkan'); expect(calls.filter(c=>!c.url.endsWith('/me'))).toHaveLength(0); });
 it('failed reads expose safe recovery without private payloads or mutations', async()=> { const calls=portalBackend(f.patient,c=>c.url.includes('dose-events')?failure(503,'UNAVAILABLE'):undefined); await renderPortal('home'); await screen.findAllByRole('button',{name:'Coba kembali'}); expect(screen.queryByText(/private clinical detail/)).not.toBeInTheDocument(); expect(calls.every(c=>!c.options.method||c.options.method==='GET')).toBe(true); });
