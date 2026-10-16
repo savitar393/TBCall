@@ -17,7 +17,17 @@ export const portalApi = {
     patient: (signal: AbortSignal) => request("/patient", s.selfPatientSchema, { signal }),
     patientTreatment: (signal: AbortSignal) => request("/treatment", s.patientTreatmentSchema, { signal }),
     supporterTreatment: (caseId: string, signal: AbortSignal) => request(`/supporting-cases/${encodeURIComponent(caseId)}/treatment`, s.supporterTreatmentSchema, { signal }),
-    doses: (target: PortalTarget, page: number, signal: AbortSignal) => request(`${target.kind === "patient" ? "/treatment" : targetPath(target)}/dose-events${paging(page)}`, s.dosePageSchema, { signal }),
+    doses: async (target: PortalTarget, page: number, signal: AbortSignal) => {
+        try {
+            return await request(`${target.kind === "patient" ? "/treatment" : targetPath(target)}/dose-events${paging(page)}`, s.dosePageSchema, { signal });
+        } catch (error) {
+            // This fixed SELF read checks ADHERENCE_READ before returning not-found
+            // when no treatment exists. Do not normalize supporter, route or write failures.
+            if (target.kind === "patient" && error instanceof ApiError && error.problem.status === 404 && error.problem.code === "RESOURCE_NOT_FOUND")
+                return { data: { content: [], page, size: 20, totalElements: 0 } };
+            throw error;
+        }
+    },
     recordDose: (target: PortalTarget, body: DoseInput, signal: AbortSignal) => request(`${target.kind === "patient" ? "/treatment" : targetPath(target)}/dose-events`, s.safeDoseSchema, { method: "POST", body, signal }),
     followUps: (signal: AbortSignal) => request("/follow-ups", s.followUpsSchema, { signal }),
     tpt: (signal: AbortSignal) => request("/tpt", s.safeTptSchema, { signal }),
