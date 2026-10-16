@@ -87,24 +87,20 @@ public class ReminderDispatchWorker {
             correlation=null;outcome=ReminderTransport.Outcome.UNCERTAIN;
         }
         String state="FAILED",classification=outcome.name();
-        String channel=job.channel();
         Instant next=now;
         switch(outcome){
             case ACCEPTED -> {state="ACCEPTED";classification="SIMULATED_ACCEPTANCE";}
             case UNCERTAIN -> state="UNCERTAIN";
-            case FAILED -> { /* A definitive terminal result does not authorize fallback. */ }
-            case SAFE_RETRY,SAFE_FALLBACK -> {
+            case FAILED -> { /* A definitive terminal result does not authorize another handoff. */ }
+            case SAFE_RETRY -> {
                 Preference p=store.preference(job.userId(),false);
                 boolean current=p!=null && p.version()==job.preferenceVersion();
                 // No nested identity locks here: authoritative full revalidation occurs on the next admission.
                 boolean timely=!now.isAfter(job.scheduledAt().toInstant().plusSeconds(properties.getMaxLatenessMinutes()*60L));
-                boolean retry=outcome==ReminderTransport.Outcome.SAFE_RETRY;
-                boolean fallback=outcome==ReminderTransport.Outcome.SAFE_FALLBACK && current && "WHATSAPP".equals(channel)
-                        && p.fallback() && p.whatsapp() && p.sms();
-                if(current && timely && job.attempts()<properties.getMaxAttempts() && (retry || fallback)){
-                    next=retry?now.plusSeconds(properties.getRetrySeconds()*(1L<<(job.attempts()-1))):now;
+                if(current && p.whatsapp() && timely && job.attempts()<properties.getMaxAttempts()){
+                    next=now.plusSeconds(properties.getRetrySeconds()*(1L<<(job.attempts()-1)));
                     if(!next.isAfter(job.scheduledAt().toInstant().plusSeconds(properties.getMaxLatenessMinutes()*60L))){
-                        state="SCHEDULED";if(fallback)channel="SMS";
+                        state="SCHEDULED";
                     }else classification="EXPIRED";
                 }
             }
@@ -114,9 +110,9 @@ public class ReminderDispatchWorker {
                 where job_id=? and attempt_number=? and lease_token=? and outcome='PENDING'
                 """,outcome.name(),at(now),correlation,job.id(),job.attempts(),handoff.lease());
         store.jdbc().update("""
-                update reminder_jobs set state=?,channel=?,classification=?,provider_correlation=?,next_attempt_at=?,
+                update reminder_jobs set state=?,classification=?,provider_correlation=?,next_attempt_at=?,
                 lease_token=null,lease_until=null,updated_at=? where id=?
-                """,state,channel,classification,correlation,at(next),at(now),job.id());
+                """,state,classification,correlation,at(next),at(now),job.id());
         audit.record(null,"MEDICATION_REMINDER_"+state,"REMINDER_JOB",job.id());
     }
 

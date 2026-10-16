@@ -9,11 +9,9 @@ import java.util.*;
 public final class ReminderDtos {
     private ReminderDtos(){}
     public static final String POLICY="MEDICATION_REMINDERS_V1";
-    public record Preferences(long version,boolean whatsappConsent,boolean smsConsent,String preferredChannel,
-            boolean smsFallback,String timeZone,String permittedFrom,String permittedUntil,boolean allDay,
+    public record Preferences(long version,boolean whatsappConsent,String timeZone,String permittedFrom,String permittedUntil,boolean allDay,
             boolean verifiedPhone,String maskedPhone,boolean bindingCurrent,String mode,String policyVersion,@JsonIgnore String etag){}
-    public record Change(@NotNull Boolean whatsappConsent,@NotNull Boolean smsConsent,@NotBlank String preferredChannel,
-            @NotNull Boolean smsFallback,@Size(max=100) String timeZone,@Size(max=5) String permittedFrom,
+    public record Change(@NotNull Boolean whatsappConsent,@Size(max=100) String timeZone,@Size(max=5) String permittedFrom,
             @Size(max=5) String permittedUntil,@NotNull Boolean allDay,@NotBlank String policyVersion,@NotNull Boolean riskAcknowledged){
         @JsonAnySetter public void unsupported(String field,Object value){throw new IllegalArgumentException("Unsupported reminder preference");}
     }

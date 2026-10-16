@@ -2,7 +2,7 @@ import { z } from "@/lib/validation";
 import { apiRequest, type ApiOptions } from "@/lib/api/client";
 import { ApiError } from "@/lib/api/problem";
 
-const channel = z.enum(["WHATSAPP", "SMS"]);
+const channel = z.enum(["WHATSAPP"]);
 const mode = z.enum(["DISABLED", "SIMULATED"]);
 const time = z.string().regex(/^(?:[01]\d|2[0-3]):[0-5]\d$/).nullable();
 export function validReminderZone(zone: string) {
@@ -12,7 +12,7 @@ export function validReminderZone(zone: string) {
   try { new Intl.DateTimeFormat("id-ID", { timeZone: zone }); return true; } catch { return false; }
 }
 const consentFields = {
-  whatsappConsent: z.boolean(), smsConsent: z.boolean(), preferredChannel: channel, smsFallback: z.boolean(),
+  whatsappConsent: z.boolean(),
   timeZone: z.string().refine(validReminderZone).nullable(), permittedFrom: time, permittedUntil: time, allDay: z.boolean(),
   policyVersion: z.literal("MEDICATION_REMINDERS_V1"),
 };

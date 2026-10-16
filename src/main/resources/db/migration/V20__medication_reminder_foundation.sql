@@ -6,14 +6,10 @@ CREATE TABLE reminder_preferences (
     phone_binding varchar(64),
     version bigint NOT NULL CHECK (version > 0),
     whatsapp_consent boolean NOT NULL DEFAULT false,
-    sms_consent boolean NOT NULL DEFAULT false,
-    preferred_channel varchar(10) NOT NULL CHECK (preferred_channel IN ('WHATSAPP','SMS')),
-    sms_fallback boolean NOT NULL DEFAULT false,
     time_zone varchar(100),
     permitted_from time(0), permitted_until time(0), all_day boolean NOT NULL DEFAULT false,
     policy_version varchar(60) NOT NULL, updated_at timestamptz NOT NULL, last_planned_at timestamptz,
-    CHECK (NOT sms_fallback OR (whatsapp_consent AND sms_consent AND preferred_channel='WHATSAPP')),
-    CHECK (NOT (whatsapp_consent OR sms_consent) OR
+    CHECK (NOT whatsapp_consent OR
         (phone_binding IS NOT NULL AND time_zone IS NOT NULL AND
         ((all_day AND permitted_from IS NULL AND permitted_until IS NULL) OR
          (NOT all_day AND permitted_from IS NOT NULL AND permitted_until IS NOT NULL AND permitted_from<>permitted_until))))
@@ -21,7 +17,7 @@ CREATE TABLE reminder_preferences (
 CREATE TABLE reminder_consent_events (
     id uuid PRIMARY KEY, user_id uuid NOT NULL REFERENCES reminder_preferences(user_id),
     patient_link_id uuid NOT NULL REFERENCES patient_user_links(id), link_generation varchar(64) NOT NULL,
-    phone_binding varchar(64), channel varchar(10) NOT NULL CHECK (channel IN ('WHATSAPP','SMS')),
+    phone_binding varchar(64), channel varchar(10) NOT NULL CHECK (channel='WHATSAPP'),
     action varchar(12) NOT NULL CHECK (action IN ('GRANTED','WITHDRAWN')),
     purpose varchar(40) NOT NULL CHECK (purpose='MEDICATION_REMINDER'),
     policy_version varchar(60) NOT NULL, method varchar(30) NOT NULL CHECK (method='SELF_PORTAL'),
@@ -45,7 +41,7 @@ CREATE TABLE reminder_jobs (
     revision_id uuid NOT NULL, occurrence_id varchar(200) NOT NULL,
     scheduled_at timestamptz NOT NULL, logical_key varchar(64) NOT NULL,
     idempotency_key uuid NOT NULL UNIQUE,
-    channel varchar(10) NOT NULL CHECK (channel IN ('WHATSAPP','SMS')),
+    channel varchar(10) NOT NULL CHECK (channel='WHATSAPP'),
     state varchar(20) NOT NULL CHECK (state IN ('SCHEDULED','ELIGIBLE','SUPPRESSED','DISPATCHED','ACCEPTED','DELIVERED','FAILED','CANCELLED','UNCERTAIN')),
     attempt_count integer NOT NULL DEFAULT 0 CHECK (attempt_count BETWEEN 0 AND 3),
     next_attempt_at timestamptz NOT NULL, lease_token uuid, lease_until timestamptz,
@@ -66,8 +62,8 @@ CREATE INDEX idx_reminder_lease ON reminder_jobs(lease_until) WHERE state IN ('E
 CREATE INDEX idx_reminder_history ON reminder_jobs(user_id,link_generation,scheduled_at DESC,id);
 CREATE TABLE reminder_attempts (
     id uuid PRIMARY KEY, job_id uuid NOT NULL REFERENCES reminder_jobs(id), attempt_number integer NOT NULL CHECK (attempt_number BETWEEN 1 AND 3),
-    lease_token uuid NOT NULL, channel varchar(10) NOT NULL CHECK (channel IN ('WHATSAPP','SMS')),
-    outcome varchar(30) NOT NULL CHECK (outcome IN ('PENDING','ACCEPTED','SAFE_RETRY','SAFE_FALLBACK','FAILED','UNCERTAIN')),
+    lease_token uuid NOT NULL, channel varchar(10) NOT NULL CHECK (channel='WHATSAPP'),
+    outcome varchar(30) NOT NULL CHECK (outcome IN ('PENDING','ACCEPTED','SAFE_RETRY','FAILED','UNCERTAIN')),
     mode varchar(12) NOT NULL CHECK (mode IN ('DISABLED','SIMULATED')),
     started_at timestamptz NOT NULL, finished_at timestamptz, provider_correlation varchar(120),
     UNIQUE(job_id,attempt_number), CHECK ((outcome='PENDING')=(finished_at IS NULL))

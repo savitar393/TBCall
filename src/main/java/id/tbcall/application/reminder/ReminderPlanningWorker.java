@@ -21,7 +21,7 @@ public class ReminderPlanningWorker {
         Instant now=clock.instant();
         // Rotate even ineligible candidates; one stale binding must not starve other enrolled patients.
         if(p!=null)store.jdbc().update("update reminder_preferences set last_planned_at=? where user_id=?",at(now),user);
-        if(id==null || !id.active() || !id.patientRole() || !id.verifiedPhone() || !bound(p,id) || !(p.whatsapp() || p.sms()))return 0;
+        if(id==null || !id.active() || !id.patientRole() || !id.verifiedPhone() || !bound(p,id) || !p.whatsapp())return 0;
         var treatment=em.find(Treatment.class,treatmentId);
         if(treatment==null || !"ACTIVE".equals(treatment.getStatus()) || !"ACTIVE".equals(treatment.getTbCase().getStatus()))return 0;
         Instant start=now.minusSeconds(properties.getMaxLatenessMinutes()*60L),end=now.plusSeconds(properties.getPlanningHours()*3600L);
@@ -39,7 +39,7 @@ public class ReminderPlanningWorker {
                         on conflict(schedule_id,scheduled_at,user_id,preferences_version) do update set revision_id=excluded.revision_id,
                         occurrence_id=excluded.occurrence_id,state=excluded.state,classification=excluded.classification,updated_at=excluded.updated_at
                         where reminder_jobs.attempt_count=0 and reminder_jobs.state in ('SCHEDULED','SUPPRESSED','CANCELLED') and reminder_jobs.revision_id<>excluded.revision_id
-                        """,job,user,id.linkId(),id.generation(),id.phoneBinding(),p.version(),treatmentId,schedule,o.revisionId(),o.id(),o.scheduledAt(),logical,job,p.channel(),reason==null?"SCHEDULED":"SUPPRESSED",o.scheduledAt(),reason,properties.getMode().name(),at(now),at(now));
+                        """,job,user,id.linkId(),id.generation(),id.phoneBinding(),p.version(),treatmentId,schedule,o.revisionId(),o.id(),o.scheduledAt(),logical,job,"WHATSAPP",reason==null?"SCHEDULED":"SUPPRESSED",o.scheduledAt(),reason,properties.getMode().name(),at(now),at(now));
                 if(changed>0){inserted++;audit.record(null,"MEDICATION_REMINDER_PLANNED","MEDICATION_SCHEDULE",schedule);}
                 if(inserted>=Math.min(budget,properties.getBatchSize()))break;
         }

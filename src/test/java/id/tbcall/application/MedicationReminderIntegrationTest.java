@@ -4,7 +4,6 @@ import id.tbcall.application.reminder.ReminderDispatcher;
 import id.tbcall.application.reminder.ReminderDispatchWorker;
 import id.tbcall.application.reminder.ReminderPlanner;
 import id.tbcall.application.reminder.ReminderTransport;
-import id.tbcall.application.reminder.SimulatedSmsTransport;
 import id.tbcall.application.reminder.SimulatedWhatsAppTransport;
 import id.tbcall.security.PasswordHasher;
 import jakarta.servlet.http.Cookie;
@@ -14,6 +13,7 @@ import java.util.concurrent.*;
 import java.util.concurrent.atomic.AtomicReference;
 import org.junit.jupiter.api.*;
 import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.CsvSource;
 import org.junit.jupiter.params.provider.ValueSource;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
@@ -74,7 +74,6 @@ class MedicationReminderIntegrationTest {
     @Autowired ReminderDispatcher dispatcher;
     @Autowired ReminderDispatchWorker worker;
     @MockitoSpyBean SimulatedWhatsAppTransport whatsapp;
-    @MockitoSpyBean SimulatedSmsTransport sms;
     final JsonMapper json=JsonMapper.builder().build();
     static final String PASSWORD="Fictional reminder regression password 2026!";
     static final String PHONE="+6281111111001";
@@ -85,7 +84,7 @@ class MedicationReminderIntegrationTest {
 
     @BeforeEach void setup() throws Exception {
         TIME.set(START);
-        reset(whatsapp,sms);
+        reset(whatsapp);
         if(hash==null) hash=passwords.encode(PASSWORD);
         jdbc.execute("truncate users,patients,facilities restart identity cascade");
         facility=jdbc.queryForObject("insert into facilities(name) values ('Fictional reminder facility') returning id",UUID.class);
@@ -110,18 +109,19 @@ class MedicationReminderIntegrationTest {
         assertThat(response.getHeader("ETag")).startsWith("\"").endsWith("\"");
         JsonNode value=json.readTree(response.getContentAsString());
         assertThat(value.path("whatsappConsent").asBoolean()).isFalse();
-        assertThat(value.path("smsConsent").asBoolean()).isFalse();
-        assertThat(value.path("smsFallback").asBoolean()).isFalse();
+        assertThat(value.has("smsConsent")).isFalse();
+        assertThat(value.has("smsFallback")).isFalse();
+        assertThat(value.has("preferredChannel")).isFalse();
         assertThat(value.path("verifiedPhone").asBoolean()).isTrue();
         assertThat(value.path("mode").asText()).isEqualTo("SIMULATED");
         assertThat(response.getContentAsString()).doesNotContain(PHONE,"+6281111111999",patient.toString(),"PRIVATE-CLINICAL");
         createSchedule(); planner.plan(); dispatcher.dispatch();
         assertThat(count("reminder_jobs")).isZero();
-        verifyNoInteractions(whatsapp,sms);
+        verifyNoInteractions(whatsapp);
     }
 
     @Test void consentWriteRequiresCsrfFreshVersionAndRiskAcknowledgement() throws Exception {
-        var change=preferences(true,false,false);
+        var change=preferences(true);
         String original=etag("0");
         mvc.perform(patch(PREFERENCES).cookie(patientCookie).header("If-Match",original)
                 .contentType("application/json").content(json.writeValueAsString(change))).andExpect(status().isForbidden());
@@ -131,26 +131,37 @@ class MedicationReminderIntegrationTest {
         change.put("riskAcknowledged",true);
         JsonNode enrolled=change(change,"0");
         assertThat(enrolled.path("whatsappConsent").asBoolean()).isTrue();
-        assertThat(enrolled.path("smsConsent").asBoolean()).isFalse();
+        assertThat(enrolled.has("smsConsent")).isFalse();
         assertThat(enrolled.path("bindingCurrent").asBoolean()).isTrue();
         call(patientCookie,patch(PREFERENCES).header("If-Match",original),change,409);
         assertThat(count("reminder_consent_events")).isEqualTo(1);
         assertThat(count("reminder_jobs")).isZero();
     }
 
-    @ParameterizedTest @ValueSource(strings={"policy","unknownRecipient","fallbackWithoutSms","smsWithoutConsent","invalidZone","halfWindow"})
+    @ParameterizedTest @ValueSource(strings={"policy","unknownRecipient","invalidZone","halfWindow"})
     void invalidConsentCannotCreateRecipientAuthority(String invalid) throws Exception {
-        var value=preferences(true,false,false);
+        var value=preferences(true);
         switch(invalid) {
             case "policy" -> value.put("policyVersion","OUTDATED_POLICY");
             case "unknownRecipient" -> value.put("phone","+6281111111777");
-            case "fallbackWithoutSms" -> value.put("smsFallback",true);
-            case "smsWithoutConsent" -> value.put("preferredChannel","SMS");
             case "invalidZone" -> value.put("timeZone","GMT+7");
             case "halfWindow" -> {value.put("allDay",false);value.put("permittedFrom","08:00");}
         }
         call(patientCookie,patch(PREFERENCES).header("If-Match",etag("0")),value,400);
         assertThat(count("reminder_consent_events")).isZero();
+    }
+
+    @ParameterizedTest @CsvSource({"smsConsent,true","smsConsent,false","smsFallback,true","smsFallback,false",
+            "preferredChannel,WHATSAPP","preferredChannel,SMS"})
+    void obsoleteChannelInputsAreRejectedRatherThanSilentlyIgnored(String field,String legacyValue) throws Exception {
+        var value=preferences(true);
+        // Even formerly valid or disabled legacy values are unsupported request fields.
+        value.put(field,field.equals("preferredChannel")?legacyValue:Boolean.valueOf(legacyValue));
+        call(patientCookie,patch(PREFERENCES).header("If-Match",etag("0")),value,400);
+        assertThat(count("reminder_preferences")).isZero();
+        assertThat(count("reminder_consent_events")).isZero();
+        assertThat(count("reminder_jobs")).isZero();
+        verifyNoInteractions(whatsapp);
     }
 
     @ParameterizedTest @ValueSource(strings={"SYSTEM_ADMIN","FACILITY_ADMIN","TB_OFFICER","LAB_STAFF","PROGRAM_MONITOR","TREATMENT_SUPPORTER"})
@@ -161,7 +172,7 @@ class MedicationReminderIntegrationTest {
         jdbc.update("insert into patient_user_links(user_id,patient_id,relationship_type,verification_status,verified_at) values (?,?,'SELF','VERIFIED',now())",other,unrelated);
         Cookie cookie=login("other@example.invalid");
         call(cookie,get(PREFERENCES),null,403);
-        call(cookie,patch(PREFERENCES).header("If-Match","\"0\""),preferences(true,true,true),403);
+        call(cookie,patch(PREFERENCES).header("If-Match","\"0\""),preferences(true),403);
         assertThat(count("reminder_consent_events")).isZero();
     }
 
@@ -169,21 +180,22 @@ class MedicationReminderIntegrationTest {
         jdbc.update("update users set phone_verified_at=null where id=?",self);
         JsonNode read=call(patientCookie,get(PREFERENCES),null,200);
         assertThat(read.path("verifiedPhone").asBoolean()).isFalse();
-        call(patientCookie,patch(PREFERENCES).header("If-Match",etag("0")),preferences(true,false,false),400);
+        call(patientCookie,patch(PREFERENCES).header("If-Match",etag("0")),preferences(true),400);
         createSchedule(); planner.plan(); TIME.set(DUE); dispatcher.dispatch();
         assertThat(count("reminder_jobs")).isZero();
-        verifyNoInteractions(whatsapp,sms);
+        verifyNoInteractions(whatsapp);
     }
 
     @Test void duplicatePlanningAndDispatchSendOnlyOneGenericMessageAndNeverCreateDoseEvidence() throws Exception {
-        enroll(true,false,false); createSchedule();
+        enroll(true); createSchedule();
         assertThat(planner.plan()).isEqualTo(1);
         assertThat(planner.plan()).isZero();
         assertThat(count("reminder_jobs")).isEqualTo(1);
         TIME.set(DUE); dispatcher.dispatch(); dispatcher.dispatch(); planner.plan(); dispatcher.dispatch();
         var sent=org.mockito.ArgumentCaptor.forClass(ReminderTransport.Message.class);
-        verify(whatsapp,times(1)).send(sent.capture()); verifyNoInteractions(sms);
+        verify(whatsapp,times(1)).send(sent.capture());
         assertThat(sent.getValue().destination()).isEqualTo(PHONE);
+        assertThat(sent.getValue().channel()).isEqualTo("WHATSAPP");
         assertThat(sent.getValue().text()).doesNotContain("TBC","TBCall","tuberkulosis","PRIVATE",patient.toString(),caseId.toString(),treatment.toString());
         assertThat(dueState()).isEqualTo("ACCEPTED");
         assertThat(count("reminder_attempts")).isEqualTo(1);
@@ -194,7 +206,7 @@ class MedicationReminderIntegrationTest {
 
     @ParameterizedTest @ValueSource(strings={"phoneChanged","phoneUnverified","linkRevoked","roleRevoked","suspended","caseCompleted","caseReferred","treatmentPaused","treatmentStopped","treatmentCompleted"})
     void authorityAndClinicalEligibilityAreRecheckedBeforeHandoff(String invalidation) throws Exception {
-        enroll(true,true,true); createSchedule(); planner.plan(); TIME.set(DUE);
+        enroll(true); createSchedule(); planner.plan(); TIME.set(DUE);
         var claim=onlyClaim();
         switch(invalidation) {
             case "phoneChanged" -> jdbc.update("update users set phone='+6281111111003' where id=?",self);
@@ -211,62 +223,62 @@ class MedicationReminderIntegrationTest {
         assertThat(worker.admit(claim)).isNull(); dispatcher.dispatch();
         assertThat(count("reminder_attempts")).isZero();
         assertThat(jdbc.queryForObject("select count(*) from reminder_jobs where state in ('DISPATCHED','ACCEPTED')",Integer.class)).isZero();
-        verifyNoInteractions(whatsapp,sms);
+        verifyNoInteractions(whatsapp);
     }
 
-    @Test void withdrawingConsentAfterClaimPreventsHandoffAndCannotBecomeSmsFallback() throws Exception {
-        enroll(true,true,true); createSchedule(); planner.plan(); TIME.set(DUE);
+    @Test void withdrawingConsentAfterClaimPreventsHandoff() throws Exception {
+        enroll(true); createSchedule(); planner.plan(); TIME.set(DUE);
         var claim=onlyClaim();
-        change(preferences(false,false,false),"1");
+        change(preferences(false),"1");
         assertThat(worker.admit(claim)).isNull(); dispatcher.dispatch();
         assertThat(count("reminder_attempts")).isZero();
-        verifyNoInteractions(whatsapp,sms);
+        verifyNoInteractions(whatsapp);
     }
 
     @Test void changedVerifiedPhoneRequiresNewExplicitConsentBinding() throws Exception {
-        enroll(true,false,false); createSchedule(); planner.plan();
+        enroll(true); createSchedule(); planner.plan();
         jdbc.update("update users set phone='+6281111111003',phone_verified_at=now() where id=?",self);
         JsonNode read=call(patientCookie,get(PREFERENCES),null,200);
         assertThat(read.path("bindingCurrent").asBoolean()).isFalse();
-        TIME.set(DUE); dispatcher.dispatch(); verifyNoInteractions(whatsapp,sms);
-        change(preferences(true,false,false),"1"); planner.plan(); dispatcher.dispatch();
+        TIME.set(DUE); dispatcher.dispatch(); verifyNoInteractions(whatsapp);
+        change(preferences(true),"1"); planner.plan(); dispatcher.dispatch();
         var sent=org.mockito.ArgumentCaptor.forClass(ReminderTransport.Message.class);
         verify(whatsapp,times(1)).send(sent.capture());
         assertThat(sent.getValue().destination()).isEqualTo("+6281111111003");
     }
 
     @Test void reverifyingTheSamePhoneDoesNotRestoreTheOldConsentBinding() throws Exception {
-        enroll(true,false,false); createSchedule(); planner.plan();
+        enroll(true); createSchedule(); planner.plan();
         jdbc.update("update users set phone_verified_at=null where id=?",self);
         TIME.set(DUE); dispatcher.dispatch();
         jdbc.update("update users set phone_verified_at=now()+interval '1 second' where id=?",self);
         JsonNode old=call(patientCookie,get(PREFERENCES),null,200);
         assertThat(old.path("bindingCurrent").asBoolean()).isFalse();
         assertThat(old.path("whatsappConsent").asBoolean()).isFalse();
-        planner.plan(); dispatcher.dispatch(); verifyNoInteractions(whatsapp,sms);
-        change(preferences(true,false,false),"1"); planner.plan(); dispatcher.dispatch();
+        planner.plan(); dispatcher.dispatch(); verifyNoInteractions(whatsapp);
+        change(preferences(true),"1"); planner.plan(); dispatcher.dispatch();
         verify(whatsapp,times(1)).send(any());
     }
 
     @ParameterizedTest @ValueSource(strings={"phoneChanged","phoneReverified","selfGenerationChanged"})
     void stalePreferenceFormCannotConsentToANewRecipientOrSelfBinding(String change) throws Exception {
-        enroll(true,false,false);
+        enroll(true);
         String stale=etag("1");
         switch(change) {
             case "phoneChanged" -> jdbc.update("update users set phone='+6281111111003',phone_verified_at=now()+interval '1 second' where id=?",self);
             case "phoneReverified" -> jdbc.update("update users set phone_verified_at=now()+interval '1 second' where id=?",self);
             default -> jdbc.update("update patient_user_links set version=version+1,verified_at=now()+interval '1 second' where user_id=?",self);
         }
-        call(patientCookie,patch(PREFERENCES).header("If-Match",stale),preferences(true,true,true),409);
+        call(patientCookie,patch(PREFERENCES).header("If-Match",stale),preferences(true),409);
         JsonNode current=call(patientCookie,get(PREFERENCES),null,200);
         assertThat(current.path("bindingCurrent").asBoolean()).isFalse();
         assertThat(current.path("whatsappConsent").asBoolean()).isFalse();
-        assertThat(current.path("smsConsent").asBoolean()).isFalse();
+        assertThat(current.has("smsConsent")).isFalse();
         assertThat(count("reminder_consent_events")).isEqualTo(1);
     }
 
     @Test void crashBeforeAdmissionReleasesLeaseWithoutLosingTheReminder() throws Exception {
-        enroll(true,false,false); createSchedule(); planner.plan(); TIME.set(DUE);
+        enroll(true); createSchedule(); planner.plan(); TIME.set(DUE);
         var stale=onlyClaim(); TIME.set(DUE.plusSeconds(31));
         worker.recover();
         assertThat(worker.admit(stale)).isNull();
@@ -276,221 +288,211 @@ class MedicationReminderIntegrationTest {
         assertThat(count("reminder_attempts")).isEqualTo(1);
     }
 
-    @Test void crashAfterDurableHandoffBecomesUncertainAndNeverRetriesOrFallsBack() throws Exception {
-        enroll(true,true,true); createSchedule(); planner.plan(); TIME.set(DUE);
+    @Test void crashAfterDurableHandoffBecomesUncertainAndNeverRetries() throws Exception {
+        enroll(true); createSchedule(); planner.plan(); TIME.set(DUE);
         var handoff=worker.admit(onlyClaim()); assertThat(handoff).isNotNull();
         TIME.set(DUE.plusSeconds(31)); worker.recover(); dispatcher.dispatch();
         assertThat(dueState()).isEqualTo("UNCERTAIN");
         assertThat(count("reminder_attempts")).isEqualTo(1);
-        verifyNoInteractions(whatsapp,sms);
+        verifyNoInteractions(whatsapp);
         // A late result from the expired owner cannot turn the uncertain attempt into a retry.
-        worker.complete(handoff,new ReminderTransport.Result(ReminderTransport.Outcome.SAFE_FALLBACK,"late-result"));
+        worker.complete(handoff,new ReminderTransport.Result(ReminderTransport.Outcome.SAFE_RETRY,"late-result"));
         planner.plan(); dispatcher.dispatch();
-        verifyNoInteractions(whatsapp,sms);
+        verifyNoInteractions(whatsapp);
+        assertThat(dueState()).isEqualTo("UNCERTAIN");
+        assertThat(count("reminder_attempts")).isEqualTo(1);
+        assertWhatsAppOnlyMetadata();
     }
 
     @Test void concurrentWorkersCannotHandoffTheSameOccurrenceTwice() throws Exception {
-        enroll(true,false,false); createSchedule(); planner.plan(); TIME.set(DUE);
+        enroll(true); createSchedule(); planner.plan(); TIME.set(DUE);
         var start=new CountDownLatch(1);
         try(var executor=Executors.newFixedThreadPool(2)) {
             var first=executor.submit(()->{start.await();return dispatcher.dispatch();});
             var second=executor.submit(()->{start.await();return dispatcher.dispatch();});
             start.countDown(); first.get(15,TimeUnit.SECONDS); second.get(15,TimeUnit.SECONDS);
         }
-        verify(whatsapp,times(1)).send(any()); verifyNoInteractions(sms);
+        verify(whatsapp,times(1)).send(any());
         assertThat(count("reminder_attempts")).isEqualTo(1);
         assertThat(dueState()).isEqualTo("ACCEPTED");
     }
 
     @Test void safePreacceptFailuresRetryAtMostThreeTimesWithinTheTimeBudget() throws Exception {
         doReturn(new ReminderTransport.Result(ReminderTransport.Outcome.SAFE_RETRY,"safe-retry")).when(whatsapp).send(any());
-        enroll(true,true,true); createSchedule(); planner.plan(); TIME.set(DUE);
+        enroll(true); createSchedule(); planner.plan(); TIME.set(DUE);
         dispatcher.dispatch(); dispatcher.dispatch();
         assertThat(count("reminder_attempts")).isEqualTo(1);
         TIME.set(DUE.plusSeconds(15)); dispatcher.dispatch();
         TIME.set(DUE.plusSeconds(30)); dispatcher.dispatch();
         TIME.set(DUE.plusSeconds(45)); dispatcher.dispatch(); worker.recover(); planner.plan(); dispatcher.dispatch();
-        verify(whatsapp,times(3)).send(any()); verifyNoInteractions(sms);
+        verify(whatsapp,times(3)).send(any());
         assertThat(count("reminder_attempts")).isEqualTo(3);
         assertThat(dueState()).isEqualTo("FAILED");
+        assertThat(jdbc.queryForList("select scheduled_at from reminder_jobs order by scheduled_at",OffsetDateTime.class)
+                .stream().map(OffsetDateTime::toInstant).toList()).containsExactly(DUE,DUE.plus(Duration.ofDays(1)));
+        assertWhatsAppOnlyMetadata();
     }
 
     @Test void preferenceReenrollmentCannotResetTheThreeAttemptBudgetForOneOccurrence() throws Exception {
         doReturn(new ReminderTransport.Result(ReminderTransport.Outcome.SAFE_RETRY,"safe-retry")).when(whatsapp).send(any());
-        enroll(true,false,false); createSchedule(); planner.plan(); TIME.set(DUE); dispatcher.dispatch();
+        enroll(true); createSchedule(); planner.plan(); TIME.set(DUE); dispatcher.dispatch();
         for(int version=1;version<=3;version++) {
-            change(preferences(true,false,false),Integer.toString(version));
+            change(preferences(true),Integer.toString(version));
             planner.plan(); dispatcher.dispatch();
         }
-        verify(whatsapp,times(3)).send(any()); verifyNoInteractions(sms);
+        verify(whatsapp,times(3)).send(any());
         assertThat(count("reminder_attempts")).isEqualTo(3);
     }
 
-    @Test void onlyDefinitivePreacceptFailureCanUseSeparatelyConsentedSmsFallback() throws Exception {
-        doReturn(new ReminderTransport.Result(ReminderTransport.Outcome.SAFE_FALLBACK,"definitive-rejection")).when(whatsapp).send(any());
-        enroll(true,true,true); createSchedule(); planner.plan(); TIME.set(DUE); dispatcher.dispatch();
-        TIME.set(DUE.plusSeconds(15)); dispatcher.dispatch();
-        var sent=org.mockito.ArgumentCaptor.forClass(ReminderTransport.Message.class);
-        verify(whatsapp,times(1)).send(any()); verify(sms,times(1)).send(sent.capture());
-        assertThat(sent.getValue().destination()).isEqualTo(PHONE);
-        assertThat(sent.getValue().channel().toString()).isEqualTo("SMS");
-        assertThat(dueState()).isEqualTo("ACCEPTED");
-        assertThat(count("reminder_attempts")).isEqualTo(2);
-    }
-
-    @Test void whatsappConsentAloneNeverAuthorizesSms() throws Exception {
-        doReturn(new ReminderTransport.Result(ReminderTransport.Outcome.SAFE_FALLBACK,"definitive-rejection")).when(whatsapp).send(any());
-        enroll(true,false,false); createSchedule(); planner.plan(); TIME.set(DUE); dispatcher.dispatch();
-        TIME.set(DUE.plusSeconds(15)); dispatcher.dispatch();
-        verify(whatsapp,times(1)).send(any()); verifyNoInteractions(sms);
-        assertThat(count("reminder_attempts")).isEqualTo(1);
-    }
-
     @ParameterizedTest @ValueSource(strings={"ACCEPTED","UNCERTAIN","FAILED","THROWN"})
-    void terminalOutcomeNeverTriggersRetryOrFallback(String result) throws Exception {
+    void terminalOutcomeNeverTriggersRetryOrAnotherChannel(String result) throws Exception {
         if(result.equals("THROWN")) doThrow(new IllegalStateException("Synthetic ambiguous transport failure")).when(whatsapp).send(any());
         else doReturn(new ReminderTransport.Result(ReminderTransport.Outcome.valueOf(result),"synthetic-result")).when(whatsapp).send(any());
-        enroll(true,true,true); createSchedule(); planner.plan(); TIME.set(DUE); dispatcher.dispatch();
+        enroll(true); createSchedule(); planner.plan(); TIME.set(DUE); dispatcher.dispatch();
         TIME.set(DUE.plusSeconds(60)); worker.recover(); dispatcher.dispatch(); planner.plan(); dispatcher.dispatch();
-        verify(whatsapp,times(1)).send(any()); verifyNoInteractions(sms);
+        verify(whatsapp,times(1)).send(any());
         assertThat(count("reminder_attempts")).isEqualTo(1);
         assertThat(dueState()).isEqualTo(switch(result) {
             case "ACCEPTED" -> "ACCEPTED";
             case "FAILED" -> "FAILED";
             default -> "UNCERTAIN";
         });
+        assertThat(jdbc.queryForList("select scheduled_at from reminder_jobs order by scheduled_at",OffsetDateTime.class)
+                .stream().map(OffsetDateTime::toInstant).toList()).containsExactly(DUE,DUE.plus(Duration.ofDays(1)));
+        assertWhatsAppOnlyMetadata();
     }
 
     @ParameterizedTest @ValueSource(strings={"nullResponse","nullOutcome","invalidCorrelation"})
-    void malformedProviderResponseIsUncertainAndCannotAuthorizeRetryOrFallback(String invalid) throws Exception {
+    void malformedProviderResponseIsUncertainAndCannotAuthorizeRetryOrAnotherChannel(String invalid) throws Exception {
         ReminderTransport.Result result=switch(invalid) {
             case "nullResponse" -> null;
             case "nullOutcome" -> new ReminderTransport.Result(null,"synthetic-result");
-            default -> new ReminderTransport.Result(ReminderTransport.Outcome.SAFE_FALLBACK,"provider text with spaces");
+            default -> new ReminderTransport.Result(ReminderTransport.Outcome.SAFE_RETRY,"provider text with spaces");
         };
         doReturn(result).when(whatsapp).send(any());
-        enroll(true,true,true); createSchedule(); planner.plan(); TIME.set(DUE); dispatcher.dispatch();
+        enroll(true); createSchedule(); planner.plan(); TIME.set(DUE); dispatcher.dispatch();
         TIME.set(DUE.plusSeconds(60)); worker.recover(); planner.plan(); dispatcher.dispatch();
-        verify(whatsapp,times(1)).send(any()); verifyNoInteractions(sms);
+        verify(whatsapp,times(1)).send(any());
         assertThat(count("reminder_attempts")).isEqualTo(1);
         assertThat(dueState()).isEqualTo("UNCERTAIN");
-        if(invalid.equals("invalidCorrelation"))
+        if(invalid.equals("invalidCorrelation")) {
             assertThat(jdbc.queryForObject("select provider_correlation from reminder_jobs where scheduled_at=?",String.class,DUE.atOffset(ZoneOffset.UTC))).isNull();
-    }
-
-    @Test void revokedSmsConsentPreventsAnAlreadyQueuedFallback() throws Exception {
-        doReturn(new ReminderTransport.Result(ReminderTransport.Outcome.SAFE_FALLBACK,"definitive-rejection")).when(whatsapp).send(any());
-        enroll(true,true,true); createSchedule(); planner.plan(); TIME.set(DUE); dispatcher.dispatch();
-        change(preferences(true,false,false),"1");
-        TIME.set(DUE.plusSeconds(15)); dispatcher.dispatch();
-        verifyNoInteractions(sms);
-        assertThat(count("reminder_attempts")).isEqualTo(1);
-    }
-
-    @Test void independentlyConsentedSmsStillRequiresTheFallbackPreference() throws Exception {
-        doReturn(new ReminderTransport.Result(ReminderTransport.Outcome.SAFE_FALLBACK,"definitive-rejection")).when(whatsapp).send(any());
-        enroll(true,true,false); createSchedule(); planner.plan(); TIME.set(DUE); dispatcher.dispatch();
-        TIME.set(DUE.plusSeconds(15)); dispatcher.dispatch();
-        verify(whatsapp,times(1)).send(any()); verifyNoInteractions(sms);
-        assertThat(count("reminder_attempts")).isEqualTo(1);
-    }
-
-    @Test void queuedFallbackCannotOutliveTheOriginalOccurrence() throws Exception {
-        doReturn(new ReminderTransport.Result(ReminderTransport.Outcome.SAFE_FALLBACK,"definitive-rejection")).when(whatsapp).send(any());
-        enroll(true,true,true); createSchedule(); planner.plan(); TIME.set(DUE.plusSeconds(590)); dispatcher.dispatch();
-        TIME.set(DUE.plusSeconds(601)); dispatcher.dispatch();
-        verify(whatsapp,times(1)).send(any()); verifyNoInteractions(sms);
-        assertThat(count("reminder_attempts")).isEqualTo(1);
+            assertThat(jdbc.queryForObject("select provider_correlation from reminder_attempts",String.class)).isNull();
+        }
+        assertThat(jdbc.queryForList("select scheduled_at from reminder_jobs order by scheduled_at",OffsetDateTime.class)
+                .stream().map(OffsetDateTime::toInstant).toList()).containsExactly(DUE,DUE.plus(Duration.ofDays(1)));
+        assertWhatsAppOnlyMetadata();
     }
 
     @Test void lateQueuedReminderExpiresWithoutSending() throws Exception {
-        enroll(true,true,true); createSchedule(); planner.plan();
+        enroll(true); createSchedule(); planner.plan();
         TIME.set(DUE.plusSeconds(601)); dispatcher.dispatch(); worker.recover(); dispatcher.dispatch();
-        verifyNoInteractions(whatsapp,sms);
+        verifyNoInteractions(whatsapp);
         assertThat(count("reminder_attempts")).isZero();
         assertThat(dueState()).isEqualTo("SUPPRESSED");
     }
 
     @Test void safeRetryCannotContinueBeyondTheTenMinuteDeadline() throws Exception {
         doReturn(new ReminderTransport.Result(ReminderTransport.Outcome.SAFE_RETRY,"safe-retry")).when(whatsapp).send(any());
-        enroll(true,false,false); createSchedule(); planner.plan(); TIME.set(DUE.plusSeconds(590)); dispatcher.dispatch();
+        enroll(true); createSchedule(); planner.plan(); TIME.set(DUE.plusSeconds(590)); dispatcher.dispatch();
         TIME.set(DUE.plusSeconds(605)); dispatcher.dispatch();
         verify(whatsapp,times(1)).send(any()); assertThat(count("reminder_attempts")).isEqualTo(1);
     }
 
-    @Test void smsCanBeThePrimaryChannelOnlyWithItsOwnConsent() throws Exception {
-        var settings=preferences(false,true,false); settings.put("preferredChannel","SMS");
-        change(settings,"0"); createSchedule(); planner.plan(); TIME.set(DUE); dispatcher.dispatch();
-        verifyNoInteractions(whatsapp); verify(sms,times(1)).send(any());
-        assertThat(dueState()).isEqualTo("ACCEPTED");
-    }
-
     @Test void consentHistoryRecordsSeparateGrantsAndWithdrawalsWithoutCopyingThePhone() throws Exception {
-        enroll(true,false,false);
-        var settings=preferences(false,true,false); settings.put("preferredChannel","SMS");
-        change(settings,"1");
+        enroll(true);
+        change(preferences(false),"1");
         assertThat(jdbc.queryForList("select channel||':'||action from reminder_consent_events order by preferences_version,channel",String.class))
-                .containsExactly("WHATSAPP:GRANTED","SMS:GRANTED","WHATSAPP:WITHDRAWN");
+                .containsExactly("WHATSAPP:GRANTED","WHATSAPP:WITHDRAWN");
         assertThat(jdbc.queryForList("select row_to_json(e)::text from reminder_consent_events e",String.class))
                 .allSatisfy(row->assertThat(row).doesNotContain(PHONE,"+6281111111999"));
         assertThatThrownBy(()->jdbc.update("update reminder_consent_events set policy_version='REWRITTEN'"))
                 .isInstanceOf(org.springframework.dao.DataAccessException.class);
         assertThatThrownBy(()->jdbc.update("delete from reminder_consent_events"))
                 .isInstanceOf(org.springframework.dao.DataAccessException.class);
-        assertThat(count("reminder_consent_events")).isEqualTo(3);
+        assertThat(count("reminder_consent_events")).isEqualTo(2);
+    }
+
+    @ParameterizedTest @ValueSource(strings={"SMS","EMAIL"})
+    void databaseRejectsUnsupportedChannelsInConsentJobsAndAttempts(String channel) throws Exception {
+        enroll(true); createSchedule(); planner.plan();
+        assertThatThrownBy(()->jdbc.update("""
+                insert into reminder_consent_events(id,user_id,patient_link_id,link_generation,phone_binding,
+                    channel,action,purpose,policy_version,method,actor_user_id,preferences_version,recorded_at,withdrawn_at)
+                select gen_random_uuid(),user_id,patient_link_id,link_generation,phone_binding,?,action,purpose,
+                    policy_version,method,actor_user_id,preferences_version,recorded_at,withdrawn_at
+                from reminder_consent_events
+                """,channel)).isInstanceOf(org.springframework.dao.DataIntegrityViolationException.class);
+        assertThatThrownBy(()->jdbc.update("update reminder_jobs set channel=?",channel))
+                .isInstanceOf(org.springframework.dao.DataIntegrityViolationException.class);
+        TIME.set(DUE); dispatcher.dispatch();
+        assertThatThrownBy(()->jdbc.update("update reminder_attempts set channel=?",channel))
+                .isInstanceOf(org.springframework.dao.DataIntegrityViolationException.class);
+        assertThat(count("reminder_consent_events")).isEqualTo(1);
+        assertThat(count("reminder_jobs")).isEqualTo(1);
+        assertThat(count("reminder_attempts")).isEqualTo(1);
+        assertWhatsAppOnlyMetadata();
+    }
+
+    @Test void databaseRejectsTheObsoleteFallbackOutcome() throws Exception {
+        enroll(true); createSchedule(); planner.plan(); TIME.set(DUE); dispatcher.dispatch();
+        assertThatThrownBy(()->jdbc.update("update reminder_attempts set outcome='SAFE_FALLBACK'"))
+                .isInstanceOf(org.springframework.dao.DataIntegrityViolationException.class);
+        assertWhatsAppOnlyMetadata();
+        assertThat(dueState()).isEqualTo("ACCEPTED");
     }
 
     @Test void consentWithdrawalAfterHandoffPreservesUncertainHistoryAndDoesNotAuthorizeAnotherAttempt() throws Exception {
-        enroll(true,true,true); createSchedule(); planner.plan(); TIME.set(DUE);
+        enroll(true); createSchedule(); planner.plan(); TIME.set(DUE);
         var handoff=worker.admit(onlyClaim()); assertThat(handoff).isNotNull();
-        change(preferences(false,false,false),"1");
+        change(preferences(false),"1");
         worker.complete(handoff,new ReminderTransport.Result(ReminderTransport.Outcome.UNCERTAIN,"ambiguous-send"));
         TIME.set(DUE.plusSeconds(60)); worker.recover(); planner.plan(); dispatcher.dispatch();
         assertThat(dueState()).isEqualTo("UNCERTAIN");
         assertThat(count("reminder_attempts")).isEqualTo(1);
-        verifyNoInteractions(whatsapp,sms);
+        verifyNoInteractions(whatsapp);
     }
 
     @Test void anAcceptedOccurrenceCannotBeResentAfterPreferenceVersionOrScheduleRevisionChanges() throws Exception {
-        enroll(true,true,true); createSchedule(); planner.plan(); TIME.set(DUE); dispatcher.dispatch();
-        change(preferences(true,true,true),"1");
+        enroll(true); createSchedule(); planner.plan(); TIME.set(DUE); dispatcher.dispatch();
+        change(preferences(true),"1");
         call(staffCookie,patch(schedulePath()).header("If-Match","\"0\""),schedule("Asia/Jakarta","2026-10-11",List.of("08:00")),200);
         planner.plan(); dispatcher.dispatch();
-        verify(whatsapp,times(1)).send(any()); verifyNoInteractions(sms);
+        verify(whatsapp,times(1)).send(any());
         assertThat(count("reminder_attempts")).isEqualTo(1);
     }
 
     @Test void cancellingTheScheduleAfterClaimPreventsHandoff() throws Exception {
-        enroll(true,false,false); createSchedule(); planner.plan(); TIME.set(DUE);
+        enroll(true); createSchedule(); planner.plan(); TIME.set(DUE);
         var claim=onlyClaim();
         call(staffCookie,post(schedulePath()+"/cancel").header("If-Match","\"0\""),null,200);
         assertThat(worker.admit(claim)).isNull(); dispatcher.dispatch();
-        verifyNoInteractions(whatsapp,sms); assertThat(count("reminder_attempts")).isZero();
+        verifyNoInteractions(whatsapp); assertThat(count("reminder_attempts")).isZero();
     }
 
     @Test void revisedFutureOccurrenceInvalidatesOldJobAndPlansTheNewTime() throws Exception {
-        enroll(true,false,false); createSchedule(); planner.plan();
+        enroll(true); createSchedule(); planner.plan();
         call(staffCookie,patch(schedulePath()).header("If-Match","\"0\""),schedule("Asia/Jakarta","2026-10-11",List.of("09:00")),200);
-        planner.plan(); TIME.set(DUE); dispatcher.dispatch(); verifyNoInteractions(whatsapp,sms);
+        planner.plan(); TIME.set(DUE); dispatcher.dispatch(); verifyNoInteractions(whatsapp);
         TIME.set(Instant.parse("2026-10-11T02:00:00Z")); dispatcher.dispatch();
         verify(whatsapp,times(1)).send(any()); assertThat(count("reminder_attempts")).isEqualTo(1);
     }
 
     @ParameterizedTest @ValueSource(strings={"outside","overnightInside","overnightOutside"})
     void permissionWindowsUseThePatientsLocalTimeAndHandleMidnight(String scenario) throws Exception {
-        var settings=preferences(true,false,false); settings.put("allDay",false);
+        var settings=preferences(true); settings.put("allDay",false);
         boolean inside=scenario.equals("overnightInside");
         settings.put("permittedFrom",scenario.equals("outside")?"09:00":"20:00");
         settings.put("permittedUntil",scenario.equals("outside")?"20:00":"06:00");
         change(settings,"0");
         createSchedule(schedule("Asia/Jakarta","2026-10-11",List.of(inside?"22:00":"08:00")));
         planner.plan(); TIME.set(Instant.parse(inside?"2026-10-11T15:00:00Z":"2026-10-11T01:00:00Z")); dispatcher.dispatch();
-        if(inside) verify(whatsapp,times(1)).send(any()); else verifyNoInteractions(whatsapp,sms);
+        if(inside) verify(whatsapp,times(1)).send(any()); else verifyNoInteractions(whatsapp);
         assertThat(count("reminder_attempts")).isEqualTo(inside?1:0);
     }
 
     @Test void plannerUsesTwentyFourHoursRatherThanCalendarDayAndNeverEnqueuesFarFutureOccurrences() throws Exception {
-        enroll(true,false,false);
+        enroll(true);
         createSchedule(schedule("Asia/Jakarta","2026-10-11",List.of("06:59","07:01","08:00")));
         planner.plan();
         var instants=jdbc.queryForList("select scheduled_at from reminder_jobs order by scheduled_at",OffsetDateTime.class)
@@ -501,7 +503,7 @@ class MedicationReminderIntegrationTest {
     }
 
     @Test void dstGapHasNoJobAndOverlapHasOneDeterministicInstant() throws Exception {
-        enroll(true,false,false);
+        enroll(true);
         createSchedule(schedule("America/New_York","2026-10-11",List.of("01:30","02:30")));
         TIME.set(Instant.parse("2026-11-01T00:00:00Z")); planner.plan();
         var overlap=jdbc.queryForList("select scheduled_at from reminder_jobs order by scheduled_at",OffsetDateTime.class)
@@ -515,7 +517,7 @@ class MedicationReminderIntegrationTest {
     }
 
     @Test void historyIsBoundedContainsOnlyCurrentUsersMetadataAndNeverClaimsDelivery() throws Exception {
-        enroll(true,false,false); createSchedule(); planner.plan(); TIME.set(DUE); dispatcher.dispatch();
+        enroll(true); createSchedule(); planner.plan(); TIME.set(DUE); dispatcher.dispatch();
         var response=mvc.perform(get("/api/v1/me/medication-reminders/history").cookie(patientCookie)
                 .param("page","0").param("size","10")).andExpect(status().isOk())
                 .andExpect(header().string("Cache-Control",org.hamcrest.Matchers.containsString("no-store"))).andReturn().getResponse();
@@ -523,6 +525,7 @@ class MedicationReminderIntegrationTest {
         assertThat(history.path("content")).hasSize(1);
         assertThat(history.path("content").get(0).path("state").asText()).isEqualTo("ACCEPTED");
         assertThat(history.path("content").get(0).path("mode").asText()).isEqualTo("SIMULATED");
+        assertThat(history.path("content").get(0).path("channel").asText()).isEqualTo("WHATSAPP");
         assertThat(response.getContentAsString()).doesNotContain(PHONE,"PRIVATE",self.toString(),patient.toString(),
                 caseId.toString(),treatment.toString(),"idempotencyKey","leaseToken","DELIVERED");
         call(patientCookie,get("/api/v1/me/medication-reminders/history").param("size","101"),null,400);
@@ -543,11 +546,11 @@ class MedicationReminderIntegrationTest {
         else jdbc.update("update patient_user_links set verification_status=? where user_id=?",status.toUpperCase(Locale.ROOT),self);
         call(patientCookie,get(PREFERENCES),null,403);
         call(patientCookie,get("/api/v1/me/medication-reminders/history"),null,403);
-        call(patientCookie,patch(PREFERENCES).header("If-Match","\"0\""),preferences(true,false,false),403);
+        call(patientCookie,patch(PREFERENCES).header("If-Match","\"0\""),preferences(true),403);
     }
 
     @Test void claimIsBoundedToOneHundredJobsAndLeavesTheRemainderAvailable() throws Exception {
-        enroll(true,false,false); createSchedule(); planner.plan();
+        enroll(true); createSchedule(); planner.plan();
         // Supply 101 due jobs to exercise the worker batch boundary independently of planner ordering.
         jdbc.update("""
                 insert into reminder_jobs(id,user_id,patient_link_id,link_generation,phone_binding,preferences_version,
@@ -564,7 +567,7 @@ class MedicationReminderIntegrationTest {
         assertThat(first).hasSize(100); assertThat(next).hasSize(1);
         assertThat(first.stream().map(ReminderDispatchWorker.Claim::jobId).toList())
                 .doesNotContain(next.getFirst().jobId());
-        assertThat(count("reminder_attempts")).isZero(); verifyNoInteractions(whatsapp,sms);
+        assertThat(count("reminder_attempts")).isZero(); verifyNoInteractions(whatsapp);
     }
 
     @ParameterizedTest @ValueSource(strings={"TB_OFFICER","TREATMENT_SUPPORTER","SYSTEM_ADMIN"})
@@ -573,16 +576,21 @@ class MedicationReminderIntegrationTest {
         patientCookie=login("patient@example.invalid");
         call(patientCookie,get(PREFERENCES),null,403);
         call(patientCookie,get("/api/v1/me/medication-reminders/history"),null,403);
-        call(patientCookie,patch(PREFERENCES).header("If-Match","\"0\""),preferences(true,false,false),403);
+        call(patientCookie,patch(PREFERENCES).header("If-Match","\"0\""),preferences(true),403);
         assertThat(count("reminder_consent_events")).isZero();
     }
 
     private ReminderDispatchWorker.Claim onlyClaim() {
         var claims=worker.claim(); assertThat(claims).hasSize(1); return claims.getFirst();
     }
+    private void assertWhatsAppOnlyMetadata() {
+        for(String table:List.of("reminder_consent_events","reminder_jobs","reminder_attempts"))
+            assertThat(jdbc.queryForList("select distinct channel from "+table,String.class))
+                    .as("channel attribution in %s",table).containsExactly("WHATSAPP");
+    }
     private int count(String table) { return jdbc.queryForObject("select count(*) from "+table,Integer.class); }
     private String dueState() { return jdbc.queryForObject("select state from reminder_jobs where scheduled_at=?",String.class,DUE.atOffset(ZoneOffset.UTC)); }
-    private void enroll(boolean wa,boolean text,boolean fallback) throws Exception { change(preferences(wa,text,fallback),"0"); }
+    private void enroll(boolean wa) throws Exception { change(preferences(wa),"0"); }
     private JsonNode change(Map<String,Object> value,String version) throws Exception {
         return call(patientCookie,patch(PREFERENCES).header("If-Match",etag(version)),value,200);
     }
@@ -592,10 +600,10 @@ class MedicationReminderIntegrationTest {
         assertThat(result.getHeader("ETag")).isNotBlank();
         return result.getHeader("ETag");
     }
-    private Map<String,Object> preferences(boolean wa,boolean text,boolean fallback) {
+    private Map<String,Object> preferences(boolean wa) {
         Map<String,Object> value=new HashMap<>();
-        value.put("whatsappConsent",wa); value.put("smsConsent",text); value.put("smsFallback",fallback);
-        value.put("preferredChannel","WHATSAPP"); value.put("timeZone","Asia/Jakarta");
+        value.put("whatsappConsent",wa);
+        value.put("timeZone","Asia/Jakarta");
         value.put("permittedFrom",null); value.put("permittedUntil",null); value.put("allDay",true);
         value.put("policyVersion","MEDICATION_REMINDERS_V1"); value.put("riskAcknowledged",true);
         return value;

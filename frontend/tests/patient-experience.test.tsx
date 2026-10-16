@@ -18,14 +18,14 @@ it('calendar is read-only and makes paginated coverage explicit', async()=> { co
 it('calendar unlinked state suppresses all clinical reads', async()=> { const calls=portalBackend({...f.patient,patientLink:null, permissions:[]}); render(<AppProviders><PortalBoundary mode="patient" context="calendar"><PatientCalendar/></PortalBoundary></AppProviders>); await screen.findByText(/Izin baca catatan kalender belum/); expect(calls.filter(c=>!c.url.endsWith('/me'))).toHaveLength(0); });
 it('profile protects demographic access while permitting self reminder privacy controls', async()=> {
   const calls=portalBackend({...f.patient,permissions:[]}, c=>{
-    if(c.url.endsWith('/medication-reminders/preferences')) return Response.json({version:0,whatsappConsent:false,smsConsent:false,preferredChannel:'WHATSAPP',smsFallback:false,timeZone:null,permittedFrom:null,permittedUntil:null,allDay:false,verifiedPhone:true,maskedPhone:'+62••••1234',bindingCurrent:true,mode:'DISABLED',policyVersion:'MEDICATION_REMINDERS_V1'},{headers:{ETag:'"0-identity-binding-58e2"'}});
+    if(c.url.endsWith('/medication-reminders/preferences')) return Response.json({version:0,whatsappConsent:false,timeZone:null,permittedFrom:null,permittedUntil:null,allDay:false,verifiedPhone:true,maskedPhone:'+62••••1234',bindingCurrent:true,mode:'DISABLED',policyVersion:'MEDICATION_REMINDERS_V1'},{headers:{ETag:'"0-identity-binding-58e2"'}});
     if(c.url.includes('/medication-reminders/history?')) return Response.json({content:[],page:0,size:10,totalElements:0});
     return undefined;
   });
   render(<AppProviders><PortalBoundary mode="patient" context="profile"><PatientProfile/></PortalBoundary></AppProviders>);
   await screen.findByText('Izin baca profil belum tersedia.');
   expect(await screen.findByRole('checkbox',{name:'Izinkan WhatsApp'})).not.toBeChecked();
-  expect(screen.getByRole('checkbox',{name:'Izinkan SMS'})).not.toBeChecked();
+  expect(screen.queryByRole('checkbox',{name:/SMS/})).not.toBeInTheDocument();
   expect(screen.queryByText(f.selfPatient.fullName)).not.toBeInTheDocument();
   expect(calls.some(c=>c.url.split('?')[0].endsWith('/me/patient'))).toBe(false);
   expect(calls.every(c=>(!c.options.method||c.options.method==='GET')&&/^\/api\/tbcall\/v1\/me(?:\/medication-reminders\/(?:preferences|history))?$/.test(c.url.split('?')[0]))).toBe(true);

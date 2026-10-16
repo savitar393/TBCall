@@ -21,12 +21,10 @@ public class ReminderPreferencesService {
         if(match==null || match.isBlank())throw new ApplicationFailure(428,"PRECONDITION_REQUIRED","Prasyarat perubahan diperlukan","Buka pengaturan sebelum menyimpan.");
         if(!match.matches("\"[0-9]+-[a-f0-9]{64}\""))throw ApplicationFailure.invalid("ETag pengingat tidak valid.");
         if(!etag(old,id).equals(match))throw ApplicationFailure.optimistic();
-        if(input==null || input.whatsappConsent()==null || input.smsConsent()==null || input.smsFallback()==null || input.allDay()==null || input.riskAcknowledged()==null)throw ApplicationFailure.invalid("Isian pengingat tidak lengkap.");
-        boolean enabled=input.whatsappConsent() || input.smsConsent();
-        if(!POLICY.equals(input.policyVersion()) || !Set.of("WHATSAPP","SMS").contains(Objects.toString(input.preferredChannel(),"")))throw ApplicationFailure.invalid("Versi persetujuan atau kanal tidak valid.");
+        if(input==null || input.whatsappConsent()==null || input.allDay()==null || input.riskAcknowledged()==null)throw ApplicationFailure.invalid("Isian pengingat tidak lengkap.");
+        boolean enabled=input.whatsappConsent();
+        if(!POLICY.equals(input.policyVersion()))throw ApplicationFailure.invalid("Versi persetujuan tidak valid.");
         if(enabled && (!id.verifiedPhone() || !input.riskAcknowledged()))throw ApplicationFailure.invalid("Nomor akun terverifikasi dan persetujuan risiko diperlukan.");
-        if(enabled && !("WHATSAPP".equals(input.preferredChannel())?input.whatsappConsent():input.smsConsent()))throw ApplicationFailure.invalid("Kanal pilihan memerlukan persetujuan tersendiri.");
-        if(input.smsFallback() && !(input.whatsappConsent() && input.smsConsent() && "WHATSAPP".equals(input.preferredChannel())))throw ApplicationFailure.invalid("Cadangan SMS memerlukan kedua persetujuan dan pilihan WhatsApp.");
         LocalTime from=null,until=null;
         if(enabled){
             if(input.timeZone()==null || !ZoneId.getAvailableZoneIds().contains(input.timeZone()))throw ApplicationFailure.invalid("Pilih zona waktu IANA.");
@@ -36,21 +34,16 @@ public class ReminderPreferencesService {
         }
         long version=old==null?1:old.version()+1;OffsetDateTime now=OffsetDateTime.now(clock);
         store.jdbc().update("""
-                insert into reminder_preferences(user_id,patient_link_id,link_generation,phone_binding,version,whatsapp_consent,sms_consent,preferred_channel,sms_fallback,time_zone,permitted_from,permitted_until,all_day,policy_version,updated_at)
-                values (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?) on conflict(user_id) do update set patient_link_id=excluded.patient_link_id,
+                insert into reminder_preferences(user_id,patient_link_id,link_generation,phone_binding,version,whatsapp_consent,time_zone,permitted_from,permitted_until,all_day,policy_version,updated_at)
+                values (?,?,?,?,?,?,?,?,?,?,?,?) on conflict(user_id) do update set patient_link_id=excluded.patient_link_id,
                 link_generation=excluded.link_generation,phone_binding=excluded.phone_binding,version=excluded.version,
-                whatsapp_consent=excluded.whatsapp_consent,sms_consent=excluded.sms_consent,preferred_channel=excluded.preferred_channel,
-                sms_fallback=excluded.sms_fallback,time_zone=excluded.time_zone,permitted_from=excluded.permitted_from,
+                whatsapp_consent=excluded.whatsapp_consent,time_zone=excluded.time_zone,permitted_from=excluded.permitted_from,
                 permitted_until=excluded.permitted_until,all_day=excluded.all_day,policy_version=excluded.policy_version,updated_at=excluded.updated_at,last_planned_at=null
-                """,id.userId(),id.linkId(),id.generation(),id.phoneBinding(),version,input.whatsappConsent(),input.smsConsent(),input.preferredChannel(),input.smsFallback(),enabled?input.timeZone():null,from,until,enabled && input.allDay(),POLICY,now);
-        for(String channel:List.of("WHATSAPP","SMS")){
-            boolean granted="WHATSAPP".equals(channel)?input.whatsappConsent():input.smsConsent();
-            boolean was=old!=null && consent(old,channel);
-            if(granted || was)store.jdbc().update("""
+                """,id.userId(),id.linkId(),id.generation(),id.phoneBinding(),version,enabled,enabled?input.timeZone():null,from,until,enabled && input.allDay(),POLICY,now);
+        if(enabled || old!=null && old.whatsapp())store.jdbc().update("""
                     insert into reminder_consent_events(id,user_id,patient_link_id,link_generation,phone_binding,channel,action,purpose,policy_version,method,actor_user_id,preferences_version,recorded_at,withdrawn_at)
-                    values (?,?,?,?,?,?,?,'MEDICATION_REMINDER',?,'SELF_PORTAL',?,?,?,?)
-                    """,UUID.randomUUID(),id.userId(),id.linkId(),id.generation(),id.phoneBinding(),channel,granted?"GRANTED":"WITHDRAWN",POLICY,id.userId(),version,now,granted?null:now);
-        }
+                    values (?,?,?,?,?,'WHATSAPP',?,'MEDICATION_REMINDER',?,'SELF_PORTAL',?,?,?,?)
+                    """,UUID.randomUUID(),id.userId(),id.linkId(),id.generation(),id.phoneBinding(),enabled?"GRANTED":"WITHDRAWN",POLICY,id.userId(),version,now,enabled?null:now);
         // Only pre-handoff work can be cancelled. Accepted/uncertain handoffs are historical facts.
         store.jdbc().update("update reminder_jobs set state='CANCELLED',classification='CONSENT_CHANGED',lease_token=null,lease_until=null,updated_at=? where user_id=? and state in ('SCHEDULED','ELIGIBLE')",now,id.userId());
         audit.record(actor.userId(),"MEDICATION_REMINDER_PREFERENCES_CHANGED","USER",actor.userId());
@@ -68,7 +61,7 @@ public class ReminderPreferencesService {
     private Preferences view(Preference p,ReminderIdentity.Identity id){
         boolean bound=p==null || ReminderStore.bound(p,id);boolean enabled=bound && id.verifiedPhone();
         String masked=id.verifiedPhone()?"••••"+id.phone().substring(Math.max(0,id.phone().length()-4)):null;
-        return new Preferences(p==null?0:p.version(),p!=null && enabled && p.whatsapp(),p!=null && enabled && p.sms(),p==null || !bound?"WHATSAPP":p.channel(),p!=null && enabled && p.fallback(),p==null || !bound?null:p.zone(),p==null || !bound || p.from()==null?null:p.from().toString(),p==null || !bound || p.until()==null?null:p.until().toString(),p!=null && bound && p.allDay(),id.verifiedPhone(),masked,bound,properties.getMode().name(),POLICY,etag(p,id));
+        return new Preferences(p==null?0:p.version(),p!=null && enabled && p.whatsapp(),p==null || !bound?null:p.zone(),p==null || !bound || p.from()==null?null:p.from().toString(),p==null || !bound || p.until()==null?null:p.until().toString(),p!=null && bound && p.allDay(),id.verifiedPhone(),masked,bound,properties.getMode().name(),POLICY,etag(p,id));
     }
     private String etag(Preference p,ReminderIdentity.Identity id){
         // Consent may never be silently rebound by a form opened for a different verified destination/link.
