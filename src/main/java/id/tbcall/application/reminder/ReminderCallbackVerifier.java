@@ -2,17 +2,18 @@ package id.tbcall.application.reminder;
 
 import java.time.Instant;
 import java.util.Map;
+import java.util.List;
 import java.util.UUID;
 
 /**
- * Future provider boundary DESIGN ONLY. No bean, callback endpoint or event consumer exists in 2C-A.
- * A future approved adapter must authenticate the original bytes/signature, enforce timestamp/replay
- * limits, bind provider account and correlation to the recorded attempt, and durably deduplicate events.
- * Opt-out must revoke the bound recipient's consent without accepting user/patient IDs from the body.
- * Acceptance is never delivery. Provider-specific protocol and credential custody require separate review.
+ * Authenticates the original bytes and bounds the provider timestamp before returning a complete batch.
+ * The consumer binds these digest facts to recorded attempts and durably deduplicates provider events.
+ * Opt-out revokes the bound recipient's consent without accepting user/patient IDs from the body.
+ * Acceptance and delivery never establish medication adherence.
  */
 public interface ReminderCallbackVerifier {
-    VerifiedEvent verify(byte[] originalBody,Map<String,String> headers,Instant receivedAt);
-    enum Kind { AUTHORITATIVE_DELIVERY, TERMINAL_FAILURE, OPT_OUT }
-    record VerifiedEvent(String providerEventId,UUID attemptId,Kind kind,Instant occurredAt){}
+    List<VerifiedEvent> verify(byte[] originalBody,Map<String,String> headers,Instant receivedAt);
+    enum Kind { ACCEPTANCE, AUTHORITATIVE_DELIVERY, TERMINAL_FAILURE, OPT_OUT }
+    record VerifiedEvent(String providerEventId,UUID callbackToken,Kind kind,Instant occurredAt,
+            String messageDigest,String recipientDigest){}
 }

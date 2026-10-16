@@ -13,7 +13,7 @@ import org.springframework.core.env.Profiles;
 
 @Component @ConfigurationProperties("tbcall.reminders") @Validated @Getter @Setter
 public class ReminderProperties {
-    public enum Mode { DISABLED, SIMULATED }
+    public enum Mode { DISABLED, SIMULATED, CLOUD_TEST }
     @NotNull private Mode mode=Mode.DISABLED;
     private boolean schedulerEnabled=false;
     @Min(1) @Max(24) private int planningHours=24;
@@ -27,8 +27,10 @@ public class ReminderProperties {
     private final Environment environment;
     public ReminderProperties(SecurityProperties security,Environment environment){this.security=security;this.environment=environment;}
     @PostConstruct void safety(){
-        if(mode==Mode.SIMULATED && (security.isProduction() || environment.acceptsProfiles(Profiles.of("prod","production"))
+        if(mode!=Mode.DISABLED && (security.isProduction() || environment.acceptsProfiles(Profiles.of("prod","production"))
                 || !environment.acceptsProfiles(Profiles.of("dev","test"))))
-            throw new IllegalStateException("Reminder simulation requires explicit nonproduction dev/test configuration");
+            throw new IllegalStateException("Reminder testing requires explicit nonproduction dev/test configuration");
+        if(mode==Mode.CLOUD_TEST && schedulerEnabled)
+            throw new IllegalStateException("Meta test sending requires an explicit operator action, never scheduled dispatch");
     }
 }

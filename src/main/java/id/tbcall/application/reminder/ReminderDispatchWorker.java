@@ -20,10 +20,13 @@ public class ReminderDispatchWorker {
     private final ReminderTransports transports;
     private final Clock clock;
     private final AuditService audit;
+    private final MetaWhatsAppProperties meta;
+    private final ReminderProviderState provider;
 
     public ReminderDispatchWorker(ReminderStore store,ReminderEligibility eligibility,ReminderProperties properties,
-            ReminderTransports transports,Clock clock,AuditService audit){
+            ReminderTransports transports,Clock clock,AuditService audit,MetaWhatsAppProperties meta,ReminderProviderState provider){
         this.store=store;this.eligibility=eligibility;this.properties=properties;this.transports=transports;this.clock=clock;this.audit=audit;
+        this.meta=meta;this.provider=provider;
     }
 
     public List<Claim> claim(){
@@ -42,6 +45,17 @@ public class ReminderDispatchWorker {
         return List.copyOf(result);
     }
 
+    public Claim claimOne(UUID id){
+        Instant now=clock.instant();
+        var jobs=store.jdbc().queryForList("select id from reminder_jobs where id=? and state='SCHEDULED' and next_attempt_at<=? and scheduled_at<=? for update skip locked",
+                UUID.class,id,at(now),at(now));
+        if(jobs.isEmpty())return null;
+        UUID lease=UUID.randomUUID();
+        store.jdbc().update("update reminder_jobs set state='ELIGIBLE',lease_token=?,lease_until=?,updated_at=? where id=?",
+                lease,at(now.plusSeconds(properties.getClaimSeconds())),at(now),id);
+        return new Claim(id,lease);
+    }
+
     public Handoff admit(Claim claim){
         Job source=store.job(claim.jobId(),false);
         if(source==null)return null;
@@ -54,12 +68,13 @@ public class ReminderDispatchWorker {
                 || !job.leaseUntil().toInstant().isAfter(now))return null;
         String reason=eligibility.check(job,preference,identity,now);
         if(reason==null && !transports.available())reason="PROVIDER_DISABLED";
+        if(reason==null && properties.getMode()==ReminderProperties.Mode.CLOUD_TEST && !meta.allows(identity.phone()))reason="TEST_RECIPIENT_NOT_ALLOWED";
         if(reason!=null){terminal(job,"SUPPRESSED",reason,now);return null;}
         boolean duplicate=store.jdbc().queryForObject("""
                 select exists(select 1 from reminder_jobs where logical_key=? and id<>?
                 and state in ('DISPATCHED','ACCEPTED','DELIVERED','UNCERTAIN'))
                 """,Boolean.class,job.logicalKey(),job.id());
-        if(duplicate){terminal(job,"CANCELLED","DUPLICATE_HANDOFF",now);return null;}
+        if(duplicate || provider.previouslyAccepted(job.logicalKey())){terminal(job,"CANCELLED","DUPLICATE_HANDOFF",now);return null;}
         int logicalAttempts=store.jdbc().queryForObject("select coalesce(sum(attempt_count),0) from reminder_jobs where logical_key=?",Integer.class,job.logicalKey());
         if(logicalAttempts>=properties.getMaxAttempts()){terminal(job,"FAILED","ATTEMPT_LIMIT",now);return null;}
         int attempt=job.attempts()+1;
@@ -67,12 +82,15 @@ public class ReminderDispatchWorker {
                 update reminder_jobs set state='DISPATCHED',attempt_count=?,lease_until=?,classification='HANDOFF_ADMITTED',
                 mode=?,updated_at=? where id=?
                 """,attempt,at(now.plusSeconds(properties.getClaimSeconds())),properties.getMode().name(),at(now),job.id());
+        UUID attemptId=UUID.randomUUID();
         store.jdbc().update("""
                 insert into reminder_attempts(id,job_id,attempt_number,lease_token,channel,outcome,mode,started_at)
                 values (?,?,?,?,?,'PENDING',?,?)
-                """,UUID.randomUUID(),job.id(),attempt,claim.lease(),job.channel(),properties.getMode().name(),at(now));
+                """,attemptId,job.id(),attempt,claim.lease(),job.channel(),properties.getMode().name(),at(now));
+        UUID callback=properties.getMode()==ReminderProperties.Mode.CLOUD_TEST?UUID.randomUUID():null;
+        if(callback!=null)provider.register(attemptId,callback,identity.phone(),now);
         audit.record(null,"MEDICATION_REMINDER_HANDOFF_ADMITTED","REMINDER_JOB",job.id());
-        return new Handoff(new ReminderTransport.Message(job.id(),job.idempotency()+":"+job.channel(),job.channel(),identity.phone(),TEXT),claim.lease(),attempt);
+        return new Handoff(new ReminderTransport.Message(job.id(),job.idempotency()+":"+job.channel(),job.channel(),identity.phone(),TEXT,callback),claim.lease(),attempt);
     }
 
     public void complete(Handoff handoff,ReminderTransport.Result result){
@@ -86,10 +104,14 @@ public class ReminderDispatchWorker {
             // Never retain arbitrary provider text or interpret an invalid response as safe to retry.
             correlation=null;outcome=ReminderTransport.Outcome.UNCERTAIN;
         }
+        if(outcome==ReminderTransport.Outcome.ACCEPTED && "CLOUD_TEST".equals(job.mode())
+                && !provider.accepted(handoff.message().callbackToken(),correlation,now)){
+            correlation=null;outcome=ReminderTransport.Outcome.UNCERTAIN;
+        }
         String state="FAILED",classification=outcome.name();
         Instant next=now;
         switch(outcome){
-            case ACCEPTED -> {state="ACCEPTED";classification="SIMULATED_ACCEPTANCE";}
+            case ACCEPTED -> {state="ACCEPTED";classification="CLOUD_TEST".equals(job.mode())?"PROVIDER_ACCEPTANCE":"SIMULATED_ACCEPTANCE";}
             case UNCERTAIN -> state="UNCERTAIN";
             case FAILED -> { /* A definitive terminal result does not authorize another handoff. */ }
             case SAFE_RETRY -> {

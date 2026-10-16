@@ -69,8 +69,12 @@ public class SecurityConfiguration {
         http.sessionManagement(s -> s.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
                 .requestCache(c -> c.disable()).formLogin(c -> c.disable()).httpBasic(c -> c.disable()).logout(c -> c.disable())
                 .cors(c -> c.disable())
-                .csrf(c -> c.spa().csrfTokenRepository(csrfRepository))
-                .authorizeHttpRequests(a -> a.requestMatchers("/api/v1/auth/register", "/api/v1/auth/verify", "/api/v1/auth/login",
+                .csrf(c -> c.spa().csrfTokenRepository(csrfRepository).ignoringRequestMatchers(
+                        org.springframework.security.web.servlet.util.matcher.PathPatternRequestMatcher.withDefaults()
+                                .matcher(org.springframework.http.HttpMethod.POST,"/api/v1/webhooks/whatsapp")))
+                .authorizeHttpRequests(a -> a.requestMatchers(org.springframework.http.HttpMethod.GET,"/api/v1/webhooks/whatsapp").permitAll()
+                        .requestMatchers(org.springframework.http.HttpMethod.POST,"/api/v1/webhooks/whatsapp").permitAll()
+                        .requestMatchers("/api/v1/auth/register", "/api/v1/auth/verify", "/api/v1/auth/login",
                         "/api/v1/auth/verification/resend", "/api/v1/auth/password-reset/request", "/api/v1/auth/password-reset/confirm").permitAll()
                         .anyRequest().authenticated())
                 .exceptionHandling(e -> e.authenticationEntryPoint((request, response, failure) -> problems.write(

@@ -110,8 +110,13 @@ function jobLabel(job: ReminderJob) {
     if (job.state === "ACCEPTED") return "Diterima oleh simulasi";
     if (job.state === "DELIVERED") return "Selesai dalam simulasi";
   }
+  if (job.mode === "CLOUD_TEST") {
+    if (job.state === "ACCEPTED") return "Diterima Meta, belum dikonfirmasi terkirim · uji WhatsApp";
+    if (job.state === "DELIVERED") return "Terkirim, dikonfirmasi callback Meta · uji WhatsApp";
+    if (job.state === "UNCERTAIN") return "Hasil belum pasti, tidak dicoba ulang otomatis · uji WhatsApp";
+  }
   const names: Record<ReminderJob["state"], string> = { SCHEDULED: "Dijadwalkan", ELIGIBLE: "Memenuhi syarat", SUPPRESSED: "Tidak diproses", DISPATCHED: "Diproses", ACCEPTED: "Diterima penyedia", DELIVERED: "Terkirim", FAILED: "Gagal", CANCELLED: "Dibatalkan", UNCERTAIN: "Hasil belum pasti" };
-  return `${names[job.state]}${job.mode === "SIMULATED" ? " · simulasi" : " · pengiriman tidak tersedia"}`;
+  return `${names[job.state]}${job.mode === "SIMULATED" ? " · simulasi" : job.mode === "CLOUD_TEST" ? " · uji WhatsApp" : " · pengiriman tidak tersedia"}`;
 }
 function ReminderForm({ value, pending, onSave }: { value: ReminderPreferences; pending: boolean; onSave: (input: ReminderInput) => Promise<void> }) {
   const [whatsapp, setWhatsapp] = useState(value.bindingCurrent && value.whatsappConsent);
@@ -125,7 +130,7 @@ function ReminderForm({ value, pending, onSave }: { value: ReminderPreferences; 
   }
   const field = "grid gap-2 text-sm";
   return <form onSubmit={submit} className="space-y-4">
-    <p className="text-sm text-muted-foreground">{value.mode === "SIMULATED" ? "Simulasi: pengingat ini tidak mengirim pesan WhatsApp." : "Pengiriman WhatsApp belum tersedia. Persetujuan tetap dapat disimpan."}</p>
+    <p className="text-sm text-muted-foreground">{value.mode === "SIMULATED" ? "Simulasi: pengingat ini tidak mengirim pesan WhatsApp." : value.mode === "CLOUD_TEST" ? "Uji WhatsApp Meta terbatas: pengiriman hanya dipicu manual oleh operator. Bukan layanan produksi; tidak ada pengiriman otomatis." : "Pengiriman WhatsApp belum tersedia. Persetujuan tetap dapat disimpan."}</p>
     <p className="text-sm">{value.verifiedPhone ? <>Nomor terverifikasi: <span className="font-medium">{value.maskedPhone ?? "Tidak ditampilkan"}</span></> : "Nomor telepon belum terverifikasi. Verifikasi nomor akun sebelum mengaktifkan pengingat."}</p>
     {!value.bindingCurrent && <p role="status">Tautan akun atau nomor telah berubah. Berikan persetujuan baru untuk mengaktifkan kembali pengingat.</p>}
     <fieldset disabled={pending} className="space-y-4">

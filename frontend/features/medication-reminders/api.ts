@@ -3,7 +3,7 @@ import { apiRequest, type ApiOptions } from "@/lib/api/client";
 import { ApiError } from "@/lib/api/problem";
 
 const channel = z.enum(["WHATSAPP"]);
-const mode = z.enum(["DISABLED", "SIMULATED"]);
+const mode = z.enum(["DISABLED", "SIMULATED", "CLOUD_TEST"]);
 const time = z.string().regex(/^(?:[01]\d|2[0-3]):[0-5]\d$/).nullable();
 export function validReminderZone(zone: string) {
   // Named IANA aliases (for example GMT, CET and WET) are valid too.

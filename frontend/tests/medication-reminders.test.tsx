@@ -48,6 +48,32 @@ it.each(["SMS", "UNKNOWN"])("rejects unsupported history channel %s without disp
   backend(defaults, c => c.path.includes("/history") ? Response.json({ content: [{ id, scheduledAt: "2026-10-16T01:00:00Z", channel, state: "ACCEPTED", attemptCount: 1, classification: null, mode: "SIMULATED", createdAt: "2026-10-16T00:00:00Z" }], page: 0, size: 10, totalElements: 1 }) : undefined);
   await expect(reminderApi.history(new AbortController().signal)).rejects.toMatchObject({ problem: { code: "INVALID_RESPONSE" } });
 });
+it("accepts the limited Cloud test mode in preference and history responses", async () => {
+  backend({ ...defaults, mode: "CLOUD_TEST" }, c => c.path.includes("/history") ? Response.json({ content: [{ id, scheduledAt: "2026-10-16T01:00:00Z", channel: "WHATSAPP", state: "ACCEPTED", attemptCount: 1, classification: null, mode: "CLOUD_TEST", createdAt: "2026-10-16T00:00:00Z" }], page: 0, size: 10, totalElements: 1 }) : undefined);
+  const signal = new AbortController().signal;
+  await expect(reminderApi.preferences(signal)).resolves.toMatchObject({ data: { mode: "CLOUD_TEST", whatsappConsent: false }, etag: '"initial-zero"' });
+  await expect(reminderApi.history(signal)).resolves.toMatchObject({ data: { content: [{ mode: "CLOUD_TEST", state: "ACCEPTED" }] } });
+});
+it("shows limited manual Meta testing with consent OFF", async () => {
+  backend({ ...defaults, mode: "CLOUD_TEST" }); setup();
+  const whatsapp = await screen.findByRole("checkbox", { name: "Izinkan WhatsApp" });
+  expect(whatsapp).not.toBeChecked();
+  const note = screen.getByText(/Uji WhatsApp Meta terbatas/i);
+  expect(note).toHaveTextContent(/manual.*operator/i);
+  expect(note).toHaveTextContent(/bukan layanan produksi/i);
+  expect(note).toHaveTextContent(/tidak ada pengiriman otomatis/i);
+});
+it.each([
+  ["ACCEPTED", "Diterima Meta, belum dikonfirmasi terkirim · uji WhatsApp"],
+  ["DELIVERED", "Terkirim, dikonfirmasi callback Meta · uji WhatsApp"],
+  ["UNCERTAIN", "Hasil belum pasti, tidak dicoba ulang otomatis · uji WhatsApp"],
+])("identifies Cloud test %s without claiming medication adherence", async (state, label) => {
+  backend({ ...defaults, mode: "CLOUD_TEST" }, c => c.path.includes("/history") ? Response.json({ content: [{ id, scheduledAt: "2026-10-16T01:00:00Z", channel: "WHATSAPP", state, attemptCount: 1, classification: null, mode: "CLOUD_TEST", createdAt: "2026-10-16T00:00:00Z" }], page: 0, size: 10, totalElements: 1 }) : undefined);
+  setup();
+  expect(await screen.findByText(label)).toBeInTheDocument();
+  expect(screen.getByText(/tidak membuktikan obat diminum/i)).toBeInTheDocument();
+  expect(screen.queryByRole("button", { name: /kirim|coba ulang/i })).not.toBeInTheDocument();
+});
 async function enable() {
   await userEvent.click(await screen.findByRole("checkbox", { name: "Izinkan WhatsApp" }));
   await userEvent.type(screen.getByRole("textbox", { name: "Zona waktu (IANA)" }), "Asia/Jakarta");
@@ -68,8 +94,8 @@ it.each([supporter, { ...patient, roles: [{ code: "STAFF", name: "Petugas" }] },
   const calls = backend(); setup(user); expect(screen.queryByRole("region", { name: "Pengingat" })).not.toBeInTheDocument();
   expect(calls).toHaveLength(0);
 });
-it("requires explicit privacy acknowledgement before storing enabled consent and preserves server ETag", async () => {
-  const calls = backend(); setup(); await enable();
+it.each(["SIMULATED", "CLOUD_TEST"] as const)("requires explicit privacy acknowledgement before storing enabled consent and preserves server ETag in %s", async mode => {
+  const calls = backend({ ...defaults, mode }); setup(); await enable();
   const save = screen.getByRole("button", { name: "Simpan pengingat" });
   expect(save).toBeDisabled();
   await userEvent.click(screen.getByRole("checkbox", { name: /Saya memahami.*TBCall.*TBC/i }));

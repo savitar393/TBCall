@@ -1,6 +1,7 @@
 package id.tbcall.application;
 
 import id.tbcall.application.reminder.DisabledReminderTransport;
+import id.tbcall.application.reminder.MetaWhatsAppTransport;
 import id.tbcall.application.reminder.ReminderProperties;
 import id.tbcall.application.reminder.ReminderTransports;
 import id.tbcall.application.reminder.SimulatedWhatsAppTransport;
@@ -24,6 +25,7 @@ class ReminderTransportTest {
     @Mock ReminderProperties properties;
     @Mock SimulatedWhatsAppTransport whatsapp;
     @Mock DisabledReminderTransport disabled;
+    @Mock MetaWhatsAppTransport meta;
     @InjectMocks ReminderTransports transports;
 
     @ParameterizedTest @NullAndEmptySource @ValueSource(strings={"SMS","EMAIL","whatsapp"," WHATSAPP "})
@@ -36,6 +38,18 @@ class ReminderTransportTest {
     void disabledModeStillRejectsEveryUnsupportedChannel(String channel) {
         lenient().when(properties.getMode()).thenReturn(ReminderProperties.Mode.DISABLED);
         assertThatIllegalArgumentException().isThrownBy(()->transports.transport(channel));
+    }
+
+    @ParameterizedTest @NullAndEmptySource @ValueSource(strings={"SMS","EMAIL","whatsapp"," WHATSAPP "})
+    void cloudTestModeRejectsEveryUnsupportedChannel(String channel) {
+        lenient().when(properties.getMode()).thenReturn(ReminderProperties.Mode.CLOUD_TEST);
+        assertThatIllegalArgumentException().isThrownBy(()->transports.transport(channel));
+    }
+
+    @Test void cloudTestModeSelectsOnlyTheMetaAdapter() {
+        when(properties.getMode()).thenReturn(ReminderProperties.Mode.CLOUD_TEST);
+        assertThat(transports.available()).isTrue();
+        assertThat(transports.transport("WHATSAPP")).isSameAs(meta);
     }
 
     @Test void simulatedModeSelectsOnlyTheWhatsAppSimulation() {
