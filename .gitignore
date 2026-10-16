@@ -4,3 +4,6 @@ docs/reference-local/
 .idea/
 *.iml
 /phase4b-clean-test.log
+*.md
+*.md/
+!README.md
