@@ -5,6 +5,7 @@ import { applicationNavigation } from "@/lib/application-navigation";
 import { UnlinkedAccount } from "@/features/onboarding/unlinked-account";
 import { ArrowUpRight, Building2 } from "lucide-react";
 import { useSession } from "@/lib/auth/session";
+import { votDocumentNavigation } from "@/features/vot/navigation";
 
 export function IdentityDashboard({ contextOnly = false }: {contextOnly?: boolean} = {}) {
   const { user } = useSession();
@@ -14,7 +15,7 @@ export function IdentityDashboard({ contextOnly = false }: {contextOnly?: boolea
   const supporter = user.roles.some(role => role.code === "TREATMENT_SUPPORTER");
   return <div className="clinical-workspace"><UnlinkedAccount/>
     {!contextOnly && <><AppPageHeader title="Selamat datang" eyebrow="Beranda"/>
-      {destinations.length > 0 && <nav aria-label="Mulai dari sini" className="grid gap-3 sm:grid-cols-2 xl:grid-cols-3">{destinations.map(link => <Link key={link.href} href={link.href} aria-label={`Buka ${link.label}`} className="app-workflow-link items-center"><span className="font-semibold">{link.label}</span><ArrowUpRight aria-hidden="true" className="ml-auto size-4 shrink-0 text-muted-foreground"/></Link>)}</nav>}</>}
+      {destinations.length > 0 && <nav aria-label="Mulai dari sini" className="grid gap-3 sm:grid-cols-2 xl:grid-cols-3">{destinations.map(link => <Link key={link.href} href={link.href} onNavigate={event => votDocumentNavigation(link.href, event)} aria-label={`Buka ${link.label}`} className="app-workflow-link items-center"><span className="font-semibold">{link.label}</span><ArrowUpRight aria-hidden="true" className="ml-auto size-4 shrink-0 text-muted-foreground"/></Link>)}</nav>}</>}
     <section id="akun" className="surface scroll-mt-24 space-y-4">
       <h2 className="section-title">Akun &amp; konteks akses</h2>
       <dl className="clinical-data-grid text-sm"><div><dt className="text-muted-foreground">Identitas akun</dt><dd className="mt-1 break-words font-medium">{user.email ?? user.phone ?? "Pengguna TBCall"}</dd></div><div><dt className="text-muted-foreground">Status akun</dt><dd className="mt-1"><AppStatusBadge>{user.status === "ACTIVE" ? "Aktif" : "Status belum diketahui"}</AppStatusBadge></dd></div></dl>

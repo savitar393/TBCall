@@ -35,6 +35,16 @@ export async function proxyRequest(request: Request, path: string[]): Promise<Re
   if (!methods.has(request.method)) return problem(405, "METHOD_NOT_ALLOWED", traceId);
   const normalized = normalizedPath(path);
   if (!normalized) return problem(400, "INVALID_PROXY_PATH", traceId);
+  const votRequest = normalized.startsWith("v1/me/vot-submissions") || normalized.startsWith("v1/vot-submissions");
+  const upload = request.method === "POST" && normalized === "v1/me/vot-submissions";
+  const media = request.method === "GET" && /^v1\/(?:me\/)?vot-submissions\/[^/]+\/media$/.test(normalized);
+  if (votRequest && request.method !== "GET") {
+    const origin = request.headers.get("Origin");
+    if ((origin && origin !== new URL(request.url).origin) || request.headers.get("Sec-Fetch-Site") === "cross-site") return problem(403, "FORBIDDEN", traceId);
+  }
+  const maximumVideoBytes = 20971520;
+  if (upload && Number(request.headers.get("Content-Length")) > maximumVideoBytes) return problem(413, "VOT_FILE_TOO_LARGE", traceId);
+  let exceeded = false;
   try {
     const target = new URL(`/api/${normalized}`, backendOrigin());
     target.search = new URL(request.url).search;
@@ -44,20 +54,37 @@ export async function proxyRequest(request: Request, path: string[]): Promise<Re
       if (value !== null) headers.set(name, value);
     }
     headers.set("X-Request-ID", traceId);
-    const upstream = await fetch(target, {
+    let body: BodyInit | undefined;
+    if (upload && request.body) {
+      let bytes = 0;
+      body = request.body.pipeThrough(new TransformStream<Uint8Array, Uint8Array>({ transform(chunk, controller) {
+        bytes += chunk.byteLength;
+        if (bytes > maximumVideoBytes) { exceeded = true; controller.error(new Error("Upload limit exceeded")); return; }
+        controller.enqueue(chunk);
+      } }));
+    } else if (request.method !== "GET") body = await request.arrayBuffer();
+    const init: RequestInit & { duplex?: "half" } = {
       method: request.method, headers, cache: "no-store", redirect: "manual",
-      signal: AbortSignal.timeout(15_000),
-      ...(request.method === "GET" ? {} : { body: await request.arrayBuffer() }),
-    });
+      signal: AbortSignal.any([request.signal, AbortSignal.timeout(upload || media ? 120_000 : 15_000)]),
+      ...(body === undefined ? {} : { body }), ...(upload ? { duplex: "half" } : {}),
+    };
+    const upstream = await fetch(target, init);
     const outgoing = new Headers({ "Cache-Control": "no-store" });
     for (const name of responseHeaders) {
       const value = upstream.headers.get(name);
       if (value !== null) outgoing.set(name, value);
     }
+    if (media) {
+      outgoing.set("X-Content-Type-Options", "nosniff");
+      for (const name of ["Content-Length", "Accept-Ranges", "Content-Disposition"]) {
+        const value = upstream.headers.get(name);
+        if (value !== null) outgoing.set(name, value);
+      }
+    }
     for (const cookie of upstream.headers.getSetCookie()) outgoing.append("Set-Cookie", cookie);
     return new Response(upstream.body, { status: upstream.status, headers: outgoing });
   } catch {
     // Deliberately omit the exception: it can contain hosts, credentials or body text.
-    return problem(503, "BACKEND_UNAVAILABLE", traceId);
+    return exceeded ? problem(413, "VOT_FILE_TOO_LARGE", traceId) : problem(503, "BACKEND_UNAVAILABLE", traceId);
   }
 }

@@ -13,6 +13,8 @@ import { canTreatment } from "../permissions";
 import { canMonitoring } from "@/features/monitoring/permissions";
 import { DoseEvidence } from "./dose-evidence";
 import { StaffMedicationSchedule } from "@/features/medication-schedule/components/staff-medication-schedule";
+import { StaffVot } from "@/features/vot/staff";
+import { canReviewVot } from "@/features/vot/permissions";
 import { TreatmentEditor,type Editor } from "./treatment-editor";
 export function TreatmentDetail({id}:{id:string}){
  const {user}=useSession(),query=useQuery(treatmentQueries.detail(user!.id,id)),refs=useQuery(treatmentQueries.references(user!.id)),t=query.data?.data,context=useQuery({...treatmentQueries.caseContext(user!.id,t?.caseId??""),enabled:t?.status==="ACTIVE"&&canTreatment(user,"CASE_READ","OUTCOME_READ","OUTCOME_WRITE")});
@@ -31,6 +33,7 @@ export function TreatmentDetail({id}:{id:string}){
  {saved&&<p role="status" className="clinical-saved">Perubahan tersimpan. Data pengobatan dimuat ulang.</p>}{editor&&<section aria-label="Formulir tindakan" className="clinical-editor"><h2 ref={formHeading} tabIndex={-1} className="section-title">{editorTitles[editor.kind]}</h2><TreatmentEditor key={editor.kind+("id"in editor?editor.id:"")} editor={editor} treatment={t} etag={query.data?.etag} references={refs.isError?undefined:ref} caseActive={!context.isError&&!context.isFetching&&context.data?.data.status==="ACTIVE"} available={allow} onSuccess={()=>{setSaved(true);closeEditor();}} onClose={closeEditor}/></section>}
 
  <StaffMedicationSchedule key={id} treatment={t} available={allow}/>
+ {canReviewVot(user)&&<><Link href="#treatment-vot" className="text-primary underline">Peninjauan VOT</Link><StaffVot treatmentId={id}/></>}
  {canTreatment(user,"ADHERENCE_READ")&&<DoseEvidence treatment={t} references={ref}/>}
  <AppDisclosure title="Metadata pengobatan" open><DisplayFields values={[["Berat awal (kg)",t.initialWeightKg],["Bentuk OAT",t.oatForm],["Sumber obat",t.drugSource],["Awal intensif",t.intensiveStartDate],["Akhir intensif",t.intensiveEndDate],["Awal lanjutan",t.continuationStartDate],["Akhir lanjutan",t.continuationEndDate],["Deskripsi paduan",t.regimenDescription],["Catatan",t.notes]]}/></AppDisclosure>
  <div id="treatment-drugs" className="clinical-section"><AppSection title="Obat pengobatan">{!t.drugs.length&&<p className="clinical-empty">Belum ada obat tercatat.</p>}{t.drugs.map(d=><article key={d.id} className="clinical-record-row"><h3 className="font-semibold">{d.drugName}</h3><p>{d.treatmentPhase??"—"} · {d.doseValue??"—"} {d.doseUnit??""} · Frekuensi per minggu: {d.frequencyPerWeek??"—"}</p><p>{formatDate(d.startDate)} – {formatDate(d.endDate)} · Batch: {d.batchNumber??"—"} · Sumber: {d.drugSource??"—"}</p><p className="whitespace-pre-wrap break-words">{d.notes??"—"}</p></article>)}</AppSection></div>

@@ -1,6 +1,7 @@
 // @vitest-environment node
 import { describe, expect, it } from "vitest";
 import { contentSecurityPolicy, securityHeaders } from "@/lib/security/headers";
+import nextConfig from "../next.config";
 
 describe("frontend security policy", () => {
   it("uses production nonce scripts without unsafe-eval, unsafe-inline scripts or wildcards", () => {
@@ -24,5 +25,11 @@ describe("frontend security policy", () => {
     expect(headers["Permissions-Policy"]).toContain("camera=()");
     expect(headers["Permissions-Policy"]).toContain("microphone=()");
     expect(headers["Permissions-Policy"]).toContain("geolocation=()");
+  });
+  it("allows same-origin capture only on the VOT page and local blob video preview", async () => {
+    const rules = await nextConfig.headers!();
+    const recording = rules.find(rule => rule.source === "/portal/vot");
+    expect(recording?.headers).toContainEqual({ key: "Permissions-Policy", value: "camera=(self), microphone=(self), geolocation=(), payment=(), usb=()" });
+    expect(contentSecurityPolicy("nonce", false)).toContain("media-src 'self' blob:");
   });
 });

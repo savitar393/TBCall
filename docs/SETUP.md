@@ -66,3 +66,45 @@ Allowlist at most five recipients per enabled channel. The default test sender i
 Every operation is manual. Telegram `/stop` withdraws securely attributable current consent when ingested by the operator's poll. Timeouts and ambiguous handoffs are not automatically resent. Confirmed-safe failures remain bounded by the attempt limit, configured retry delay and original ten-minute lateness window.
 
 WhatsApp remains separate: `SIMULATED` makes no network requests; `CLOUD_TEST` requires its own Meta sender/template/recipient approvals, credentials and authenticated manual actions. `CHANNEL_TEST` cannot send WhatsApp. Complete configuration names and limits are in [application.properties](../src/main/resources/application.properties); never substitute a production account for a synthetic test.
+
+## Asynchronous video observed treatment (aVOT)
+
+Use a new isolated synthetic database and dedicated private media directory outside **all** repository worktrees and frontend/public/static directories. Never reuse the running smoke-test database. Keep reminders disabled, their scheduler off and external integrations disconnected throughout this test.
+
+```powershell
+# Alongside the isolated database settings above, before starting this backend:
+$env:SPRING_PROFILES_ACTIVE = 'dev'
+$env:TBCALL_PRODUCTION = 'false'
+$env:SERVER_PORT = '18080'
+$env:TBCALL_CORS_ALLOWED_ORIGINS = 'http://localhost:13000'
+$env:TBCALL_COOKIE_SECURE = 'false'
+$env:TBCALL_VOT_ENABLED = 'true'
+$env:TBCALL_VOT_SYNTHETIC_ONLY = 'true'
+$env:TBCALL_VOT_STORAGE_PATH = 'D:\TBCallSyntheticVotMedia'
+$env:TBCALL_VOT_MAX_FILE_BYTES = '20971520'
+$env:TBCALL_VOT_RETENTION_DAYS = '7'
+$env:TBCALL_VOT_CLEANUP_ENABLED = 'true'
+$env:TBCALL_VOT_CLEANUP_INTERVAL_MS = '3600000'
+$env:TBCALL_REMINDER_MODE = 'DISABLED'
+$env:TBCALL_REMINDER_SCHEDULER_ENABLED = 'false'
+```
+
+Start this worktree's backend on port 18080. In this worktree's `frontend/.env.local`, set the server-only `TBCALL_BACKEND_URL=http://127.0.0.1:18080`, then run `pnpm dev --hostname 127.0.0.1 --port 13000`. Open `http://localhost:13000` in a separate browser profile to isolate session cookies from other local TBCall instances. Verify the new datasource and both ports before entering test records; never reuse the original instance's port or database. Plain HTTP and insecure development cookies are for loopback synthetic testing only.
+
+The application refuses VOT when production checks/profiles are active, no explicit `dev`/`test` profile is active, synthetic-only is false, storage is unsafe, retention is outside 1–365 days or the byte limit exceeds 20 MiB (20,971,520 bytes). On Windows provision the dedicated directory with restrictive OS ACLs for the backend account; POSIX directories/files are owner-only. Do not serve it through another web server, sync it publicly, or include recordings in source control/backups without a retention design. Local storage is not production-ready. Disable VOT again when finished.
+
+Patients open **Video Pengobatan (VOT)**, choose an elapsed prescribed occurrence from the current active revision, record (camera/microphone permission required on HTTPS/localhost) or select a WebM/MP4, preview, explicitly consent and submit. Recording stops at about 60 seconds in the browser. The server enforces byte limits and container characteristics, **not a guaranteed duration, decoded validity, identity, ingestion or adherence**. Device denial/unsupported recording allows file selection or assistance from the treatment officer; VOT is optional. Only synthetic demonstrations belong in this environment.
+
+Each occurrence accepts one immutable submission within seven days after its prescribed time, while the treatment and current prescription remain active and unexpired. A patient can withdraw pending review consent by cancelling with the latest version: subsequent officer playback requests and decisions are denied, while the patient's own playback, audit metadata and original video remain until retention. Completed reviews are immutable; contact the facility for assistance with subsequent privacy requests. Replacements are refused, including after cancellation. An officer with dedicated VOT permissions and matching active treatment/current case facility sees **Peninjauan VOT** and records **Aktivitas teramati** or **Tidak dapat diverifikasi** after confirmation. These are evidence classifications; neither upload nor review creates/updates a `DoseEvent` or changes adherence. SYSTEM_ADMIN has no default playback/review rights.
+
+Retention is measured from successful submission. Expiry immediately blocks playback/new review, even if the hourly sweep has not run. Each sweep examines at most 50 expired media records and removes at most 100 unreferenced/partial files older than 24 hours; metadata, consent and decisions remain auditable. Sweeps resume past failed deletions and the orphan scan resumes after its 10,000-entry bound, so later candidates progress. Filesystem failures retry on a subsequent sweep; process restarts reset scan cursors. Keep cleanup enabled while operating this prototype. Use `TBCALL_VOT_RETENTION_DAYS=1` for a short isolated manual retention test; clock-controlled integration tests verify expiry without waiting or modifying a running database. Laced WebM blocks are unsupported; use an alternative browser or MP4 when container admission rejects such a clip.
+
+Synthetic smoke test:
+
+1. In the isolated environment create fictional verified PATIENT and TB_OFFICER accounts, assign the officer to an active fictional facility, and create a fictional clinical registration, case and active treatment through the normal workflow. Verify a SELF link to the patient account.
+2. As that officer, create a medication schedule with an occurrence due during the demonstration. Wait until that time; do not backdate prescriptions or use clinical dosage instructions for the recording.
+3. As the patient, open VOT, record a short fictional demonstration or choose a synthetic clip, preview, consent and submit. Confirm **Menunggu peninjauan**. Try a duplicate and confirm it cannot replace the original.
+4. As the assigned officer, open Peninjauan VOT (or the treatment VOT section), play the protected video, choose either review classification, add optional synthetic notes and confirm. Repeating a stale decision must fail.
+5. As the patient, refresh history and confirm the same review. Compare the isolated database's `dose_events` before and after: there must be no automatically added/changed row.
+6. Try an unrelated patient, officer from another facility, and SYSTEM_ADMIN: neither metadata nor media may become available through a guessed submission UUID. Revoke the SELF link or facility assignment and confirm access is denied on the next request.
+7. After the configured retention period, confirm playback returns unavailable, the sweep physically removes the private file, and history/audit metadata remains. Automated `VotIntegrationTest` exercises this with a disposable PostgreSQL container and simulated clock. No test requires real reminders or clinical integrations.

@@ -15,6 +15,7 @@ export function contentSecurityPolicy(nonce: string, development: boolean): stri
     "style-src-attr 'unsafe-inline'",
     `connect-src 'self'${development ? " ws: wss:" : ""}`,
     "img-src 'self' data:", "font-src 'self'", "object-src 'none'",
+    "media-src 'self' blob:",
     "base-uri 'self'", "form-action 'self'", "frame-ancestors 'none'",
   ].join("; ") + ";";
 }

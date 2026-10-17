@@ -234,9 +234,9 @@ class PortalReferenceIntegrationTest {
         call(request(org.springframework.http.HttpMethod.valueOf(method),PATH),Map.of(),405);
     }
 
-    @Test void freshDatabaseUsesExactlyV1ThroughV22() {
+    @Test void freshDatabaseUsesExactlyV1ThroughV23() {
         assertThat(jdbc.queryForList("select version from flyway_schema_history where success order by installed_rank",String.class))
-                .containsExactly("1","2","3","4","5","6","7","8","9","10","11","12","13","14","15","16","17","18","19","20","21","22");
+                .containsExactly("1","2","3","4","5","6","7","8","9","10","11","12","13","14","15","16","17","18","19","20","21","22","23");
     }
 
     private static Stream<Arguments> rolePermissions() {

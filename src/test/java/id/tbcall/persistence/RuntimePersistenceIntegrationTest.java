@@ -64,7 +64,7 @@ class RuntimePersistenceIntegrationTest {
             Map.entry(PreventiveTreatment.class, "preventive_treatments"), Map.entry(AdverseEvent.class, "adverse_events"),
             Map.entry(MonitoringPlan.class, "monitoring_plans"), Map.entry(MonitoringEvent.class, "monitoring_events"),
             Map.entry(Alert.class, "alerts"), Map.entry(Notification.class, "notifications"),
-            Map.entry(MedicationSchedule.class,"medication_schedules"));
+            Map.entry(MedicationSchedule.class,"medication_schedules"),Map.entry(VotSubmission.class,"vot_submissions"));
 
     @Test
     void versionColumnsAndJpaVersionsCoverExactlyTheApprovedTables() {
@@ -78,7 +78,7 @@ class RuntimePersistenceIntegrationTest {
         assertThat(jdbc.queryForObject("""
                 select count(*) from information_schema.columns where table_schema='public'
                 and column_name='version' and data_type='bigint' and is_nullable='NO' and column_default='0'
-                """, Integer.class)).isEqualTo(29);
+                """, Integer.class)).isEqualTo(30);
         Map<Class<?>, Object> fixtures = fixtures();
         em.flush();
         for (var entry : VERSIONED.entrySet()) {
@@ -91,7 +91,7 @@ class RuntimePersistenceIntegrationTest {
                     .isZero();
         }
         assertThat(emf.getMetamodel().getEntities().stream().filter(e -> e.hasSingleIdAttribute())
-                .filter(e -> ((jakarta.persistence.metamodel.IdentifiableType<?>) e).hasVersionAttribute()).count()).isEqualTo(27);
+                .filter(e -> ((jakarta.persistence.metamodel.IdentifiableType<?>) e).hasVersionAttribute()).count()).isEqualTo(28);
     }
 
     @Test
@@ -345,6 +345,12 @@ class RuntimePersistenceIntegrationTest {
         prescription.setSchedule(medication); prescription.setRevisionNumber(1); prescription.setStatus("ACTIVE"); prescription.setTimeZone("Asia/Jakarta");
         prescription.setStartDate(START); prescription.setWeekdayMask(127); prescription.setTimes(Set.of(java.time.LocalTime.of(8,0)));
         prescription.setValidFrom(SCHEDULED); prescription.setCreatedAt(SCHEDULED); prescription.setCreatedByUser(user); persist(rows,prescription);
+        VotSubmission video=new VotSubmission();video.setId(UUID.randomUUID());video.setPatientId(patient.getId());video.setTreatment(treatment);
+        video.setScheduleId(medication.getId());video.setRevisionId(prescription.getId());video.setOccurrenceId(prescription.getId()+"/"+SCHEDULED.toLocalDate()+"/08:00");
+        video.setLocalDate(SCHEDULED.toLocalDate());video.setLocalTime(java.time.LocalTime.of(8,0));video.setTimeZone("Asia/Jakarta");video.setScheduledAt(SCHEDULED);
+        video.setUploadedByUserId(user.getId());video.setPatientLinkId(link.getId());video.setMediaKey(UUID.randomUUID().toString());video.setContentType("video/webm");video.setMediaSize(100);
+        video.setSubmittedAt(SCHEDULED);video.setStatus("PENDING_REVIEW");video.setConsentAcknowledged(true);video.setConsentPolicyVersion("vot-synthetic-v1");
+        video.setRetentionExpiresAt(SCHEDULED.plusDays(7));video.setCreatedAt(SCHEDULED);video.setUpdatedAt(SCHEDULED);persist(rows,video);
         TreatmentDrug treatmentDrug = new TreatmentDrug(); treatmentDrug.setTreatment(treatment); treatmentDrug.setDrug(drug); persist(rows, treatmentDrug);
         DoseEvent dose = new DoseEvent(); dose.setTreatment(treatment); dose.setScheduledDate(START); dose.setStatus("TAKEN_OBSERVED"); persist(rows, dose);
         FollowUp followUp = new FollowUp(); followUp.setTreatment(treatment); followUp.setFollowUpType("CLINICAL"); followUp.setScheduledAt(SCHEDULED); persist(rows, followUp);

@@ -1,5 +1,6 @@
 "use client";
 import Link from "next/link";
+import { votDocumentNavigation } from "@/features/vot/navigation";
 import type { ReactNode } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { AppDisclosure, AppPageHeader, AppSection, AppStatusBadge } from "@/components/application-patterns";
@@ -37,6 +38,7 @@ export function PatientTreatment() {
   return <div className="clinical-workspace"><AppPageHeader title="Pengobatan" actions={<Refresh onClick={() => query.refetch()}/>}/>
     {query.isPending || query.error ? <PortalState query={query}/> : !t ? <p>Belum ada catatan pengobatan.</p> : <TreatmentFields treatment={t} nextActivity={nextActivity}/>}
     {(query.isPending || query.error || !t) && nextActivity}
+    {user!.permissions.includes("VOT_SELF_READ") && <AppSection title="Video Pengobatan (VOT)"><p>Video sintetis untuk peninjauan petugas. Pengiriman video tidak otomatis mencatat dosis.</p><Link className="text-primary underline" href="/portal/vot" onNavigate={event => votDocumentNavigation("/portal/vot", event)}>Buka Video Pengobatan (VOT)</Link></AppSection>}
     {t && (user!.permissions.includes("ADHERENCE_READ") || user!.permissions.includes("ADHERENCE_RECORD")) && <DoseEvidence target={{ kind: "patient" }} active={t.status === "ACTIVE"} startDate={t.startDate}/>}
   </div>;
 }

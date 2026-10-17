@@ -15,13 +15,14 @@ TBCall is a tuberculosis care coordination and monitoring application for health
 - Published geographic reporting snapshots with explicit reporting grants, suppression and an indicative Indonesia choropleth.
 - Consent-bound WhatsApp, Email and Telegram reminder infrastructure. External delivery is disabled by default; provider adapters support explicitly admitted nonproduction tests only.
 - Facility-scoped permissions, session authentication, CSRF protection, optimistic concurrency and audit records.
+- Asynchronous video observed treatment (aVOT): consented private synthetic videos, prescribed-occurrence linkage, officer review and retention. Uploads/reviews never create dose evidence or establish adherence.
 
 ## Technology
 
 | Component | Stack |
 | --- | --- |
 | Backend | Java 21, Spring Boot 4.1.1, Spring Security, Spring Data JPA/Hibernate, JDBC |
-| Database | PostgreSQL; Flyway-managed migrations through V22 |
+| Database | PostgreSQL; Flyway-managed migrations through V23 |
 | Frontend | Next.js 16, React 19, TypeScript, Tailwind CSS, TanStack Query |
 | Testing | JUnit 5, Testcontainers/PostgreSQL, Vitest, Testing Library; optional isolated browser harness |
 | Build tools | Maven Wrapper, Node.js 24.15–24.x, pnpm 11.19.0 |
@@ -43,6 +44,8 @@ The backend reads `TBCALL_DB_URL`, `TBCALL_DB_USER` and `TBCALL_DB_PASSWORD` fro
 `frontend/.env.local` contains the server-only `TBCALL_BACKEND_URL`. Never put provider credentials in `NEXT_PUBLIC_*` variables, source files or committed environment files.
 
 Reminder sending defaults to `TBCALL_REMINDER_MODE=DISABLED` with its scheduler off. WhatsApp uses the separate `CLOUD_TEST` mode; Email/Telegram use `CHANNEL_TEST`. Both require explicit nonproduction configuration and authenticated operator actions. See [provider configuration](docs/SETUP.md#reminder-provider-tests) and the defaults in [application.properties](src/main/resources/application.properties).
+
+VOT is disabled by default and local storage is restricted to explicitly enabled synthetic `dev`/`test` environments. See [VOT setup and smoke test](docs/SETUP.md#asynchronous-video-observed-treatment-avot). This storage implementation is not production-ready.
 
 ## Testing
 

@@ -23,11 +23,12 @@ export function portalNavigation(user: Me): NavigationItem[] {
         links.push({ label: "Portal Saya", href: "/portal" }, { label: "Kalender Saya", href: "/portal/calendar" }, { label: "Data diri", href: "/portal/profile" }, { label: "Bantuan & dukungan", href: "/portal/support" });
         for (const [permission, label, href] of [
             ["TREATMENT_READ", "Pengobatan Saya", "/portal/treatment"],
+            ["VOT_SELF_READ", "Video Pengobatan (VOT)", "/portal/vot"],
             ["TPT_READ", "TPT Saya", "/portal/tpt"],
             ["MONITORING_READ", "Pemantauan Saya", "/portal/monitoring"],
             ["ALERT_READ", "Peringatan Saya", "/portal/alerts"],
         ])
-            if (user.permissions.includes(permission))
+            if (user.permissions.includes(permission) && (permission !== "VOT_SELF_READ" || !!user.patientLink))
                 links.push({ label, href });
     }
     if (canSupportCases(user))
@@ -45,9 +46,10 @@ export function patientNavigation(user: Me): NavigationItem[] {
     ];
     for (const [permission, label, href] of [
         ["TREATMENT_READ", "Pengobatan", "/portal/treatment"],
+        ["VOT_SELF_READ", "Video Pengobatan (VOT)", "/portal/vot"],
         ["MONITORING_READ", "Pemantauan", "/portal/monitoring"],
         ["NOTIFICATION_READ_SELF", "Notifikasi", "/portal/notifications"],
-    ]) if (user.permissions.includes(permission)) links.push({ label, href });
+    ]) if (user.permissions.includes(permission) && (permission !== "VOT_SELF_READ" || !!user.patientLink)) links.push({ label, href });
     links.push({ label: "Profil", href: "/portal/profile" }, { label: "Bantuan", href: "/portal/support" });
     if (user.permissions.includes("TPT_READ")) links.push({ label: "Terapi pencegahan (TPT)", href: "/portal/tpt" });
     if (user.permissions.includes("ALERT_READ")) links.push({ label: "Peringatan", href: "/portal/alerts" });

@@ -5,6 +5,7 @@ import { usePathname } from "next/navigation";
 import { Building2, ChevronLeft, ChevronRight, CalendarDays, Bell, Pill, FlaskConical, Home, LogOut, Menu, UserRound, Activity, HeartHandshake, ShieldCheck, ShieldAlert, UsersRound, LayoutDashboard, ClipboardPlus, History, ArrowLeftRight, Search, Settings2, Network } from "lucide-react";
 import { useSession } from "@/lib/auth/session";
 import { applicationNavigation, applicationBreadcrumbs, navigationActive, patientOnly } from "@/lib/application-navigation";
+import { votDocumentNavigation } from "@/features/vot/navigation";
 import { AppBreadcrumbs } from "./application-patterns";
 import { cn } from "@/lib/utils";
 import { useSidebar } from "./sidebar-preference";
@@ -43,7 +44,7 @@ export function AppShell({ children }: { children: ReactNode }) {
         {group.links.map(item => {
           const Icon = icons[item.href] ?? UserRound;
           const current = navigationActive(pathname,item.href,user);
-          return <Link key={item.href} href={item.href} onClick={() => { if (mobile) setDrawer(false); }} aria-current={current ? "page" : undefined} title={collapsed && !mobile ? item.label : undefined}
+          return <Link key={item.href} href={item.href} onNavigate={event => votDocumentNavigation(item.href, event)} onClick={() => { if (mobile) setDrawer(false); }} aria-current={current ? "page" : undefined} title={collapsed && !mobile ? item.label : undefined}
             className={cn("sidebar-link relative flex min-h-11 items-center gap-2.5 rounded-xl px-3 text-sm font-medium transition-colors", current ? "bg-primary/10 text-primary" : "text-muted-foreground hover:bg-accent hover:text-foreground")}>
             <span className="app-nav-icon"><Icon aria-hidden="true" className="size-[18px] shrink-0"/></span><span className={!mobile ? "sidebar-label" : undefined}>{item.label}</span>
           </Link>;
